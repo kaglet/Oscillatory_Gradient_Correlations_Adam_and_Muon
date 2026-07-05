@@ -1,0 +1,4 @@
+optimizer:
+  _target_: my_app.Optimizer
+  algo: Adam
+  lr: 0.001
