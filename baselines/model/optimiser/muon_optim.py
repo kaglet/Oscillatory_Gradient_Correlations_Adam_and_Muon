@@ -4,7 +4,7 @@ TODO:
      - Perhaps can fetch model from config, and fetch info on it simply.
 - With config dynamic setting of nonhidden params assuming static transformer model only. 
      - Can fetch params from config class maybe using model type, after passing in what Muon needs, possibly inheriting 
-     - See Muon GitHub CIFAR implementation for pro code potentially of param setting to borrow
+     - See Muon GitHub NanoGPT (transformer) CIFAR (CNN/RNN idk which) implementation for pro code potentially of param setting to borrow
      - Set lr, decay with config. 
 """
 from muon import MuonWithAuxAdam
