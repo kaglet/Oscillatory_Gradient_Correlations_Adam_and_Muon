@@ -1302,5 +1302,5 @@ Adapted from the following sources:
 
 ### Lightning and Hydra Templates
 
-
-- [Hackernoon](https://hackernoon.com/yet-another-lightning-hydra-template-for-ml-experiments)
+- Base [Ashleve](https://github.com/ashleve/lightning-hydra-template)
+  - Extended and Updated by [Hackernoon](https://hackernoon.com/yet-another-lightning-hydra-template-for-ml-experiments)
