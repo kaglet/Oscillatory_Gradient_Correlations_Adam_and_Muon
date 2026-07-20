@@ -1,4 +1,4 @@
-from typing import Callable, Type, Tuple
+from typing import Callable, Type, Tuple, AnyStr
 
 import pytorch_lightning as pl
 import torch
@@ -9,10 +9,12 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 
-from torchmetrics import MaxMetric, MeanMetric
+from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
+from muon import MuonWithAuxAdam
+from torch.optim import Adam, AdamW
 
-__all__ = ["MNISTLitModule", "single_layer_nn", "train_and_eval"]
+__all__ = ["MNISTLitModule", "train_and_eval"]
 
 
 class MNISTLitModule(pl.LightningModule):
@@ -74,61 +76,66 @@ class MNISTLitModule(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         return loss, preds, targets
 
-    # TODO: Unify training, validation, test steps which repeat their processing
+    def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+        loss, preds, targets = metrics
+        loss_store(loss)
+        acc_store(preds, targets)
+        self.log(f"{metric_name}/loss", loss_store, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
+
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        loss, preds, targets = self.batch_step(batch)
-
-        # update and log metrics
-        self.train_loss(loss)
-        self.train_acc(preds, targets)
-        self.log("train/loss", self.train_loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("train/acc", self.train_acc, on_step=True, on_epoch=True, prog_bar=True)
-
+        metrics = self.batch_step(batch)
+        loss, _, _ = metrics
+        self.update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
         return loss
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         """Perform a single validation step on a batch of data from the validation set."""
-        loss, preds, targets = self.batch_step(batch)
-
-        # update and log metrics
-        self.val_loss(loss)
-        self.val_acc(preds, targets)
-        self.log("val/loss", self.val_loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("val/acc", self.val_acc, on_step=True, on_epoch=True, prog_bar=True)
+        metrics = self.batch_step(batch)
+        self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
 
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
-        """Perform a single test step on a batch of data from the test set.
-
-        :param batch: A batch of data (a tuple) containing the input tensor of images and target
-            labels.
-        :param batch_idx: The index of the current batch.
-        """
-        loss, preds, targets = self.batch_step(batch)
-
-        # update and log metrics
-        self.test_loss(loss)
-        self.test_acc(preds, targets)
-        self.log("test/loss", self.test_loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("test/acc", self.test_acc, on_step=True, on_epoch=True, prog_bar=True)
+        """Perform a single test step on a batch of data from the test set."""
+        metrics = self.batch_step(batch)
+        self.update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
 
     def on_train_epoch_end(self) -> None:
         "Lightning hook that is called when a training epoch ends."
         pass
 
+    # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:
-        "Lightning hook that is called when a validation epoch ends."
-        acc = self.val_acc.compute()  # get current val acc
-        self.max_val_acc(acc)  # update best so far val acc
-        # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
-        # otherwise metric would be reset by lightning after each epoch
+        """
+        Lightning hook that is called when a validation epoch ends.
+        """
+        acc = self.val_acc.compute() # get current val acc
+        self.max_val_acc(acc)  # auto update store with best so far val acc
+        
+        # Recall metric is reset by us with lightning after each epoch.
+        # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
 
     def configure_optimizers(self):
         # Implicitly equivalent to self.model.parameters()
         # TODO: Do if statement logic for now for Muon and Adam handling how to run optim
+        # TODO: Parameters depend on architecture to formulate and select which may be messy, I want it model agnostic but it is not, e.g. select only layers for Muon trying to keep it neutral, and select everything else for Adam, or the other way around
+        filter_params = [p for p in self.model.parameters() if len(p.shape) == 4 and p.requires_grad]
+        norm_biases = [p for n, p in self.model.named_parameters() if 'norm' in n and p.requires_grad]        
+        input_weights = [*self.model.head.(), *self.model.embed.parameters()]
+        adam_param_configs = [dict(params=[self.model.whiten.bias], lr=bias_lr, weight_decay=wd/bias_lr),
+                     dict(params=norm_biases, lr=bias_lr, weight_decay=wd/bias_lr),
+                     dict(params=[self.model.head.weight], lr=head_lr, weight_decay=wd/head_lr),
+                     dict(params=[*list(self.model.children())[:-1]], lr=head_lr, weight_decay=wd/head_lr)]
+        param_groups = [
+            dict(params=hidden_weights, use_muon=True,
+                lr=0.02, weight_decay=0.01),
+            dict(params=hidden_gains_biases+nonhidden_params, use_muon=False,
+                lr=3e-4, betas=(0.9, 0.95), weight_decay=0.01),
+        ]
+        optimizer = MuonWithAuxAdam(param_groups)
         return self.optim(self.parameters())
 
     def train_dataloader(self):
