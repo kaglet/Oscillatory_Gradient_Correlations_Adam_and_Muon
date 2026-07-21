@@ -1,7 +1,7 @@
 import torch.nn as nn
 from typing import Any, Dict, Tuple
 
-__all__ = ["get_Muon_Aux_Adam_params", "get_Adam_params"]
+__all__ = ["get_Muon_Aux_Adam_params", "get_Full_Adam_params"]
 
 def get_Muon_Aux_Adam_params(model: nn.Module, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas=Tuple[float, float], use_layer_recs=False ) -> list[dict[str, Any]]:
     # Norm biases are not innately 2D, but a collation of 1D vectors
@@ -33,7 +33,7 @@ def get_Muon_Aux_Adam_params(model: nn.Module, lr_each: Tuple[float, float], wei
 
     return param_groups
 
-def get_Adam_params(model: nn.Module, lr: float, weight_decay: float, betas=Tuple[float, float]) -> list[dict[str, Any]]:
+def get_Full_Adam_params(model: nn.Module, lr: float, weight_decay: float, betas=Tuple[float, float]) -> list[dict[str, Any]]:
     all_params = list(model.parameters())
 
     # Return as param_groups instead of all parameters in the case own experiments over different Adam config is desired

@@ -1,4 +1,4 @@
-from typing import Callable, Type, Tuple, AnyStr
+from typing import Callable, Type, Tuple, AnyStr, Any
 
 import pytorch_lightning as pl
 import torch
@@ -21,6 +21,8 @@ class MNISTLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
+        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        params: list[dict[str, Any]],
         optim: Partial[Optimizer],
         dataloader: Type[DataLoader],
         # scheduler: LRScheduler,
@@ -32,7 +34,7 @@ class MNISTLitModule(pl.LightningModule):
         self.save_hyperparameters(logger=False)
         self.optim = optim
         self.dataloader = dataloader
-
+        self.params = params
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
         
@@ -119,56 +121,7 @@ class MNISTLitModule(pl.LightningModule):
 
 
     def configure_optimizers(self) -> Optimizer:
-        # Implicitly equivalent to self.model.parameters()
-        # TODO: Do if statement logic for now for Muon and Adam handling how to run optim
-        # TODO: Parameters depend on architecture to formulate and select which may be messy, I want it model agnostic but it is not, e.g. select only layers for Muon trying to keep it neutral, and select everything else for Adam, or the other way around
+        optimizer = MuonWithAuxAdam(self.params)
+        # TODO: Can try add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it
+        return optimizer
 
-        
-        adam_param_configs = [dict(params=[self.model.whiten.bias], lr=bias_lr, weight_decay=wd/bias_lr),
-                     dict(params=norm_biases, lr=bias_lr, weight_decay=wd/bias_lr),
-                     dict(params=[self.model.head.weight], lr=head_lr, weight_decay=wd/head_lr),
-                     dict(params=[], lr=head_lr, weight_decay=wd/head_lr)]
-        param_groups = [
-            dict(params=hidden_weights, use_muon=True,
-                lr=0.02, weight_decay=0.01),
-            dict(params=hidden_gains_biases+nonhidden_params, use_muon=False,
-                lr=3e-4, betas=(0.9, 0.95), weight_decay=0.01),
-        ]
-        optimizer = MuonWithAuxAdam(param_groups)
-        return self.optim(self.parameters())
-
-    def train_dataloader(self):
-        # generate dataset: input, cos(input)
-        input = self.training_domain.reshape(-1, 1)
-        targets = self.target_fn(input)
-        return self.dataloader(TensorDataset(input, targets))
-
-def train_and_eval(
-    model: torch.nn.Module,
-    optim: Partial[Optimizer],
-    dataloader: Type[DataLoader],
-    target_fn: Callable[[torch.Tensor], torch.Tensor],
-    training_domain: torch.Tensor,
-    lit_module: Type[MNISTLitModule],
-    trainer: pl.Trainer,
-):
-
-
-    lit = lit_module(
-        model=model,
-        optim=optim,
-        dataloader=dataloader,
-        target_fn=target_fn,
-        training_domain=training_domain,
-    )
-
-    # train the model
-    trainer.fit(lit)
-
-    # evaluate the model over the domain to assess the fit
-    final_eval = lit(training_domain.reshape(-1, 1))
-    final_eval = final_eval.detach().cpu().numpy().ravel()
-
-    # return the final evaluation of our model:
-    # a shape-(N,) numpy-array
-    return final_eval
