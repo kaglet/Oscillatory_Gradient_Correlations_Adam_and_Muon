@@ -7,34 +7,7 @@ from torchmetrics.classification.accuracy import Accuracy
 
 
 class MNISTLitModule(LightningModule):
-    """Example of a `LightningModule` for MNIST classification.
-
-    A `LightningModule` implements 8 key methods:
-
-    ```python
-    def __init__(self):
-    # Define initialization code here.
-
-    def setup(self, stage):
-    # Things to setup before each stage, 'fit', 'validate', 'test', 'predict'.
-    # This hook is called on every process when using DDP.
-
-    def training_step(self, batch, batch_idx):
-    # The complete training step.
-
-    def validation_step(self, batch, batch_idx):
-    # The complete validation step.
-
-    def test_step(self, batch, batch_idx):
-    # The complete test step.
-
-    def predict_step(self, batch, batch_idx):
-    # The complete predict step.
-
-    def configure_optimizers(self):
-    # Define and configure optimizers and LR schedulers.
-    ```
-
+    """
     Docs:
         https://lightning.ai/docs/pytorch/latest/common/lightning_module.html
     """

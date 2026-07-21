@@ -118,17 +118,16 @@ class MNISTLitModule(pl.LightningModule):
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Optimizer:
         # Implicitly equivalent to self.model.parameters()
         # TODO: Do if statement logic for now for Muon and Adam handling how to run optim
         # TODO: Parameters depend on architecture to formulate and select which may be messy, I want it model agnostic but it is not, e.g. select only layers for Muon trying to keep it neutral, and select everything else for Adam, or the other way around
-        filter_params = [p for p in self.model.parameters() if len(p.shape) == 4 and p.requires_grad]
-        norm_biases = [p for n, p in self.model.named_parameters() if 'norm' in n and p.requires_grad]        
-        input_weights = [*self.model.head.(), *self.model.embed.parameters()]
+
+        
         adam_param_configs = [dict(params=[self.model.whiten.bias], lr=bias_lr, weight_decay=wd/bias_lr),
                      dict(params=norm_biases, lr=bias_lr, weight_decay=wd/bias_lr),
                      dict(params=[self.model.head.weight], lr=head_lr, weight_decay=wd/head_lr),
-                     dict(params=[*list(self.model.children())[:-1]], lr=head_lr, weight_decay=wd/head_lr)]
+                     dict(params=[], lr=head_lr, weight_decay=wd/head_lr)]
         param_groups = [
             dict(params=hidden_weights, use_muon=True,
                 lr=0.02, weight_decay=0.01),
