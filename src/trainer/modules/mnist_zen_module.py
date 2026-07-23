@@ -14,7 +14,7 @@ from torchmetrics.classification.accuracy import Accuracy
 from muon import MuonWithAuxAdam
 from torch.optim import Adam, AdamW
 
-__all__ = ["MNISTLitModule", "train_and_eval"]
+__all__ = ["MNISTLitModule"]
 
 
 class MNISTLitModule(pl.LightningModule):

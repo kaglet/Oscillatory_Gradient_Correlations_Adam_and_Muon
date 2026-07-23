@@ -1,4 +1,5 @@
 # TODO: Overwrite and replace this with trainer at higher level 
+# TODO: See that model is passed because their lit module is not defined yet, we already have defined upper level configs, and this should be upper level even if a custom build.
 def train_and_eval(
     model: torch.nn.Module,
     # TODO: Change this so knowledge of lightning module not required and only lightning module instance built already is passed in as only requirement to a Trainer
