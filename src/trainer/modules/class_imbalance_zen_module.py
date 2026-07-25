@@ -8,11 +8,9 @@ from torch.optim import Optimizer  # type: ignore
 from torch.utils.data import DataLoader, TensorDataset
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
-
+from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
-from muon import MuonWithAuxAdam
-from torch.optim import Adam, AdamW
 
 __all__ = ["MNISTLitModule"]
 
@@ -26,8 +24,6 @@ class MNISTLitModule(pl.LightningModule):
         optim: Partial[Optimizer],
         dataloader: Type[DataLoader],
         # scheduler: LRScheduler,
-        target_fn: Callable[[torch.Tensor], torch.Tensor],
-        training_domain: torch.Tensor,
     ):
         super().__init__()
 
@@ -50,9 +46,6 @@ class MNISTLitModule(pl.LightningModule):
 
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
-
-        self.training_domain = training_domain
-        self.target_fn = target_fn
 
         self.model = model
 
@@ -121,7 +114,7 @@ class MNISTLitModule(pl.LightningModule):
 
 
     def configure_optimizers(self) -> Optimizer:
-        optimizer = MuonWithAuxAdam(self.params)
+        optimizer = self.optim(self.params)
         # TODO: Can try add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it
         return optimizer
 
