@@ -5,7 +5,7 @@ from hydra_zen import builds, make_config, make_custom_builds_fn, zen
 import torch as tr
 from muon import MuonWithAuxAdam
 from torch.utils.data import DataLoader
-from src.trainer.modules.class_imbalance_zen_module import MNISTLitModule 
+from src.trainer.modules.class_imbalance_zen_module import ClassImbLitModule 
 from src.trainer.dataloader import mnist_zen_dataloader
 from src.trainer.per_optim_params.resnet_params.get_params import get_Muon_Aux_Adam_params
 from src import train_and_eval
@@ -73,9 +73,13 @@ TODO: Decide if will nest lit module for groups and clean self referencing of ot
 unified setting point or only allow selection of the lightning module class. For the latter need to have a way to select from the config store by a particular name
 here, so that on call of build, the right thing is called.  
 If I figure out how to access name not at call time but at config creation time I can instantiate the model again for params that I deleted. 
+
+I am sure you simply override depending on how granular you want to go. That loads the exact dictionary required. See the tutorial on swappable configs. 
+Their tutorial neglects to mention you can't define a nested option, then not connect the nested option to a pre-existing larger group that completes the nesting.
+You register everything to a group with a key, and values that go by name.
 """
 lit_module = pbuilds(
-    MNISTLitModule, 
+    ClassImbLitModule, 
     model=class_imb_model_small,
     params=class_imb_params,
     optim=optim,

@@ -12,10 +12,10 @@ from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 
-__all__ = ["MNISTLitModule"]
+__all__ = ["ClassImbLitModule"]
 
 
-class MNISTLitModule(pl.LightningModule):
+class ClassImbLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
