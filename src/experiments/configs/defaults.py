@@ -96,8 +96,8 @@ lit_module_store(lit_module, name="class_imb_module")
 trainer_store = store(group="experiment/trainer/")
 trainer_store(class_imb_trainer, name="class_imb_trainer")
 
-# TODO: FIX passing everything into here instead of already built trainer and lit_module
-# See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
+# TODO: Import only this
+# TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 ExperimentConfig = make_config(
     seed=1,
     lit_module=lit_module,
