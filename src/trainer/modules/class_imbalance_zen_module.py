@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Optimizer  # type: ignore
-from torch.utils.data import DataLoader, TensorDataset
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 from hydra_zen import instantiate
@@ -22,14 +21,12 @@ class ClassImbLitModule(pl.LightningModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[dict[str, Any]],
         optim: Partial[Optimizer],
-        dataloader: Type[DataLoader],
         # scheduler: LRScheduler,
     ):
         super().__init__()
 
         self.save_hyperparameters(logger=False)
         self.optim = optim
-        self.dataloader = dataloader
         self.params = params
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
