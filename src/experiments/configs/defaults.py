@@ -1,5 +1,7 @@
 import os
 
+import torchvision
+import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, Callback
 from hydra_zen import builds, make_config, make_custom_builds_fn, zen
@@ -9,6 +11,7 @@ from src.trainer.per_optim_params.resnet_params.get_params import get_Muon_Aux_A
 from torchvision.models import resnet18, resnet50
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
+from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
 
 """
 To more easily keep track:
@@ -21,25 +24,16 @@ with a unified parent group name arg, and the param name
 auto-derived to remove human error. 
 """
 
-def get_callbacks() -> list[Callback]:
+def get_callbacks(callback: Callback, *callbacks: Callback) -> list[Callback]:
     """"
     Simplest workaround to define a list arg in config as Hydra is innately difficult with this. 
-    
     TODO: 
-    Later an extension could be to allow *args, and return those in a list format. 
-    Input args to a function are configurable, then simply have function return the args as a list. 
+    Make arbitrary number of input args to a function that are configurable, then simply have function return the args as a list. 
     """
-    model_checkpoint = ModelCheckpoint(
-        save_top_k=3, 
-        mode="max", 
-        # TODO: Ensure unification across logging metric monitored. Unit 6.1 of PL docs do not cover ensuring consistency.
-        # TODO: Change val accuracy to be the best on on a subgroup not the average
+    return [callback]
 
-        monitor="val/acc", 
-        save_last=True
-    )
-
-    return [model_checkpoint]
+def get_transforms(transform: nn.Module, *transforms: nn.Module) -> list[nn.Module]:
+    return [transform]
 
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
@@ -78,6 +72,20 @@ optim_store(muon_aux_adam_optim, name="muon_aux_adam_optim")
 params_store = store(group="experiment/lit_module/params/")
 params_store(class_imb_params, name="class_imb_params")
 
+model_checkpoint = ModelCheckpoint(
+    save_top_k=3, 
+    mode="max", 
+    # TODO: Ensure unification across logging metric monitored. Unit 6.1 of PL docs do not cover ensuring consistency.
+    # TODO: Change val accuracy to be the best on on a subgroup not the average
+
+    monitor="val/acc", 
+    save_last=True
+) 
+
+checkpoints = [model_checkpoint]
+
+get_callbacks_cfg = builds(get_callbacks, callback=model_checkpoint) 
+
 class_imb_trainer = builds(
     pl.Trainer, 
     max_epochs=100,
@@ -85,7 +93,7 @@ class_imb_trainer = builds(
     accelerator="auto",
     barebones=False,
     benchmark=True,
-    callbacks=builds(get_callbacks),
+    callbacks=builds(get),
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
     enable_autolog_hparams=True,
@@ -93,15 +101,41 @@ class_imb_trainer = builds(
 
 lit_module_store = store(group="experiment/lit_module/")
 lit_module_store(lit_module, name="class_imb_module")
+
 trainer_store = store(group="experiment/trainer/")
 trainer_store(class_imb_trainer, name="class_imb_trainer")
 
+class_imb_transforms_store = store(group="experiment/transforms")
+class_imb_train_transforms = torchvision.transforms.Compose(
+    [
+        torchvision.transforms.ToTensor(),
+        cifar10_normalization(),
+    ]
+)
+class_imb_val_transforms = torchvision.transforms.Compose(
+    [
+        torchvision.transforms.ToTensor(),
+        cifar10_normalization(),
+    ]
+)
+class_imb_test_transforms = torchvision.transforms.Compose(
+    [
+        torchvision.transforms.ToTensor(),
+        cifar10_normalization(),
+    ]
+)
+
+class_imb_transforms_store(class_imb_train_transforms, name="class_imb_train_transforms")
+class_imb_transforms_store(class_imb_val_transforms, name="class_imb_val_transforms")
+class_imb_transforms_store(class_imb_test_transforms, name="class_imb_test_transforms")
 # TODO: Import only this
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
+# Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
     lit_module=lit_module,
     trainer=class_imb_trainer,
+    transforms=,
 )
 
 
