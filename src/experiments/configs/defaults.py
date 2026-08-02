@@ -41,6 +41,11 @@ pbuilds = make_custom_builds_fn(
     zen_wrappers=validates_with_beartype
 )
 
+"""
+TODO: 
+- Allow nesting on class imb by having it as a dictionary for example, via configs. 
+- Ensure object literals are renamed to cfg when that is required such as in groups etc., including transforms.
+"""
 class_imb_model_small = builds(resnet18) 
 
 class_imb_params = builds(
@@ -72,7 +77,8 @@ optim_store(muon_aux_adam_optim, name="muon_aux_adam_optim")
 params_store = store(group="experiment/lit_module/params/")
 params_store(class_imb_params, name="class_imb_params")
 
-model_checkpoint = ModelCheckpoint(
+model_checkpoint = builds(
+    ModelCheckpoint,
     save_top_k=3, 
     mode="max", 
     # TODO: Ensure unification across logging metric monitored. Unit 6.1 of PL docs do not cover ensuring consistency.
@@ -84,7 +90,7 @@ model_checkpoint = ModelCheckpoint(
 
 checkpoints = [model_checkpoint]
 
-get_callbacks_cfg = builds(get_callbacks, callback=model_checkpoint) 
+get_callbacks_cfg = builds(get_callbacks, callbacks=checkpoints) 
 
 class_imb_trainer = builds(
     pl.Trainer, 
@@ -93,7 +99,7 @@ class_imb_trainer = builds(
     accelerator="auto",
     barebones=False,
     benchmark=True,
-    callbacks=builds(get),
+    callbacks=get_callbacks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
     enable_autolog_hparams=True,
@@ -128,6 +134,8 @@ class_imb_test_transforms = torchvision.transforms.Compose(
 class_imb_transforms_store(class_imb_train_transforms, name="class_imb_train_transforms")
 class_imb_transforms_store(class_imb_val_transforms, name="class_imb_val_transforms")
 class_imb_transforms_store(class_imb_test_transforms, name="class_imb_test_transforms")
+get_transforms_cfg = builds(get_transforms)
+
 # TODO: Import only this
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
