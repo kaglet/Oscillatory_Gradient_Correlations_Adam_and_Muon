@@ -46,25 +46,90 @@ TODO:
 - Allow nesting on class imb by having it as a dictionary for example, via configs. 
 - Ensure object literals are renamed to cfg when that is required such as in groups etc., including transforms.
 """
-class_imb_model_small = builds(resnet18) 
+def get_lit_module():
+    class_imb_params = builds(
+        get_Muon_Aux_Adam_params,
+        # TODO: Fix and finalize the below interpolation
+        model="${lit_module.model.class_imb_model_small}",
+        lr_each=(0.2, 0.01), 
+        weight_decay_each=(0, 0), 
+        betas=(0.95, 0.99), 
+        use_layer_recs=False
+    )
 
-class_imb_params = builds(
-    get_Muon_Aux_Adam_params,
-    model="${lit_module.model.class_imb_model_small}",
-    lr_each=(0.2, 0.01), 
-    weight_decay_each=(0, 0), 
-    betas=(0.95, 0.99), 
-    use_layer_recs=False
-)
+    muon_aux_adam_optim = pbuilds(MuonWithAuxAdam)
 
-muon_aux_adam_optim = pbuilds(MuonWithAuxAdam)
+    lit_module = builds(
+        ClassImbLitModule, 
+        model="${lit_module.model.class_imb_model_small}",
+        params=class_imb_params,
+        optim=muon_aux_adam_optim,
+    )
 
-lit_module = builds(
-    ClassImbLitModule, 
-    model="${lit_module.model.class_imb_model_small}",
-    params=class_imb_params,
-    optim=muon_aux_adam_optim,
-)
+    return lit_module 
+
+def get_trainer():
+    model_checkpoint = builds(
+        ModelCheckpoint,
+        save_top_k=3, 
+        mode="max", 
+        # TODO: Ensure unification across logging metric monitored. Unit 6.1 of PL docs do not cover ensuring consistency.
+        # TODO: Change val accuracy to be the best on on a subgroup not the average
+        monitor="val/acc", 
+        save_last=True
+    ) 
+
+    get_callbacks_cfg = builds(get_callbacks, callbacks=model_checkpoint) 
+
+    class_imb_trainer = builds(
+        pl.Trainer, 
+        max_epochs=100,
+        deterministic=True,
+        accelerator="auto",
+        barebones=False,
+        benchmark=True,
+        callbacks=get_callbacks_cfg,
+        default_root_dir=os.getcwd(),
+        detect_anomaly=False,
+        enable_autolog_hparams=True,
+    )  
+
+    return class_imb_trainer
+
+def get_dataloader(): 
+    # TODO: I don't want to build the below, as it gets too granular, so perhaps store in config store
+    class_imb_train_transforms = torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor(),
+            cifar10_normalization(),
+        ]
+    )
+    class_imb_val_transforms = torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor(),
+            cifar10_normalization(),
+        ]
+    )
+    class_imb_test_transforms = torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor(),
+            cifar10_normalization(),
+        ]
+    )
+
+class_imb_transforms_store = store(group="experiment/transforms")
+
+
+lit_module_store = store(group="experiment/lit_module/")
+lit_module_store(lit_module, name="class_imb_module")
+
+trainer_store = store(group="experiment/trainer/")
+trainer_store(class_imb_trainer, name="class_imb_trainer")
+
+experiment_store = store(group="experiments")
+subgrp_robust_store = experiment_store()
+class_imb_store = experiment_store()
+spurious_pix_store = experiment_store()
 
 model_store = store(group="experiment/lit_module/model/")
 class_imb_model_big = builds(resnet50) 
@@ -76,60 +141,6 @@ optim_store(muon_aux_adam_optim, name="muon_aux_adam_optim")
 
 params_store = store(group="experiment/lit_module/params/")
 params_store(class_imb_params, name="class_imb_params")
-
-model_checkpoint = builds(
-    ModelCheckpoint,
-    save_top_k=3, 
-    mode="max", 
-    # TODO: Ensure unification across logging metric monitored. Unit 6.1 of PL docs do not cover ensuring consistency.
-    # TODO: Change val accuracy to be the best on on a subgroup not the average
-
-    monitor="val/acc", 
-    save_last=True
-) 
-
-checkpoints = [model_checkpoint]
-
-get_callbacks_cfg = builds(get_callbacks, callbacks=checkpoints) 
-
-class_imb_trainer = builds(
-    pl.Trainer, 
-    max_epochs=100,
-    deterministic=True,
-    accelerator="auto",
-    barebones=False,
-    benchmark=True,
-    callbacks=get_callbacks_cfg,
-    default_root_dir=os.getcwd(),
-    detect_anomaly=False,
-    enable_autolog_hparams=True,
-)  
-
-lit_module_store = store(group="experiment/lit_module/")
-lit_module_store(lit_module, name="class_imb_module")
-
-trainer_store = store(group="experiment/trainer/")
-trainer_store(class_imb_trainer, name="class_imb_trainer")
-
-class_imb_transforms_store = store(group="experiment/transforms")
-class_imb_train_transforms = torchvision.transforms.Compose(
-    [
-        torchvision.transforms.ToTensor(),
-        cifar10_normalization(),
-    ]
-)
-class_imb_val_transforms = torchvision.transforms.Compose(
-    [
-        torchvision.transforms.ToTensor(),
-        cifar10_normalization(),
-    ]
-)
-class_imb_test_transforms = torchvision.transforms.Compose(
-    [
-        torchvision.transforms.ToTensor(),
-        cifar10_normalization(),
-    ]
-)
 
 class_imb_transforms_store(class_imb_train_transforms, name="class_imb_train_transforms")
 class_imb_transforms_store(class_imb_val_transforms, name="class_imb_val_transforms")
