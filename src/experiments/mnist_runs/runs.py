@@ -7,7 +7,7 @@ from hydra_zen import builds, make_config, make_custom_builds_fn, zen
 import torch as tr
 from muon import MuonWithAuxAdam
 from torch.utils.data import DataLoader
-from src.trainer.modules.class_imbalance_zen_module import ClassImbLitModule 
+from src.trainer.modules.class_imbalance_module import ClassImbLitModule 
 from src.trainer.dataloader import mnist_dataloader
 from src.trainer.per_optim_params.resnet_params.get_params import get_Muon_Aux_Adam_params
 from src import train_and_val

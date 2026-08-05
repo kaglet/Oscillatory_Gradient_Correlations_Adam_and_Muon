@@ -13,7 +13,6 @@ from torchmetrics.classification.accuracy import Accuracy
 
 __all__ = ["ClassImbLitModule"]
 
-
 class ClassImbLitModule(pl.LightningModule):
     def __init__(
         self,
