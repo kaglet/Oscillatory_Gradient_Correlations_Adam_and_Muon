@@ -4,22 +4,23 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim import Optimizer  # type: ignore
+from torch.optim import Optimizer  
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 
-__all__ = ["ClassImbLitModule"]
+__all__ = ["GeneralLitModule"]
 
-class ClassImbLitModule(pl.LightningModule):
+class GeneralLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[dict[str, Any]],
         optim: Partial[Optimizer],
+        num_classes: int=10,
         # scheduler: LRScheduler,
     ):
         super().__init__()
@@ -31,9 +32,9 @@ class ClassImbLitModule(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
         
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=10)
-        self.val_acc = Accuracy(task="multiclass", num_classes=10)
-        self.test_acc = Accuracy(task="multiclass", num_classes=10)
+        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
@@ -82,15 +83,19 @@ class ClassImbLitModule(pl.LightningModule):
         # return loss or backpropagation will fail
         return loss
     
-    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
+    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self.batch_step(batch)
+        loss, _, _ = metrics
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
-
-    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
+        return loss 
+    
+    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
         metrics = self.batch_step(batch)
+        loss, _, _ = metrics
         self.update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
+        return loss
 
     def on_train_epoch_end(self) -> None:
         "Lightning hook that is called when a training epoch ends."
@@ -107,7 +112,6 @@ class ClassImbLitModule(pl.LightningModule):
         # Recall metric is reset by us with lightning after each epoch.
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
-
 
     def configure_optimizers(self) -> Optimizer:
         optimizer = self.optim(self.params)

@@ -27,7 +27,7 @@ class MNISTDataModule(L.LightningDataModule):
         if stage == "fit":
             mnist_full = MNIST(self.data_dir, train=True, transform=self.train_transforms)
             self.mnist_train, self.mnist_val = random_split(
-                mnist_full, [55000, 5000], generator=torch.Generator().manual_seed(42)
+                mnist_full, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
             )
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end

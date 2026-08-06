@@ -1,1 +1,13 @@
-# TODO: Run test on a smaller subset of the data, and evaluate best AND last to see if degradation affects anything
+from torch.utils.data import DataLoader
+from pytorch_lightning import Trainer, LightningDataModule, LightningModule
+
+def train_and_val(
+    lit_module: LightningModule,
+    datamodule: LightningDataModule,
+    trainer: Trainer,
+):
+    trainer.fit(model=lit_module, datamodule=datamodule)
+    # TODO: When you run test evaluate best AND last for Muon to see if degradation is a notably suffered effect
+    trainer.test(model=lit_module, datamodule=datamodule)
+    
+    return 1
