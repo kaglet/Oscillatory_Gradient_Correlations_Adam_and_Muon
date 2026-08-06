@@ -1,6 +1,5 @@
-from hydra_zen import builds, instantiate
+from hydra_zen import builds
 from pytorch_lightning import Trainer
 
 trainer_cfg = builds(Trainer)
-trainer = instantiate(trainer_cfg)
-print(trainer)
+print(trainer_cfg)
