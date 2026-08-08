@@ -1,5 +1,5 @@
-from hydra_zen import builds
-from pytorch_lightning import Trainer
-
-trainer_cfg = builds(Trainer)
-print(trainer_cfg)
+import torch
+import hydra_zen 
+print(torch.__version__)
+print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
