@@ -153,3 +153,6 @@ configs/local/default.yaml
 
 # Aim logging
 .aim
+# pixi environments
+.pixi/*
+!.pixi/config.toml
