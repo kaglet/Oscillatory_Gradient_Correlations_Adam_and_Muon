@@ -1,26 +1,21 @@
 [workspace]
 authors = ["Kago <kmotlhabane769@gmail.com>"]
-channels = ["conda-forge"]
+channels = ["https://prefix.dev/conda-forge"]
 name = "COS700"
-platforms = [
-    "win-64",
-    { name = "win-64-cuda", platform = "win-64", cuda = "12" },
-]
+platforms = [{ platform = "win-64", cuda = "13.1" }]
 version = "0.1.0"
 
 [tasks]
 random_tests = "python src/random_tests.py"
+jobs = "python src/jobs.py"
 
 [dependencies]
-pytorch = ">=2.13.0,<3"
+pytorch-gpu = "*"
 lightning = ">=2.6.5,<3"
 hydra-zen = ">=0.16.0,<0.17"
 torchvision = ">=0.28.0,<0.29"
-transformers = ">=5.14.1,<6"
-python = ">=3.14.6,<3.15"
+transformers = ">=5.15.0,<6"
+lightning-bolts = ">=0.7.0,<0.8"
 
-[feature.cuda]
-platforms = ["win-64-cuda"]
-
-[environments]
-gpu = ["cuda"]
+[pypi-dependencies]
+muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
