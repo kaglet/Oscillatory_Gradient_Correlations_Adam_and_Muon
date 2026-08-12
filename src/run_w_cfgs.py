@@ -50,6 +50,7 @@ cls_imb_model_l_cfg = resnet_model_cfg(net=resnet50, num_classes=100)
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_model_clb_cfg = resnet_model_cfg(net=resnet50)
 
+# TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = params_cfg(   
     model=resnet_model_cfg,
@@ -107,6 +108,7 @@ def create_clbks(*callbacks: Callback) -> list[Callback]:
     """
     return list(callbacks)
 
+# TODO: Fix this current error stopping file
 # Define base chkpt cfg list returned, TODO: cfg can have non-generic instances to override later
 create_clbks_cfg = builds(create_clbks, callbacks=chkpts) 
 
