@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [tasks]
 random_tests = "python src/random_tests.py"
-jobs = "python src/jobs.py"
+jobs = "python jobs.py"
 
 [dependencies]
 pytorch-gpu = "*"
@@ -16,6 +16,7 @@ hydra-zen = ">=0.16.0,<0.17"
 torchvision = ">=0.28.0,<0.29"
 transformers = ">=5.15.0,<6"
 lightning-bolts = ">=0.7.0,<0.8"
+beartype = ">=0.22.9,<0.23"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }

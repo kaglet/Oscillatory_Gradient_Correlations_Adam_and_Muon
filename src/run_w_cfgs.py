@@ -9,7 +9,7 @@ import torchvision
 import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, Callback
-from hydra_zen import builds, make_config, make_custom_builds_fn, zen
+from hydra_zen import make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
@@ -24,7 +24,7 @@ from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
-
+builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
     populate_full_signature=True,
@@ -44,11 +44,11 @@ resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
 
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(resnet18)
-cls_imb_model_l_cfg = resnet_model_cfg(resnet50, num_classes=100) 
+cls_imb_model_s_cfg = resnet_model_cfg(net=resnet18)
+cls_imb_model_l_cfg = resnet_model_cfg(net=resnet50, num_classes=100) 
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_clb_cfg = resnet_model_cfg(resnet50)
+sbg_rob_model_clb_cfg = resnet_model_cfg(net=resnet50)
 
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = params_cfg(   
