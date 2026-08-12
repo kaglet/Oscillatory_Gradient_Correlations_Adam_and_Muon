@@ -102,11 +102,11 @@ cls_imb_chkpt_cfg = chkpt_cfg(
 # Create static list of checkpoint behaviours, TODO: can be saved into group later
 chkpts = [cls_imb_chkpt_cfg]
 
-def create_clbks(*callbacks: Callback) -> list[Callback]:
+def create_clbks(callbacks: list[Callback]) -> list[Callback]:
     """"
     Simplest workaround to define and configure lists as per Hydra-zen GitH discussion
     """
-    return list(callbacks)
+    return callbacks
 
 # TODO: Fix this current error stopping file
 # Define base chkpt cfg list returned, TODO: cfg can have non-generic instances to override later
@@ -175,7 +175,6 @@ sp_pix_dmodule_cfg = mnist_dmodule_cfg(
     val_transforms = mnist_transforms,
     test_transforms = mnist_transforms,
     batch_size = 2048,
-    num_workers = 4
 )
 
 # TODO: Import only this

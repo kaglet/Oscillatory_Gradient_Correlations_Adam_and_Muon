@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 import torch
 import lightning as L
 from torch.utils.data import random_split, DataLoader
@@ -7,7 +9,7 @@ from torch import nn
 
 class MNISTDataModule(L.LightningDataModule):
     # TODO: Unify the data directory from env see old template
-    def __init__(self, train_transforms: nn.Module, val_transforms: nn.Module, test_transforms: nn.Module, data_dir: str = "/data", batch_size: int = 2048) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "/data", batch_size: int = 2048) -> None:
         super().__init__()
         self.data_dir = data_dir
 
