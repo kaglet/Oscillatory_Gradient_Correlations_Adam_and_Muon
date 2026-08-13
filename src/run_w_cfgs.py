@@ -141,11 +141,11 @@ cifar100_transforms = torchvision.transforms.Compose(
     ]
 )
 
-cifr10_dmodule_cfg = builds(CIFAR10DataModule)
-cifr100_dmodule_cfg = builds(CIFAR100DataModule)
-mnist_dmodule_cfg = builds(MNISTDataModule)
+cifr10_datamdl_cfg = builds(CIFAR10DataModule)
+cifr100_datamdl_cfg = builds(CIFAR100DataModule)
+mnist_datamdl_cfg = builds(MNISTDataModule)
 
-cls_imb_dmodule_s_cfg = cifr10_dmodule_cfg(
+cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
     train_transforms = cifar10_transforms,
     val_transforms = cifar10_transforms,
     test_transforms = cifar10_transforms,
@@ -153,7 +153,7 @@ cls_imb_dmodule_s_cfg = cifr10_dmodule_cfg(
     num_workers = 4
 )
 
-cls_imb_dmodule_l_cfg = cifr100_dmodule_cfg(
+cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     train_transforms = cifar100_transforms,
     val_transforms = cifar100_transforms,
     test_transforms = cifar100_transforms,
@@ -168,7 +168,7 @@ mnist_transforms = torchvision.transforms.Compose(
     ]
 )
 
-sp_pix_dmodule_cfg = mnist_dmodule_cfg(
+sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     train_transforms = mnist_transforms,
     val_transforms = mnist_transforms,
     test_transforms = mnist_transforms,
@@ -182,7 +182,7 @@ ExperimentConfig = make_config(
     seed=1,
     lit_module=cls_imb_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cls_imb_model_s_cfg
+    datamodule=cls_imb_datamdl_s_cfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
