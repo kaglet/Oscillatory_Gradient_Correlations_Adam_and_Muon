@@ -102,7 +102,7 @@ cls_imb_chkpt_cfg = chkpt_cfg(
 # Create static list of checkpoint behaviours, TODO: can be saved into group later
 chkpts = [cls_imb_chkpt_cfg]
 
-def create_clbks(callbacks: list[Callback]) -> list[Callback]:
+def create_callbacks(callbacks: list[Callback]) -> list[Callback]:
     """"
     Simplest workaround to define and configure lists as per Hydra-zen GitH discussion
     """
@@ -110,7 +110,7 @@ def create_clbks(callbacks: list[Callback]) -> list[Callback]:
 
 # TODO: Fix this current error stopping file
 # Define base chkpt cfg list returned, TODO: cfg can have non-generic instances to override later
-create_clbks_cfg = builds(create_clbks, callbacks=chkpts) 
+create_clbks_cfg = builds(create_callbacks, callbacks=chkpts) 
 
 # Define base trainer cfg
 trainer_cfg = builds(
@@ -126,12 +126,19 @@ trainer_cfg = builds(
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
 # ---- DATAMODULE CONFIGS START ---- #
+def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision.transforms.Compose:
+    """"
+    Simplest workaround to define and configure lists as per Hydra-zen GitH discussion
+    """
+    return transforms
+
 cifar10_transforms = torchvision.transforms.Compose(
     [
         torchvision.transforms.ToTensor(),
         cifar10_normalization(),
     ]
 )
+cifar10_transforms = builds(create_transforms, cifar10_transforms)
 
 cifar100_transforms = torchvision.transforms.Compose(
     [
@@ -140,6 +147,8 @@ cifar100_transforms = torchvision.transforms.Compose(
         imagenet_normalization(),
     ]
 )
+
+cifar100_transforms = builds(create_transforms, cifar100_transforms)
 
 cifr10_datamdl_cfg = builds(CIFAR10DataModule)
 cifr100_datamdl_cfg = builds(CIFAR100DataModule)
@@ -167,6 +176,8 @@ mnist_transforms = torchvision.transforms.Compose(
         mnist_normalization()
     ]
 )
+
+mnist_transforms = builds(create_transforms, mnist_transforms)
 
 sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     train_transforms = mnist_transforms,
