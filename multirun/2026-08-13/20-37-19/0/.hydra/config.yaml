@@ -1,0 +1,144 @@
+seed: 1
+lit_module:
+  _target_: src.trainer.modules.general_lit_module.GeneralLitModule
+  model:
+    _target_: src.trainer.modules.components.custom_resnet.create_resnet_model
+    net:
+      path: torchvision.models.resnet.resnet18
+      _target_: hydra_zen.funcs.get_obj
+    num_classes: 10
+    num_in: 3
+    num_out: 64
+    kern_size:
+    - 3
+    - 3
+    stride:
+    - 1
+    - 1
+    padding:
+    - 1
+    - 1
+    bias: false
+  params:
+    _target_: src.trainer.per_optim_params.resnet_params.get_params.get_Muon_Aux_Adam_params
+    model:
+      _target_: src.trainer.modules.components.custom_resnet.create_resnet_model
+      net:
+        path: torchvision.models.resnet.resnet18
+        _target_: hydra_zen.funcs.get_obj
+      num_classes: 10
+      num_in: 3
+      num_out: 64
+      kern_size:
+      - 3
+      - 3
+      stride:
+      - 1
+      - 1
+      padding:
+      - 1
+      - 1
+      bias: false
+    lr_each:
+    - 0.2
+    - 0.01
+    weight_decay_each:
+    - 0.0
+    - 0.0
+    betas:
+    - 0.95
+    - 0.99
+    use_layer_recs: false
+  optim:
+    _target_: hydra_zen.funcs.zen_processing
+    _zen_target: muon.MuonWithAuxAdam
+    _zen_partial: true
+    _zen_wrappers: hydra_zen.third_party.beartype.validates_with_beartype
+  num_classes: 10
+trainer:
+  _target_: pytorch_lightning.trainer.trainer.Trainer
+  logger: true
+  enable_checkpointing: true
+  callbacks:
+    _target_: src.run_w_cfgs.create_clbks
+    callbacks:
+    - _target_: pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint
+      dirpath: null
+      filename: null
+      monitor: val/acc
+      verbose: false
+      save_last: true
+      save_top_k: 1
+      save_weights_only: false
+      mode: max
+      auto_insert_metric_name: true
+      every_n_train_steps: null
+      train_time_interval: null
+      every_n_epochs: null
+      save_on_train_epoch_end: null
+  default_root_dir: C:\Users\motlh\Coder's life\COS700
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  num_nodes: 1
+  num_processes: null
+  devices: null
+  gpus: null
+  auto_select_gpus: false
+  tpu_cores: null
+  ipus: null
+  enable_progress_bar: true
+  overfit_batches: 0.0
+  track_grad_norm: -1
+  check_val_every_n_epoch: 1
+  fast_dev_run: false
+  accumulate_grad_batches: null
+  max_epochs: 200
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: null
+  limit_test_batches: null
+  limit_predict_batches: null
+  val_check_interval: null
+  log_every_n_steps: 50
+  accelerator: auto
+  strategy: null
+  sync_batchnorm: false
+  precision: 32
+  enable_model_summary: true
+  weights_save_path: null
+  num_sanity_val_steps: 2
+  resume_from_checkpoint: null
+  profiler: null
+  benchmark: true
+  deterministic: true
+  reload_dataloaders_every_n_epochs: 0
+  auto_lr_find: false
+  replace_sampler_ddp: true
+  detect_anomaly: false
+  auto_scale_batch_size: false
+  plugins: null
+  amp_backend: native
+  amp_level: null
+  move_metrics_to_cpu: false
+  multiple_trainloader_mode: max_size_cycle
+datamodule:
+  _target_: src.trainer.modules.components.custom_resnet.create_resnet_model
+  net:
+    path: torchvision.models.resnet.resnet18
+    _target_: hydra_zen.funcs.get_obj
+  num_classes: 10
+  num_in: 3
+  num_out: 64
+  kern_size:
+  - 3
+  - 3
+  stride:
+  - 1
+  - 1
+  padding:
+  - 1
+  - 1
+  bias: false

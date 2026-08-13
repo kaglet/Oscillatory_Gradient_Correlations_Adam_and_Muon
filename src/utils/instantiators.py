@@ -2,7 +2,7 @@ from typing import List
 
 import hydra
 from lightning import Callback
-from lightning.pytorch.loggers import Logger
+from pytorch_lightning.loggers import Logger
 from omegaconf import DictConfig
 
 from src.utils import pylogger
