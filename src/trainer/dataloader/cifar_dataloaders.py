@@ -1,6 +1,6 @@
 # TODO: Create this dataloader
 
-from typing import Literal, Type
+from typing import Callable, Literal, Optional, Type
 
 import torch
 import lightning as L
@@ -13,7 +13,7 @@ __all__ = ["CIFAR10DataModule", "CIFAR100DataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
-    def __init__(self, train_transforms: nn.Module, val_transforms: nn.Module, test_transforms: nn.Module, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
         super().__init__()
         self.data_dir = data_dir
         self.train_transforms = train_transforms
@@ -62,13 +62,13 @@ class CIFAR10DataModule(CIFARDataModule):
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, dataset: Type[CIFAR10] = CIFAR10, *args, **kwargs) -> None:
-        super().__init__(dataset=dataset, *args, **kwargs)
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+        super().__init__()
 
 class CIFAR100DataModule(CIFARDataModule):
     """ 
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, dataset: Type[CIFAR100] = CIFAR100, *args, **kwargs) -> None:
-        super().__init__(dataset=dataset, *args, **kwargs)
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR100] = CIFAR100, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+        super().__init__()

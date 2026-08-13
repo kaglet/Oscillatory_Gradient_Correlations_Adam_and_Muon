@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple
 
 __all__ = ["get_Muon_Aux_Adam_params", "get_Full_Adam_params"]
 
-def get_Muon_Aux_Adam_params(model: nn.Module, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = False ) -> list[dict[str, Any]]:
+def get_Muon_Aux_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = False ) -> list[dict[str, Any]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """

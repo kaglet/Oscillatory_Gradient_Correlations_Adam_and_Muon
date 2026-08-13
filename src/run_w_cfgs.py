@@ -9,7 +9,7 @@ import torchvision
 import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, Callback
-from hydra_zen import make_custom_builds_fn, make_config, make_custom_builds_fn, zen
+from hydra_zen import just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
@@ -44,11 +44,11 @@ resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
 
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(net=resnet18)
-cls_imb_model_l_cfg = resnet_model_cfg(net=resnet50, num_classes=100) 
+cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18))
+cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100) 
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_clb_cfg = resnet_model_cfg(net=resnet50)
+sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
@@ -118,12 +118,10 @@ trainer_cfg = builds(
     max_epochs=200,
     deterministic=True,
     accelerator="auto",
-    barebones=False,
     benchmark=True,
     callbacks=create_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    enable_autolog_hparams=True,
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
@@ -184,7 +182,7 @@ ExperimentConfig = make_config(
     seed=1,
     lit_module=cls_imb_module_cfg,
     trainer=trainer_cfg,
-    dmodule=cls_imb_model_s_cfg
+    datamodule=cls_imb_model_s_cfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
