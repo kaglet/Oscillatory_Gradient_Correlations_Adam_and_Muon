@@ -56,8 +56,7 @@ cls_imb_params_cfg = params_cfg(
     model=resnet_model_cfg,
     lr_each=(0.2, 0.01), 
     weight_decay_each=(0, 0), 
-    betas=(0.95, 0.99), 
-    use_layer_recs=False
+    betas=(0.95, 0.99)
 )
 
 # Subgroup robustness experiment: Define new instance overriding default values
@@ -205,6 +204,6 @@ if __name__ == "__main__":
 
     task_function.hydra_main(
         config_name="lit_app",
-        version_base="1.1",
+        version_base="1.2",
         config_path=".",
     )

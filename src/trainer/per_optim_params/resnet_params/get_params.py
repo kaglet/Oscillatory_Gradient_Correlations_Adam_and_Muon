@@ -3,14 +3,14 @@ from typing import Any, Dict, Tuple
 
 __all__ = ["get_Muon_Aux_Adam_params", "get_Full_Adam_params"]
 
-def get_Muon_Aux_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = False ) -> list[dict[str, Any]]:
+def get_Muon_Aux_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True ) -> list[dict[str, Any]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
     # Norm biases are not innately 2D, but a collation of 1D vectors
-    norm_biases = [p for n, p in model.named_parameters() if 'norm' in n and p.requires_grad]        
+    # norm_biases = [p for n, p in model.named_parameters() if 'norm' in n and p.requires_grad]        
     low_dim_params = [p for p in model.parameters() if len(p.shape) <= 1 and p.requires_grad]
-    high_dim_params = [p for p in model.parameters() if len(p.shape) > 1 and p.requires_grad and p not in norm_biases]
+    high_dim_params = [p for p in model.parameters() if len(p.shape) > 1 and p.requires_grad]
     
     # These are to optionally NOT use Muon in input and output layer for CNN
     # Due to nature of informal recommendation per Muon author Keller these are by default ignored for now 
@@ -23,7 +23,7 @@ def get_Muon_Aux_Adam_params(model: Any, lr_each: Tuple[float, float], weight_de
         param_groups = [
             dict(params=high_dim_params, use_muon=True,
                 lr=lr_each[0], weight_decay=weight_decay_each[0]),
-            dict(params=low_dim_params+norm_biases, use_muon=False,
+            dict(params=low_dim_params, use_muon=False,
                 lr=lr_each[1], betas=betas, weight_decay=weight_decay_each[1]),
         ]
     else: 
