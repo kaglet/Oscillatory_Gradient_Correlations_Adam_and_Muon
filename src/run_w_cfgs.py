@@ -7,12 +7,12 @@ from typing import Any, Type
 
 import torchvision
 import torch.nn as nn
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, Callback
+import lightning.pytorch as pl
+from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
 from src.train_and_val import train_and_val
-from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule, CIFARDataModule
+from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
 from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
 from src.trainer.modules.general_lit_module import GeneralLitModule 
@@ -149,12 +149,8 @@ cifar100_transforms = builds(
     ]
 )
 
-cifr10_datamdl_cfg = builds(CIFARDataModule, train_transforms = cifar10_transforms,
-    val_transforms = cifar10_transforms,
-    test_transforms = cifar10_transforms,
-    batch_size = 2048,
-    num_workers = 4)
-cifr100_datamdl_cfg = builds(CIFARDataModule)
+cifr10_datamdl_cfg = builds(CIFAR10DataModule)
+cifr100_datamdl_cfg = builds(CIFAR100DataModule)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
 cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
@@ -194,7 +190,7 @@ ExperimentConfig = make_config(
     seed=1,
     lit_module=cls_imb_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cifr10_datamdl_cfg
+    datamodule=cls_imb_datamdl_s_cfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))

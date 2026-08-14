@@ -1,5 +1,5 @@
 from hydra_zen import builds
-from pytorch_lightning import Trainer
+from lightning.pytorch import Trainer
 import torch
 
 trainer_cfg = builds(Trainer)
