@@ -12,7 +12,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, Callback
 from hydra_zen import just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
 from src.train_and_val import train_and_val
-from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
+from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule, CIFARDataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
 from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
 from src.trainer.modules.general_lit_module import GeneralLitModule 
@@ -132,26 +132,29 @@ def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision
     """
     return transforms
 
-cifar10_transforms = torchvision.transforms.Compose(
+cifar10_transforms = builds(
+    torchvision.transforms.Compose,
     [
-        torchvision.transforms.ToTensor(),
-        cifar10_normalization(),
+        builds(torchvision.transforms.ToTensor),
+        builds(cifar10_normalization),
     ]
 )
-cifar10_transforms = builds(create_transforms, cifar10_transforms)
 
-cifar100_transforms = torchvision.transforms.Compose(
+cifar100_transforms = builds(
+    torchvision.transforms.Compose,
     [
-        torchvision.transforms.ToTensor(),
+        builds(torchvision.transforms.ToTensor),
         # TODO: Find out if this stand-in is fine, from uh reddit commenter, or if to calc manually 
-        imagenet_normalization(),
+        builds(imagenet_normalization),
     ]
 )
 
-cifar100_transforms = builds(create_transforms, cifar100_transforms)
-
-cifr10_datamdl_cfg = builds(CIFAR10DataModule)
-cifr100_datamdl_cfg = builds(CIFAR100DataModule)
+cifr10_datamdl_cfg = builds(CIFARDataModule, train_transforms = cifar10_transforms,
+    val_transforms = cifar10_transforms,
+    test_transforms = cifar10_transforms,
+    batch_size = 2048,
+    num_workers = 4)
+cifr100_datamdl_cfg = builds(CIFARDataModule)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
 cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
@@ -170,14 +173,12 @@ cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     num_workers = 4
 )
 
-mnist_transforms = torchvision.transforms.Compose(
+mnist_transforms = builds(torchvision.transforms.Compose,
     [
-        torchvision.transforms.ToTensor(), 
-        mnist_normalization()
+        builds(torchvision.transforms.ToTensor), 
+        builds(mnist_normalization)
     ]
 )
-
-mnist_transforms = builds(create_transforms, mnist_transforms)
 
 sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     train_transforms = mnist_transforms,
@@ -193,7 +194,7 @@ ExperimentConfig = make_config(
     seed=1,
     lit_module=cls_imb_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cls_imb_datamdl_s_cfg
+    datamodule=cifr10_datamdl_cfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
