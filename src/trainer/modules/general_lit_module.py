@@ -25,7 +25,7 @@ class GeneralLitModule(pl.LightningModule):
     ):
         super().__init__()
 
-        self.save_hyperparameters(logger=False, ignore=["model"])
+        self.save_hyperparameters(logger=False)
         self.optim = optim
         self.params = params
         # Loss function
