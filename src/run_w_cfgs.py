@@ -19,7 +19,7 @@ from src.trainer.modules.general_lit_module import GeneralLitModule
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
 from src.trainer.per_optim_params.resnet_params.get_params import get_Muon_Aux_Adam_params
-from torchvision.models import resnet18, resnet50
+from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
@@ -44,8 +44,8 @@ resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
 
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18))
-cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100) 
+cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), weights=just(ResNet18_Weights), num_classes=10)
+cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), weights=just(ResNet50_Weights), num_classes=100) 
 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
@@ -53,7 +53,7 @@ sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = params_cfg(   
-    model=resnet_model_cfg,
+    model=cls_imb_model_s_cfg,
     lr_each=(0.2, 0.01), 
     weight_decay_each=(0, 0), 
     betas=(0.95, 0.99)
@@ -61,7 +61,7 @@ cls_imb_params_cfg = params_cfg(
 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = params_cfg(   
-    model=resnet_model_cfg,
+    model=sbg_rob_model_clb_cfg,
     lr_each=(0.2, 0.01), 
     weight_decay_each=(0, 0), 
     betas=(0.95, 0.99), 
@@ -114,14 +114,16 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=200,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=True,
     callbacks=create_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    devices=1
+    devices=1, 
+    num_nodes=1,
+    strategy="ddp"
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
@@ -157,16 +159,16 @@ cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
     train_transforms = cifar10_transforms,
     val_transforms = cifar10_transforms,
     test_transforms = cifar10_transforms,
-    batch_size = 2048,
-    num_workers = 4
+    batch_size = 64,
+    num_workers = 1
 )
 
 cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     train_transforms = cifar100_transforms,
     val_transforms = cifar100_transforms,
     test_transforms = cifar100_transforms,
-    batch_size = 2048,
-    num_workers = 4
+    batch_size = 64,
+    num_workers = 1
 )
 
 mnist_transforms = builds(torchvision.transforms.Compose,
@@ -180,7 +182,7 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     train_transforms = mnist_transforms,
     val_transforms = mnist_transforms,
     test_transforms = mnist_transforms,
-    batch_size = 2048,
+    batch_size = 64,
 )
 
 # TODO: Import only this
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 
     store = ZenStore(deferred_hydra_store=False)
     store(ExperimentConfig, name="lit_app")
-
+    
     task_function.hydra_main(
         config_name="lit_app",
         version_base="1.2",
