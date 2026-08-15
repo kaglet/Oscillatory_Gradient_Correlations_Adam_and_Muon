@@ -115,12 +115,13 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 trainer_cfg = builds(
     pl.Trainer, 
     max_epochs=200,
-    deterministic=True,
-    accelerator="auto",
+    deterministic=False,
+    accelerator="gpu",
     benchmark=True,
     callbacks=create_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
+    devices=1
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #

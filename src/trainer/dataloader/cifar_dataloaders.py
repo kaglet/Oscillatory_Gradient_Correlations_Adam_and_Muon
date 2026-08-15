@@ -4,6 +4,7 @@ from typing import Callable, Literal, Optional, Type
 
 import torch
 import lightning as L
+from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
@@ -13,7 +14,7 @@ __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
-    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 15) -> None:
         super().__init__()
         self.data_dir = data_dir
         self.train_transforms = train_transforms
@@ -23,6 +24,10 @@ class CIFARDataModule(L.LightningDataModule):
         self.batch_size_per_device = batch_size
         self.num_workers = num_workers
         self.ds = dataset
+
+        self.train_indices = torch.randint(0, 5000, (100,))
+        self.val_indices = torch.randint(5000, 6000, (20,))
+        self.test_indices = torch.randint(9000, 10000, (30,))
 
     def prepare_data(self)  -> None:
         # download
@@ -46,16 +51,20 @@ class CIFARDataModule(L.LightningDataModule):
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.cifar_train, batch_size=self.batch_size_per_device)
+        sampler = SubsetRandomSampler(self.train_indices.tolist())
+        return DataLoader(self.cifar_train, batch_size=self.batch_size_per_device, sampler=sampler)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.cifar_val, batch_size=self.batch_size_per_device)
+        sampler = SubsetRandomSampler(self.val_indices.tolist())
+        return DataLoader(self.cifar_val, batch_size=self.batch_size_per_device, sampler=sampler)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.cifar_test, batch_size=self.batch_size_per_device)
+        sampler = SubsetRandomSampler(self.test_indices.tolist())
+        return DataLoader(self.cifar_test, batch_size=self.batch_size_per_device, sampler=sampler)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self.cifar_predict, batch_size=self.batch_size_per_device)
+        sampler = SubsetRandomSampler(self.test_indices.tolist())
+        return DataLoader(self.cifar_predict, batch_size=self.batch_size_per_device, sampler=sampler)
     
 class CIFAR10DataModule(CIFARDataModule):
     """ 
