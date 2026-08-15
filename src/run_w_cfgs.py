@@ -11,6 +11,7 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
+from torch.optim import Muon, Adam
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
@@ -18,7 +19,7 @@ from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
 from src.trainer.modules.general_lit_module import GeneralLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
-from src.trainer.per_optim_params.resnet_params.get_params import get_Muon_Aux_Adam_params
+from src.trainer.per_optim_params.resnet_params.get_params import get_dist_Muon_Adam_params
 from torchvision.models import resnet18, resnet50
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
@@ -36,7 +37,7 @@ pbuilds = make_custom_builds_fn(
 
 # Define base params cfg
 params_cfg = builds(
-    get_Muon_Aux_Adam_params,
+    get_dist_Muon_Adam_params,
 )
 
 # Define base vision model cfg
@@ -158,7 +159,7 @@ cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
     val_transforms = cifar10_transforms,
     test_transforms = cifar10_transforms,
     batch_size = 2048,
-    num_workers = 4
+    num_workers = 0
 )
 
 cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
@@ -166,7 +167,7 @@ cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     val_transforms = cifar100_transforms,
     test_transforms = cifar100_transforms,
     batch_size = 2048,
-    num_workers = 4
+    num_workers = 0
 )
 
 mnist_transforms = builds(torchvision.transforms.Compose,
