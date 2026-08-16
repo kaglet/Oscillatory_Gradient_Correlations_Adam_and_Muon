@@ -19,7 +19,7 @@ from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
 from src.trainer.modules.general_lit_module import GeneralLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
-from src.trainer.per_optim_params.resnet_params.get_params import get_dist_Muon_Adam_params
+from src.trainer.per_optim_params.resnet_params.get_params import get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
 from torchvision.models import resnet18, resnet50
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
@@ -36,7 +36,11 @@ pbuilds = make_custom_builds_fn(
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
 
 # Define base params cfg
-params_cfg = builds(
+non_dist_params_cfg = builds(
+    get_nondist_Muon_Adam_params,
+)
+
+dist_params_cfg = builds(
     get_dist_Muon_Adam_params,
 )
 
@@ -53,7 +57,7 @@ sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_params_cfg = params_cfg(   
+cls_imb_params_cfg = non_dist_params_cfg(   
     model=resnet_model_cfg,
     lr_each=(0.2, 0.01), 
     weight_decay_each=(0, 0), 
@@ -61,7 +65,7 @@ cls_imb_params_cfg = params_cfg(
 )
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_params_cfg = params_cfg(   
+sbg_rob_params_cfg = non_dist_params_cfg(   
     model=resnet_model_cfg,
     lr_each=(0.2, 0.01), 
     weight_decay_each=(0, 0), 

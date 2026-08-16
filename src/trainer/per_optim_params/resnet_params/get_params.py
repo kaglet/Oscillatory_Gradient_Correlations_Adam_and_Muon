@@ -25,7 +25,7 @@ def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_d
 
     return param_groups
 
-def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-10) -> list[dict[str, Any]]:
+def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-10) -> Tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
@@ -38,5 +38,5 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
     muon_groups = [dict(params=high_dim_params, lr=lr_each[0], weight_decay=weight_decay_each[0])]
     adam_groups = [dict(params=low_dim_params), dict(params=norm_biases)]
     adam_groups = [dict(**g, betas=betas, eps=eps) for g in adam_groups]
-    param_groups = [*adam_groups, *muon_groups]
-    return param_groups
+    
+    return muon_groups, adam_groups

@@ -11,23 +11,18 @@ from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 
-__all__ = ["GeneralLitModule"]
+__all__ = ["NonDistLitModule", "DistLitModule"]
 
 class GeneralLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        params: list[dict[str, Any]],
-        optim: Partial[Optimizer],
         num_classes: int=10,
-        # scheduler: LRScheduler,
     ):
         super().__init__()
 
         self.save_hyperparameters(logger=False, ignore=["model"])
-        self.optim = optim
-        self.params = params
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
         
@@ -113,8 +108,77 @@ class GeneralLitModule(pl.LightningModule):
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
+class NonDistLitModule(GeneralLitModule):
+    def __init__(
+        self,
+        model: nn.Module,
+        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        params: list[list[dict[str, Any]]],
+        optims: list[Partial[Optimizer]],
+        schedulers: list[LRScheduler],
+        num_classes: int=10,
+    ):
+        super().__init__(model=model, num_classes=num_classes)
+        self.optims = optims
+        self.schedulers = schedulers
+        self.params = params
+        # Crucial dual opt fixes/implementation from @shivvor2
+        self.automatic_optimization = False # optim.step() must be called manually seemingly
+        self._optimizer_step_count = 0
+
+    def configure_optimizers(self) -> list[Optimizer]:
+        optims = [optim(params) for optim, params in zip(self.optims, self.params)]
+        # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
+        return optims
+
+    def batch_step(
+        self, batch: Tuple[torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Perform a single model step on a batch of data."""
+        input, targets = batch
+        logits = self.forward(input)
+        loss = self.criterion(logits, targets)
+        preds = torch.argmax(logits, dim=1)
+
+        optims = self.optimizers()
+        schdlrs = self.lr_schedulers()
+
+        # Prevent PyLance error complaint where optims can technically either be single or list
+        if not isinstance(optims, list):
+            optims = [optims]
+        if not isinstance(schdlrs, list):
+            schdlrs = [schdlrs]
+
+        self.manual_backward(loss=loss)
+
+        for i, opt in enumerate(optims):
+            if i == 0:
+                opt.step()  # This increments global_step
+            else:
+                # Access underlying optimizer directly to avoid double-counting
+                opt.optimizer.step()
+            opt.zero_grad()
+
+        self._optimizer_step_count += 1
+        # TODO: Verify what _update_custom_schedules does and if I need it
+        return loss, preds, targets
+
+class DistLitModule(GeneralLitModule):
+    def __init__(
+        self,
+        model: nn.Module,
+        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        params: list[dict[str, Any]],
+        optim: Partial[Optimizer],
+        scheduler: LRScheduler,
+        num_classes: int=10,
+    ):
+        super().__init__(model=model, num_classes=num_classes)
+        self.optim = optim
+        self.scheduler = scheduler
+        self.params = params
+
     def configure_optimizers(self) -> Optimizer:
         optimizer = self.optim(self.params)
         # TODO: Can try add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it
         return optimizer
-
