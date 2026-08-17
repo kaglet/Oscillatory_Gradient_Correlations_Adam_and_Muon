@@ -149,6 +149,9 @@ dmypy.json
 configs/local/default.yaml
 /data/
 /logs/
+/lightning_logs/
+/multirun/
+/outputs/
 .env
 
 # Aim logging

@@ -3,6 +3,7 @@ Anything configurable or static in a configurable aspect is defined here and ass
 """
 
 import os
+import multiprocessing
 from typing import Any, Type
 
 import torchvision
@@ -20,7 +21,7 @@ from src.trainer.modules.general_lit_module import NonDistLitModule
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
 from src.trainer.per_optim_params.resnet_params.get_params import get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
-from torchvision.models import resnet18, resnet50
+from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
@@ -59,29 +60,30 @@ sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = non_dist_params_cfg(   
     model=resnet_model_cfg,
-    lr_each=(0.2, 0.01), 
+    lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
-    betas=(0.95, 0.99)
+    betas=(0.9, 0.99)
 )
 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = non_dist_params_cfg(   
     model=resnet_model_cfg,
-    lr_each=(0.2, 0.01), 
+    lr_each=(1e-1, 1e-3), 
     weight_decay_each=(0, 0), 
-    betas=(0.95, 0.99), 
+    betas=(0.9, 0.99),
     use_layer_recs=False
 )
 
 # Define base optimiser cfg
-mu_aux_adam_pcfg = pbuilds(MuonWithAuxAdam)
+mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
+non_dist_optims = [pbuilds(Muon), pbuilds(Adam)]
 
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_module_cfg = builds(
     NonDistLitModule, 
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
-    optims=mu_aux_adam_pcfg,
+    optims=non_dist_optims,
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
@@ -119,7 +121,7 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=15,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=True,
@@ -138,20 +140,44 @@ def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision
     """
     return transforms
 
-cifar10_transforms = builds(
+horizontal_flip = builds(torchvision.transforms.RandomHorizontalFlip)
+vertical_flip = builds(torchvision.transforms.RandomVerticalFlip)
+crops = builds(torchvision.transforms.RandomCrop)
+to_tensor = builds(torchvision.transforms.ToTensor)
+cifar_10_norm = builds(cifar10_normalization)
+cifar_100_norm = builds(imagenet_normalization)
+mnist_norm = builds(mnist_normalization)
+
+resnet18_transforms_cfg = builds(ResNet18_Weights.DEFAULT.transforms)
+resnet50_transforms_cfg = builds(ResNet50_Weights.DEFAULT.transforms)
+
+cls_imb_s_transforms = builds(
     torchvision.transforms.Compose,
     [
-        builds(torchvision.transforms.ToTensor),
-        builds(cifar10_normalization),
+        horizontal_flip,
+        crops,
+        to_tensor,
+        cifar_10_norm,
     ]
 )
 
-cifar100_transforms = builds(
+cls_imb_l_transforms = builds(
     torchvision.transforms.Compose,
     [
-        builds(torchvision.transforms.ToTensor),
-        # TODO: Find out if this stand-in is fine, from uh reddit commenter, or if to calc manually 
-        builds(imagenet_normalization),
+        horizontal_flip,
+        crops,
+        to_tensor,
+        cifar_100_norm,
+    ]
+)
+
+sp_pix_transforms = builds(
+    torchvision.transforms.Compose,
+    [
+        horizontal_flip,
+        crops,
+        to_tensor,
+        mnist_norm
     ]
 )
 
@@ -159,33 +185,29 @@ cifr10_datamdl_cfg = builds(CIFAR10DataModule)
 cifr100_datamdl_cfg = builds(CIFAR100DataModule)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
+total_local_cores = multiprocessing.cpu_count()
+total_local_cores = total_local_cores if type(total_local_cores) == int else 1
+
 cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
-    train_transforms = cifar10_transforms,
-    val_transforms = cifar10_transforms,
-    test_transforms = cifar10_transforms,
+    train_transforms = cls_imb_s_transforms,
+    val_transforms = cls_imb_s_transforms,
+    test_transforms = cls_imb_s_transforms,
     batch_size = 2048,
-    num_workers = 0
+    num_workers = total_local_cores
 )
 
 cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
-    train_transforms = cifar100_transforms,
-    val_transforms = cifar100_transforms,
-    test_transforms = cifar100_transforms,
+    train_transforms = cls_imb_l_transforms,
+    val_transforms = cls_imb_l_transforms,
+    test_transforms = cls_imb_l_transforms,
     batch_size = 2048,
-    num_workers = 0
-)
-
-mnist_transforms = builds(torchvision.transforms.Compose,
-    [
-        builds(torchvision.transforms.ToTensor), 
-        builds(mnist_normalization)
-    ]
+    num_workers = total_local_cores
 )
 
 sp_pix_datamdl_cfg = mnist_datamdl_cfg(
-    train_transforms = mnist_transforms,
-    val_transforms = mnist_transforms,
-    test_transforms = mnist_transforms,
+    train_transforms = mnist_norm,
+    val_transforms = mnist_norm,
+    test_transforms = mnist_norm,
     batch_size = 2048,
 )
 
