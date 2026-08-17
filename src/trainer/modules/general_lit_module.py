@@ -205,7 +205,7 @@ class DistLitModule(GeneralLitModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
-        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
+        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
         num_classes: int=10,
     ):
         super().__init__(model=model, num_classes=num_classes, gradAccumSchedule=gradAccumSchedule, params=params, optims=optims)

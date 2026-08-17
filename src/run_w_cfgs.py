@@ -121,7 +121,7 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=2,
+    max_epochs=200,
     deterministic=False,
     accelerator="gpu",
     benchmark=True,
@@ -142,7 +142,7 @@ def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision
 
 horizontal_flip = builds(torchvision.transforms.RandomHorizontalFlip)
 vertical_flip = builds(torchvision.transforms.RandomVerticalFlip)
-crops = builds(torchvision.transforms.RandomCrop)
+crops = builds(torchvision.transforms.RandomCrop, 32)
 to_tensor = builds(torchvision.transforms.ToTensor)
 cifar_10_norm = builds(cifar10_normalization)
 cifar_100_norm = builds(imagenet_normalization)
@@ -151,6 +151,7 @@ mnist_norm = builds(mnist_normalization)
 resnet18_transforms_cfg = builds(ResNet18_Weights.DEFAULT.transforms)
 resnet50_transforms_cfg = builds(ResNet50_Weights.DEFAULT.transforms)
 
+# Certain order of transforms matters 
 cls_imb_s_transforms = builds(
     torchvision.transforms.Compose,
     [
@@ -185,14 +186,14 @@ cifr10_datamdl_cfg = builds(CIFAR10DataModule)
 cifr100_datamdl_cfg = builds(CIFAR100DataModule)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
-total_local_cores = multiprocessing.cpu_count()
+total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
 cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 2048,
+    batch_size = 64,
     num_workers = total_local_cores
 )
 
@@ -200,15 +201,15 @@ cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     train_transforms = cls_imb_l_transforms,
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
-    batch_size = 2048,
+    batch_size = 64,
     num_workers = total_local_cores
 )
 
 sp_pix_datamdl_cfg = mnist_datamdl_cfg(
-    train_transforms = mnist_norm,
-    val_transforms = mnist_norm,
-    test_transforms = mnist_norm,
-    batch_size = 2048,
+    train_transforms = sp_pix_transforms,
+    val_transforms = sp_pix_transforms,
+    test_transforms = sp_pix_transforms,
+    batch_size = 64
 )
 
 # TODO: Import only this
