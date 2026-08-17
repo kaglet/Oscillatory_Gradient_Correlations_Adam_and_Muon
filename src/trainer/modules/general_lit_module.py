@@ -1,4 +1,4 @@
-from typing import Callable, Type, Tuple, AnyStr, Any
+from typing import Callable, Dict, Optional, Type, Tuple, AnyStr, Any
 
 import lightning.pytorch as pl
 import torch
@@ -10,6 +10,7 @@ from hydra_zen.typing import Partial
 from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
+from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
 
 __all__ = ["NonDistLitModule", "DistLitModule"]
 
@@ -17,6 +18,9 @@ class GeneralLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
+        params: list[list[dict[str, Any]]],
+        optims: list[Partial[Optimizer]],
+        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int=10,
     ):
@@ -40,6 +44,13 @@ class GeneralLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
+        self._grad_accum_schedule = gradAccumSchedule
+
+        self.optims = optims
+        self.params = params
+        # Crucial dual opt fixes/implementation from @shivvor2
+        self.automatic_optimization = False # optim.step() must be called manually seemingly
+        self._optimizer_step_count = 0
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
@@ -52,16 +63,63 @@ class GeneralLitModule(pl.LightningModule):
     def forward(self, input):
         return self.model(input)
 
+    def configure_optimizers(self) -> list[Optimizer]:
+        optims = [optim(params) for optim, params in zip(self.optims, self.params)]
+        # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
+        return optims
+
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
     def batch_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor]
+        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, is_Train: bool = True
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform a single model step on a batch of data."""
         input, targets = batch
-        logits = self.forward(input)
-        loss = self.criterion(logits, targets)
+        if is_Train:
+            logits = self.forward(input)
+            loss = self.criterion(logits, targets)
+
+            grad_accum = self._get_current_grad_accum()
+            scaled_loss = loss / grad_accum
+            self.manual_backward(loss=scaled_loss)
+
+            should_step = (batch_idx + 1) % grad_accum == 0
+
+            if should_step:
+                optims = self.optimizers()
+                schdlrs = self.lr_schedulers()
+
+                # Prevent PyLance error complaint where optims can technically either be single or list
+                if not isinstance(optims, list):
+                    optims = [optims]
+                if not isinstance(schdlrs, list):
+                    schdlrs = [schdlrs]
+
+                for i, opt in enumerate(optims):
+                    if i == 0:
+                        opt.step()  # This increments global_step
+                    else:
+                        # Access underlying optimizer directly to avoid double-counting
+                        opt.optimizer.step()
+                    opt.zero_grad()
+
+                self._optimizer_step_count += 1
+        else: 
+            with torch.no_grad():
+                logits = self.forward(input)
+                loss = self.criterion(logits, targets)
+
         preds = torch.argmax(logits, dim=1)
+
         return loss, preds, targets
+
+    def _get_current_grad_accum(self) -> int:
+        """Get current gradient accumulation factor.
+
+        Returns:
+            The gradient accumulation factor for the current step.
+            Uses grad_accum_schedule, and overrides Trainer value.
+        """
+        return self._grad_accum_schedule.get_accum(self._optimizer_step_count)
 
     def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
@@ -72,7 +130,7 @@ class GeneralLitModule(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        metrics = self.batch_step(batch)
+        metrics = self.batch_step(batch, batch_idx)
         loss, _, _ = metrics
         self.update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
@@ -80,14 +138,14 @@ class GeneralLitModule(pl.LightningModule):
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
-        metrics = self.batch_step(batch)
+        metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
-        metrics = self.batch_step(batch)
+        metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
         self.update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
         return loss
@@ -115,70 +173,39 @@ class NonDistLitModule(GeneralLitModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
-        schedulers: list[LRScheduler],
+        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes)
-        self.optims = optims
-        self.schedulers = schedulers
-        self.params = params
-        # Crucial dual opt fixes/implementation from @shivvor2
-        self.automatic_optimization = False # optim.step() must be called manually seemingly
-        self._optimizer_step_count = 0
+        super().__init__(model=model, num_classes=num_classes, gradAccumSchedule=gradAccumSchedule, params=params, optims=optims)
 
-    def configure_optimizers(self) -> list[Optimizer]:
-        optims = [optim(params) for optim, params in zip(self.optims, self.params)]
-        # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-        return optims
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Save scheduler states to checkpoint.
 
-    def batch_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Perform a single model step on a batch of data."""
-        input, targets = batch
-        logits = self.forward(input)
-        loss = self.criterion(logits, targets)
-        preds = torch.argmax(logits, dim=1)
+        Args:
+            checkpoint: The checkpoint dictionary to save state into.
+        """
+        checkpoint["optimizer_step_count"] = self._optimizer_step_count
+        
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """Load scheduler states from checkpoint.
 
-        optims = self.optimizers()
-        schdlrs = self.lr_schedulers()
+        Note:
+            Actual scheduler state restoration happens in on_fit_start()
+            because schedulers don't exist yet at this point.
 
-        # Prevent PyLance error complaint where optims can technically either be single or list
-        if not isinstance(optims, list):
-            optims = [optims]
-        if not isinstance(schdlrs, list):
-            schdlrs = [schdlrs]
-
-        self.manual_backward(loss=loss)
-
-        for i, opt in enumerate(optims):
-            if i == 0:
-                opt.step()  # This increments global_step
-            else:
-                # Access underlying optimizer directly to avoid double-counting
-                opt.optimizer.step()
-            opt.zero_grad()
-
-        self._optimizer_step_count += 1
-        # TODO: Verify what _update_custom_schedules does and if I need it
-        return loss, preds, targets
+        Args:
+            checkpoint: The checkpoint dictionary to load state from.
+        """
+        self._optimizer_step_count = checkpoint.get("optimizer_step_count", 0)
 
 class DistLitModule(GeneralLitModule):
     def __init__(
         self,
         model: nn.Module,
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        params: list[dict[str, Any]],
-        optim: Partial[Optimizer],
-        scheduler: LRScheduler,
+        params: list[list[dict[str, Any]]],
+        optims: list[Partial[Optimizer]],
+        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes)
-        self.optim = optim
-        self.scheduler = scheduler
-        self.params = params
-
-    def configure_optimizers(self) -> Optimizer:
-        optimizer = self.optim(self.params)
-        # TODO: Can try add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it
-        return optimizer
+        super().__init__(model=model, num_classes=num_classes, gradAccumSchedule=gradAccumSchedule, params=params, optims=optims)

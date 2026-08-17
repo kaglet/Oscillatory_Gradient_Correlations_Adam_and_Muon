@@ -16,7 +16,7 @@ from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
 from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
-from src.trainer.modules.general_lit_module import GeneralLitModule 
+from src.trainer.modules.general_lit_module import NonDistLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
 from src.trainer.per_optim_params.resnet_params.get_params import get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
@@ -78,10 +78,10 @@ mu_aux_adam_pcfg = pbuilds(MuonWithAuxAdam)
 
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_module_cfg = builds(
-    GeneralLitModule, 
+    NonDistLitModule, 
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
-    optim=mu_aux_adam_pcfg,
+    optims=mu_aux_adam_pcfg,
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
@@ -119,14 +119,15 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=200,
+    max_epochs=15,
     deterministic=False,
     accelerator="gpu",
     benchmark=True,
     callbacks=create_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    devices=1
+    devices=1,
+    precision = "bf16-mixed"
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
