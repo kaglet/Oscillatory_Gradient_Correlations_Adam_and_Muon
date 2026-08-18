@@ -55,10 +55,14 @@ class GeneralLitModule(pl.LightningModule):
         self._optimizer_step_count = 0
 
         # TODO: DO NOT leave this as default without it being set for specific stages
-        self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
-        self.train_grad_corr_store = []
+        self.init_grad_corr_stores()
+
+    def init_grad_corr_stores(self) -> bool:
+        self.trainable_params = []
         self.global_grad_corr_store = []
         self.prev_grads = []
+        self.per_param_names = []
+        return True
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
@@ -67,6 +71,7 @@ class GeneralLitModule(pl.LightningModule):
         self.val_loss.reset()
         self.val_acc.reset()
         self.max_val_acc.reset()
+        self.init_grad_corr_stores()
 
     def forward(self, input):
         return self.model(input)
@@ -76,32 +81,39 @@ class GeneralLitModule(pl.LightningModule):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
         return optims
 
-    def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]]):
+    def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         """
         
         """
-        per_param_grads = []
-        per_param_names = []
+        curr_param_grads = []
         prev_grads_exist = len(self.prev_grads) != 0
+        curr_grad_corr_store = []
 
         for i, (n, p) in enumerate(trainable_params):
+            assert p.grad is not None, "None gradients detected when trainable params expected"
             if p.grad is not None:
-                p_clone = p.grad.detach().clone()
-                per_param_grads.append(p_clone) 
-                per_param_names.append(n)
+                curr_p_grad = p.grad.detach().clone()
+                curr_param_grads.append(curr_p_grad) 
+                
                 if prev_grads_exist:
-                    prev_grad = self.prev_grads[i].detach().clone()
-                    dot_prod = float(torch.sum(torch.mul(prev_grad, p_clone)))
-                    norm = float(prev_grad.data.norm() * p_clone.data.norm())
-                    self.train_grad_corr_store.append(dot_prod / norm)
+                    prev_p_grad = self.prev_grads[i].detach().clone()
+                    dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
+                    norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
+                    curr_grad_corr_store.append(dot_prod / norm)
+                else:
+                    self.per_param_names.append(n)
 
-        self.global_grad_corr_store.append(self.train_grad_corr_store)
+        self.prev_grads = curr_param_grads 
 
-        assert len(per_param_grads) > 0, "No previous gradients stored."
-        # print("Size of current gradients",len(per_param_grads))
-        # print("Names of current parameters", per_param_names)
+        if batch_idx != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step 2
+            self.global_grad_corr_store.append(curr_grad_corr_store)
 
-        self.prev_grads = per_param_grads
+        if len(self.global_grad_corr_store) >= 2:
+            prev_store_len = len(self.global_grad_corr_store[-1])
+            curr_store_len = len(self.global_grad_corr_store[-1])
+
+            assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {batch_idx}"
+        
         return 1
 
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
@@ -121,7 +133,8 @@ class GeneralLitModule(pl.LightningModule):
             should_step = (batch_idx + 1) % grad_accum == 0
 
             if should_step:
-                self.store_grad_corr(self.trainable_params)
+                self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
+                self.store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
 
                 optims = self.optimizers()
                 schdlrs = self.lr_schedulers()
@@ -194,7 +207,7 @@ class GeneralLitModule(pl.LightningModule):
 
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
-        fields = [(n) for (n, _) in self.trainable_params]
+        fields = self.per_param_names
         print(fields)
         rows = np.array(self.global_grad_corr_store, np.float32)
         with open('GCS.csv', 'w', newline='') as f:
