@@ -1,6 +1,8 @@
-from typing import Callable, Dict, Optional, Type, Tuple, AnyStr, Any
+from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
 
+import csv
 import lightning.pytorch as pl
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,6 +54,12 @@ class GeneralLitModule(pl.LightningModule):
         self.automatic_optimization = False # optim.step() must be called manually seemingly
         self._optimizer_step_count = 0
 
+        # TODO: DO NOT leave this as default without it being set for specific stages
+        self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
+        self.train_grad_corr_store = []
+        self.global_grad_corr_store = []
+        self.prev_grads = []
+
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # by default lightning executes validation step sanity checks before training starts,
@@ -67,6 +75,34 @@ class GeneralLitModule(pl.LightningModule):
         optims = [optim(params) for optim, params in zip(self.optims, self.params)]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
         return optims
+
+    def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]]):
+        """
+        
+        """
+        per_param_grads = []
+        per_param_names = []
+        prev_grads_exist = len(self.prev_grads) != 0
+
+        for i, (n, p) in enumerate(trainable_params):
+            if p.grad is not None:
+                p_clone = p.grad.detach().clone()
+                per_param_grads.append(p_clone) 
+                per_param_names.append(n)
+                if prev_grads_exist:
+                    prev_grad = self.prev_grads[i].detach().clone()
+                    dot_prod = float(torch.sum(torch.mul(prev_grad, p_clone)))
+                    norm = float(prev_grad.data.norm() * p_clone.data.norm())
+                    self.train_grad_corr_store.append(dot_prod / norm)
+
+        self.global_grad_corr_store.append(self.train_grad_corr_store)
+
+        assert len(per_param_grads) > 0, "No previous gradients stored."
+        # print("Size of current gradients",len(per_param_grads))
+        # print("Names of current parameters", per_param_names)
+
+        self.prev_grads = per_param_grads
+        return 1
 
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
     def batch_step(
@@ -85,6 +121,8 @@ class GeneralLitModule(pl.LightningModule):
             should_step = (batch_idx + 1) % grad_accum == 0
 
             if should_step:
+                self.store_grad_corr(self.trainable_params)
+
                 optims = self.optimizers()
                 schdlrs = self.lr_schedulers()
 
@@ -153,6 +191,18 @@ class GeneralLitModule(pl.LightningModule):
     def on_train_epoch_end(self) -> None:
         "Lightning hook that is called when a training epoch ends."
         pass
+
+    def on_fit_end(self) -> None:
+        print("Saving Gradient Correlation Store at root")
+        fields = [(n) for (n, _) in self.trainable_params]
+        print(fields)
+        rows = np.array(self.global_grad_corr_store, np.float32)
+        with open('GCS.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(fields)     # Write header
+            writer.writerows(rows)      # Write data rows
+
+
 
     # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:

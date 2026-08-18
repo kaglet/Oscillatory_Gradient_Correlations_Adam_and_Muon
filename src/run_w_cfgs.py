@@ -121,7 +121,7 @@ create_clbks_cfg = builds(create_callbacks, callbacks=chkpts)
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=200,
+    max_epochs=1,
     deterministic=False,
     accelerator="gpu",
     benchmark=True,
