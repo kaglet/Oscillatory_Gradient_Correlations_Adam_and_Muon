@@ -57,7 +57,6 @@ class GeneralLitModule(pl.LightningModule):
         self.init_grad_corr_stores()
         self.save_hyperparameters(logger=False, ignore=["model"])
 
-
     def init_grad_corr_stores(self) -> bool:
         self.trainable_params = []
         self.global_grad_corr_store = []
@@ -115,7 +114,7 @@ class GeneralLitModule(pl.LightningModule):
 
         self.prev_grads = curr_param_grads 
 
-        if batch_idx != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step 2
+        if len(curr_grad_corr_store) != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step for accum
             self.global_grad_corr_store.append(curr_grad_corr_store)
 
         if len(self.global_grad_corr_store) >= 2:
@@ -125,7 +124,18 @@ class GeneralLitModule(pl.LightningModule):
             assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {batch_idx}"
         
         return 1
+    
+    def _get_current_grad_accum(self) -> int:
+        """Get current gradient accumulation factor.
 
+        Returns:
+            The gradient accumulation factor for the current step.
+            Uses grad_accum_schedule, and overrides Trainer value.
+        """
+        accum = self._grad_accum_schedule.get_accum(self._optimizer_step_count)
+        # assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
+        return accum
+    
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
     def batch_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, is_Train: bool = True
@@ -138,7 +148,7 @@ class GeneralLitModule(pl.LightningModule):
 
             grad_accum = self._get_current_grad_accum()
             scaled_loss = loss / grad_accum
-            self.manual_backward(loss=scaled_loss)
+            self.manual_backward(loss=loss)
 
             should_step = (batch_idx + 1) % grad_accum == 0
 
@@ -164,19 +174,11 @@ class GeneralLitModule(pl.LightningModule):
                 loss = self.criterion(logits, targets)
 
         preds = torch.argmax(logits, dim=1)
+        print(logits[:3, :])
+        print(preds[:3])
+        print(targets[:3])
 
         return loss, preds, targets
-
-    def _get_current_grad_accum(self) -> int:
-        """Get current gradient accumulation factor.
-
-        Returns:
-            The gradient accumulation factor for the current step.
-            Uses grad_accum_schedule, and overrides Trainer value.
-        """
-        accum = self._grad_accum_schedule.get_accum(self._optimizer_step_count)
-        # assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
-        return accum
 
     def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
@@ -187,7 +189,7 @@ class GeneralLitModule(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        metrics = self.batch_step(batch, batch_idx)
+        metrics = self.batch_step(batch, batch_idx, is_Train=True)
         loss, _, _ = metrics
         self.update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
@@ -197,6 +199,7 @@ class GeneralLitModule(pl.LightningModule):
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
+        print(loss)
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
@@ -214,7 +217,9 @@ class GeneralLitModule(pl.LightningModule):
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
-        print(fields)
+        _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
+        print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
+
         rows = np.array(self.global_grad_corr_store, np.float32)
         with open('GCS.csv', 'w', newline='') as f:
             writer = csv.writer(f)

@@ -69,7 +69,7 @@ class CIFAR10DataModule(CIFARDataModule):
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR10] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 0) -> None:
         super().__init__(train_transforms, val_transforms, test_transforms, dataset, data_dir, batch_size, num_workers)
 
 class CIFAR100DataModule(CIFARDataModule):
@@ -77,5 +77,5 @@ class CIFAR100DataModule(CIFARDataModule):
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR100] = CIFAR100, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], dataset: Type[CIFAR100] = CIFAR100, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 0) -> None:
         super().__init__(train_transforms, val_transforms, test_transforms, dataset, data_dir, batch_size, num_workers)

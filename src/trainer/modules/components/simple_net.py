@@ -32,7 +32,7 @@ class SimpleCNN(nn.Module):
 
         # 5*5*16
         self.dense = nn.Sequential( 
-            nn.Linear(in_features=5*5*16, out_features=30),
+            nn.Linear(in_features=144, out_features=30),
             nn.ReLU(),
             nn.Linear(in_features=30, out_features=10)
         )

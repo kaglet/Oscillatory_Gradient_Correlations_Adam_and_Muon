@@ -9,7 +9,7 @@ from torch import nn
 
 class MNISTDataModule(L.LightningDataModule):
     # TODO: Unify the data directory from env see old template
-    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "/data", batch_size: int = 2048) -> None:
+    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 0) -> None:
         super().__init__()
         self.data_dir = data_dir
 
@@ -18,6 +18,7 @@ class MNISTDataModule(L.LightningDataModule):
         self.test_transforms = test_transforms
 
         self.batch_size_per_device = batch_size
+        self.num_workers = num_workers
 
     def prepare_data(self)  -> None:
         # download
@@ -41,13 +42,13 @@ class MNISTDataModule(L.LightningDataModule):
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_train, batch_size=self.batch_size_per_device)
+        return DataLoader(self.mnist_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_val, batch_size=self.batch_size_per_device)
+        return DataLoader(self.mnist_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_test, batch_size=self.batch_size_per_device)
+        return DataLoader(self.mnist_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device)
+        return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers)

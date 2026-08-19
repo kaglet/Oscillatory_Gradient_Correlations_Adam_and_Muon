@@ -1,3 +1,4 @@
+
 """
 Anything configurable or static in a configurable aspect is defined here and assembled later.
 """
@@ -52,16 +53,23 @@ resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
 
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18))
+cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=3)
 cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100) 
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50))
+sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50), num_classes=10, num_in=1)
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = non_dist_params_cfg(   
-    model=resnet_model_cfg,
+    model=cls_imb_model_s_cfg,
+    lr_each=(1e-1, 1e-5), 
+    weight_decay_each=(0, 0), 
+    betas=(0.9, 0.99)
+)
+
+sp_pix_params_cfg = non_dist_params_cfg(   
+    model=sp_pix_model_cfg,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
@@ -69,8 +77,8 @@ cls_imb_params_cfg = non_dist_params_cfg(
 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = non_dist_params_cfg(   
-    model=resnet_model_cfg,
-    lr_each=(1e-1, 1e-3), 
+    model=sbg_rob_model_clb_cfg,
+    lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99),
     use_layer_recs=False
@@ -85,6 +93,16 @@ cls_imb_module_cfg = builds(
     NonDistLitModule, 
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
+    optims=non_dist_optims,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    num_classes = 10
+)
+
+sp_pix_module_cfg = builds(
+    NonDistLitModule, 
+    model=sp_pix_model_cfg,
+    params=sp_pix_params_cfg,
     optims=non_dist_optims,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
@@ -110,6 +128,8 @@ cls_imb_chkpt_cfg = chkpt_cfg(
     save_last=True
 )
 
+sp_pix_chkpt_cfg = cls_imb_chkpt_cfg
+
 # Create static list of checkpoint behaviours, TODO: can be saved into group later
 chkpts = [cls_imb_chkpt_cfg]
 
@@ -121,7 +141,8 @@ def create_callbacks(callbacks: list[Callback]) -> list[Callback]:
 
 # TODO: Fix this current error stopping file
 # Define base chkpt cfg list returned, TODO: cfg can have non-generic instances to override later
-create_clbks_cfg = builds(create_callbacks, callbacks=chkpts) 
+create_cls_imb_clbks_cfg = builds(create_callbacks, callbacks=chkpts) 
+create_sp_pix_clbks_cfg = create_cls_imb_clbks_cfg
 
 # Define base trainer cfg
 trainer_cfg = builds(
@@ -129,12 +150,12 @@ trainer_cfg = builds(
     max_epochs=1,
     deterministic=False,
     accelerator="gpu",
-    benchmark=True,
-    callbacks=create_clbks_cfg,
+    benchmark=False,
+    callbacks=create_cls_imb_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    devices=1,
-    precision = "bf16-mixed"
+    devices=1
+    # precision = "bf16-mixed"
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
@@ -147,7 +168,7 @@ def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision
 
 horizontal_flip = builds(torchvision.transforms.RandomHorizontalFlip)
 vertical_flip = builds(torchvision.transforms.RandomVerticalFlip)
-crops = builds(torchvision.transforms.RandomCrop, 32)
+crops = builds(torchvision.transforms.RandomCrop, 20)
 to_tensor = builds(torchvision.transforms.ToTensor)
 cifar_10_norm = builds(cifar10_normalization)
 cifar_100_norm = builds(imagenet_normalization)
@@ -214,7 +235,8 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     train_transforms = sp_pix_transforms,
     val_transforms = sp_pix_transforms,
     test_transforms = sp_pix_transforms,
-    batch_size = 64
+    batch_size = 64,
+    num_workers = total_local_cores
 )
 
 # TODO: Import only this
@@ -222,9 +244,9 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
-    lit_module=cls_imb_module_cfg,
+    lit_module=sp_pix_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cls_imb_datamdl_s_cfg
+    datamodule=sp_pix_datamdl_cfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
