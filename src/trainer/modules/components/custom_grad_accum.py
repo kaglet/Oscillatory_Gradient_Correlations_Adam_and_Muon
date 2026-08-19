@@ -50,7 +50,7 @@ class GradAccumSchedule:
 
         # Add default step 0 if not specified
         if 0 not in self.schedule:
-            self.schedule = {0: 4, **self.schedule}
+            self.schedule = {0: 1, **self.schedule}
 
         self._sorted_steps = sorted(self.schedule.keys())
 

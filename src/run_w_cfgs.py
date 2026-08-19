@@ -84,6 +84,8 @@ cls_imb_module_cfg = builds(
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
     optims=non_dist_optims,
+    grad_accum_schedule = ({0: 4}),
+    num_classes = 10
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #

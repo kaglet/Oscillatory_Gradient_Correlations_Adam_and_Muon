@@ -22,7 +22,8 @@ class GeneralLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
+        schdlrs: list[Partial[LRScheduler]],
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 4}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int=10,
     ):
@@ -45,6 +46,12 @@ class GeneralLitModule(pl.LightningModule):
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
+
+        # Prevent PyLance error complaint where optims can technically either be single or list
+        if not isinstance(optims, list):
+            optims = [optims]
+        if not isinstance(schdlrs, list):
+            schdlrs = [schdlrs]
 
         self.optims = optims
         self.params = params
@@ -145,13 +152,7 @@ class GeneralLitModule(pl.LightningModule):
                 self.store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
 
                 optims = self.optimizers()
-                schdlrs = self.lr_schedulers()
-
-                # Prevent PyLance error complaint where optims can technically either be single or list
-                if not isinstance(optims, list):
-                    optims = [optims]
-                if not isinstance(schdlrs, list):
-                    schdlrs = [schdlrs]
+                optims = optims if isinstance(optims, list) else [optims]
 
                 for i, opt in enumerate(optims):
                     if i == 0:
@@ -213,6 +214,10 @@ class GeneralLitModule(pl.LightningModule):
         "Lightning hook that is called when a training epoch ends."
         pass
 
+    def on_fit_start(self) -> None:
+        optims = self.optimizers()
+        optims = optims if isinstance(optims, list) else [optims]
+
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
@@ -242,10 +247,11 @@ class NonDistLitModule(GeneralLitModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
+        schdlrs: list[Partial[LRScheduler]],
         gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """Save scheduler states to checkpoint.
@@ -274,7 +280,8 @@ class DistLitModule(GeneralLitModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
+        schdlrs: list[Partial[LRScheduler]],
         gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
