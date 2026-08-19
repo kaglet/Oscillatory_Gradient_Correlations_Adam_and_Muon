@@ -22,13 +22,11 @@ class GeneralLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
-        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int=10,
     ):
         super().__init__()
-
-        self.save_hyperparameters(logger=False, ignore=["model"])
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
         
@@ -46,7 +44,7 @@ class GeneralLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
-        self._grad_accum_schedule = gradAccumSchedule
+        self._grad_accum_schedule = grad_accum_schedule
 
         self.optims = optims
         self.params = params
@@ -56,6 +54,8 @@ class GeneralLitModule(pl.LightningModule):
 
         # TODO: DO NOT leave this as default without it being set for specific stages
         self.init_grad_corr_stores()
+        self.save_hyperparameters(logger=False, ignore=["model"])
+
 
     def init_grad_corr_stores(self) -> bool:
         self.trainable_params = []
@@ -79,6 +79,14 @@ class GeneralLitModule(pl.LightningModule):
     def configure_optimizers(self) -> list[Optimizer]:
         optims = [optim(params) for optim, params in zip(self.optims, self.params)]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
+        mu_lr = optims[0].param_groups[0]["lr"]
+        ad_lr = optims[1].param_groups[0]["lr"]
+        ad_wd = optims[1].param_groups[0]["weight_decay"]
+
+        assert mu_lr == 1e-1, f"Muon lr of {mu_lr} not set to configured value"
+        assert ad_lr == 1e-5, f"Adam lr of {ad_lr} not set to configured value"
+        assert ad_wd == 0, f"Adam weight decay of {ad_wd} not set to configured value"
+
         return optims
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
@@ -215,8 +223,6 @@ class GeneralLitModule(pl.LightningModule):
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write data rows
 
-
-
     # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:
         """
@@ -239,7 +245,7 @@ class NonDistLitModule(GeneralLitModule):
         gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes, gradAccumSchedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """Save scheduler states to checkpoint.
@@ -271,4 +277,4 @@ class DistLitModule(GeneralLitModule):
         gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, num_classes=num_classes, gradAccumSchedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)

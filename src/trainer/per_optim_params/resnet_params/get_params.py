@@ -31,6 +31,6 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
     
     muon_groups = [dict(params=high_dim_params, lr=lr_each[0], weight_decay=weight_decay_each[0], momentum=betas[0], nesterov=False)]
     adam_groups = [dict(params=low_dim_params)]
-    adam_groups = [dict(**g, betas=betas, eps=eps) for g in adam_groups]
+    adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
     
     return [muon_groups, adam_groups]
