@@ -52,6 +52,7 @@ class GradAccumSchedule:
         if 0 not in self.schedule:
             self.schedule = {0: 1, **self.schedule}
 
+        # In unsorted schedule, create sorted steps (not epochs) starting at 0
         self._sorted_steps = sorted(self.schedule.keys())
 
     def adjust_accumulation_steps(self, target_memory, accum_factor, used_memory, max_steps):

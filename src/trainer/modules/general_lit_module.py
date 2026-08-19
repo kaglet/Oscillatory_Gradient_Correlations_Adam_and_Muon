@@ -25,7 +25,7 @@ class GeneralLitModule(pl.LightningModule):
         schdlrs: list[Partial[LRScheduler]],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 4}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        num_classes: int=10,
+        num_classes: int = 10,
     ):
         super().__init__()
         # Loss function
@@ -46,12 +46,6 @@ class GeneralLitModule(pl.LightningModule):
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
-
-        # Prevent PyLance error complaint where optims can technically either be single or list
-        if not isinstance(optims, list):
-            optims = [optims]
-        if not isinstance(schdlrs, list):
-            schdlrs = [schdlrs]
 
         self.optims = optims
         self.params = params
@@ -84,6 +78,7 @@ class GeneralLitModule(pl.LightningModule):
         return self.model(input)
 
     def configure_optimizers(self) -> list[Optimizer]:
+        # optims = self.optims if isinstance(self.optims, list) else [self.optims]
         optims = [optim(params) for optim, params in zip(self.optims, self.params)]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
         mu_lr = optims[0].param_groups[0]["lr"]
@@ -179,7 +174,9 @@ class GeneralLitModule(pl.LightningModule):
             The gradient accumulation factor for the current step.
             Uses grad_accum_schedule, and overrides Trainer value.
         """
-        return self._grad_accum_schedule.get_accum(self._optimizer_step_count)
+        accum = self._grad_accum_schedule.get_accum(self._optimizer_step_count)
+        assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
+        return accum
 
     def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
@@ -248,10 +245,10 @@ class NonDistLitModule(GeneralLitModule):
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
         schdlrs: list[Partial[LRScheduler]],
-        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """Save scheduler states to checkpoint.
@@ -281,7 +278,7 @@ class DistLitModule(GeneralLitModule):
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
         schdlrs: list[Partial[LRScheduler]],
-        gradAccumSchedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=gradAccumSchedule, params=params, optims=optims)
+        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)

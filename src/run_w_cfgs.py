@@ -13,10 +13,12 @@ from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
 from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
+from torch.optim.lr_scheduler import LRScheduler
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
 from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
+from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
 from src.trainer.modules.general_lit_module import NonDistLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
@@ -84,7 +86,8 @@ cls_imb_module_cfg = builds(
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
     optims=non_dist_optims,
-    grad_accum_schedule = ({0: 4}),
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = 10
 )
 
