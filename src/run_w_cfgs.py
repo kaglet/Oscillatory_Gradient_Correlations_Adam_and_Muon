@@ -243,14 +243,13 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
-    seed=1,
-    lit_module=sp_pix_module_cfg,
+    lit_module=cls_imb_module_cfg,
     trainer=trainer_cfg,
-    datamodule=sp_pix_datamdl_cfg
+    datamodule=cls_imb_datamdl_s_cfg
 )
 
-pre_seed = zen(lambda seed: pl.seed_everything(seed))
-task_function = zen(train_and_val, pre_call=pre_seed)
+# pre_seed = zen(lambda seed: pl.seed_everything(seed))
+task_function = zen(train_and_val)
 
 if __name__ == "__main__":
     # enables us to call

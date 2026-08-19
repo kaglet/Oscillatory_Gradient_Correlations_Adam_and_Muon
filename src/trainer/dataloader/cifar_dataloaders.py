@@ -41,7 +41,7 @@ class CIFARDataModule(L.LightningDataModule):
             class_names = cifar_full.classes
             num_classes = len(class_names)
             self.cifar_train, self.cifar_val = random_split(
-                cifar_full, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
+                cifar_full, [0.8, 0.2]
             )
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
