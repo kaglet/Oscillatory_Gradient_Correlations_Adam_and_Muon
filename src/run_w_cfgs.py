@@ -87,7 +87,7 @@ cls_imb_module_cfg = builds(
     params=cls_imb_params_cfg,
     optims=non_dist_optims,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 1}),
     num_classes = 10
 )
 

@@ -23,7 +23,7 @@ class GeneralLitModule(pl.LightningModule):
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
         schdlrs: list[Partial[LRScheduler]],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 4}),  
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
@@ -175,7 +175,7 @@ class GeneralLitModule(pl.LightningModule):
             Uses grad_accum_schedule, and overrides Trainer value.
         """
         accum = self._grad_accum_schedule.get_accum(self._optimizer_step_count)
-        assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
+        # assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
         return accum
 
     def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
@@ -211,10 +211,6 @@ class GeneralLitModule(pl.LightningModule):
         "Lightning hook that is called when a training epoch ends."
         pass
 
-    def on_fit_start(self) -> None:
-        optims = self.optimizers()
-        optims = optims if isinstance(optims, list) else [optims]
-
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
@@ -245,7 +241,7 @@ class NonDistLitModule(GeneralLitModule):
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
         schdlrs: list[Partial[LRScheduler]],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
         super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
@@ -278,7 +274,7 @@ class DistLitModule(GeneralLitModule):
         params: list[list[dict[str, Any]]],
         optims: list[Partial[Optimizer]],
         schdlrs: list[Partial[LRScheduler]],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 32}),
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
         super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
