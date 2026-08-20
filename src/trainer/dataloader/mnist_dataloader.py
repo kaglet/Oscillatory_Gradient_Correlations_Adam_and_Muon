@@ -1,3 +1,4 @@
+import os
 from typing import Callable, Optional
 
 import torch
@@ -6,6 +7,8 @@ from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import MNIST
 from torchvision import transforms
 from torch import nn
+
+__all__ = ["SimpleMNISTDataModule", "MNISTDataModule"]
 
 class MNISTDataModule(L.LightningDataModule):
     # TODO: Unify the data directory from env see old template
@@ -51,4 +54,27 @@ class MNISTDataModule(L.LightningDataModule):
         return DataLoader(self.mnist_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
+        return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers) 
+
+class SimpleMNISTDataModule(L.LightningDataModule):
+
+  def setup(self, stage):
+    # transforms for images
+    transform=transforms.Compose([transforms.ToTensor(), 
+                                  transforms.Normalize((0.1307,), (0.3081,))])
+      
+    # prepare transforms standard to MNIST
+    self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
+    self.mnist_train, self.mnist_val = random_split(
+                    self.mnist_train, [0.8, 0.2]
+                )
+    self.mnist_test = MNIST(os.getcwd(), train=False, download=True, transform=transform)
+
+  def train_dataloader(self):
+    return DataLoader(self.mnist_train, batch_size=64)
+
+  def val_dataloader(self):
+    return DataLoader(self.mnist_val, batch_size=64)
+
+  def test_dataloader(self):
+    return DataLoader(self.mnist_val, batch_size=64)

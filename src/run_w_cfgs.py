@@ -18,7 +18,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
-from src.trainer.dataloader.mnist_dataloader import MNISTDataModule
+from src.trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
 from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
 from src.trainer.modules.general_lit_module import NonDistLitModule, SingleOptLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
@@ -171,7 +171,7 @@ create_sp_pix_clbks_cfg = create_cls_imb_clbks_cfg
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=1,
+    max_epochs=10,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -269,7 +269,7 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 ExperimentConfig = make_config(
     lit_module=single_opt_module_cfg,
     trainer=trainer_cfg,
-    datamodule=sp_pix_datamdl_cfg
+    datamodule=builds(SimpleMNISTDataModule)
 )
 
 # pre_seed = zen(lambda seed: pl.seed_everything(seed))
