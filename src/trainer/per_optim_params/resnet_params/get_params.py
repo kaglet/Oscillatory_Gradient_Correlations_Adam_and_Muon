@@ -1,7 +1,7 @@
 import torch.nn as nn
 from typing import Any, Dict, Tuple
 
-__all__ = ["get_dist_Muon_Adam_params", "get_nondist_Muon_Adam_params"]
+__all__ = ["get_dist_Muon_Adam_params", "get_nondist_Muon_Adam_params", "get_Adam_params"]
 
 def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-10) -> list[dict[str, Any]]:
     """
@@ -35,7 +35,7 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
     
     return [muon_groups, adam_groups]
 
-def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[list[dict[str, Any]]]:
+def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[dict[str, Any]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
@@ -45,4 +45,4 @@ def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each:
     adam_groups = [dict(params=all_params)]
     adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
     
-    return [adam_groups]
+    return adam_groups
