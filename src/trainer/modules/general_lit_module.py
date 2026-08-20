@@ -114,11 +114,11 @@ class SingleOptLitModule(pl.LightningModule):
         """Perform a single model step on a batch of data."""
         input, targets = batch
         if is_Train:
-            logits = self.forward(input)
+            logits = self.model(input)
             loss = self.criterion(logits, targets)
         else: 
             with torch.no_grad():
-                logits = self.forward(input)
+                logits = self.model(input)
                 loss = self.criterion(logits, targets)
 
         preds = torch.argmax(logits, dim=1)
@@ -129,7 +129,7 @@ class SingleOptLitModule(pl.LightningModule):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
-        self.log(f"{metric_name}/loss", loss_store, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{metric_name}/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
