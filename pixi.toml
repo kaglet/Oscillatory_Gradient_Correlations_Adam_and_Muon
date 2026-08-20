@@ -8,6 +8,9 @@ version = "0.1.0"
 [tasks]
 random_tests = "python src/random_tests.py"
 jobs = "python jobs.py"
+nerd = "python nerd.py"
+nerdy = "python nerdy.py"
+mnist_test = "python src/.pixi/envs/default/Lib/site-packages/pl_bolts/models/mnist_module.py"
 
 [dependencies]
 pytorch-gpu = "*"

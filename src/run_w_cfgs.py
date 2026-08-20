@@ -28,7 +28,7 @@ from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_We
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
-from pl_bolts.models.vision import #TODO Copy over what I need for MNIST into my setup rather and ddelete pl_bolts
+from pl_bolts.models.mnist_module import LitMNIST
 from pl_bolts.datamodules import MNISTDataModule as PLMNISTDataModule
 
 builds = make_custom_builds_fn(populate_full_signature=True)
@@ -269,9 +269,9 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
-    lit_module=builds(LitMNIST, learning_rate=1e-3),
+    lit_module=single_opt_module_cfg,
     trainer=trainer_cfg,
-    datamodule=builds(PLMNISTDataModule)
+    datamodule=sp_pix_datamdl_cfg
 )
 
 # pre_seed = zen(lambda seed: pl.seed_everything(seed))

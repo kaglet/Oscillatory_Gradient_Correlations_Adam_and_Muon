@@ -45,7 +45,6 @@ class SingleOptLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
-        self._grad_accum_schedule = grad_accum_schedule
 
         self.optim = optim
         self.params = params
@@ -73,7 +72,7 @@ class SingleOptLitModule(pl.LightningModule):
     def configure_optimizers(self) -> Optimizer:
         optim = self.optim(self.params)
 
-        return optim
+        return torch.optim.Adam(self.parameters(), lr=1e-3)
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         curr_param_grads = []
@@ -129,7 +128,7 @@ class SingleOptLitModule(pl.LightningModule):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
-        self.log(f"{metric_name}/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{metric_name}/loss", loss_store, on_step=True, on_epoch=True, prog_bar=True)
         self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
