@@ -80,13 +80,13 @@ class GeneralLitModule(pl.LightningModule):
         # optims = self.optims if isinstance(self.optims, list) else [self.optims]
         optims = [optim(params) for optim, params in zip(self.optims, self.params)]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-        mu_lr = optims[0].param_groups[0]["lr"]
-        ad_lr = optims[1].param_groups[0]["lr"]
-        ad_wd = optims[1].param_groups[0]["weight_decay"]
+        # mu_lr = optims[0].param_groups[0]["lr"]
+        # ad_lr = optims[1].param_groups[0]["lr"]
+        # ad_wd = optims[1].param_groups[0]["weight_decay"]
 
-        assert mu_lr == 1e-1, f"Muon lr of {mu_lr} not set to configured value"
-        assert ad_lr == 1e-5, f"Adam lr of {ad_lr} not set to configured value"
-        assert ad_wd == 0, f"Adam weight decay of {ad_wd} not set to configured value"
+        # assert mu_lr == 1e-1, f"Muon lr of {mu_lr} not set to configured value"
+        # assert ad_lr == 1e-5, f"Adam lr of {ad_lr} not set to configured value"
+        # assert ad_wd == 0, f"Adam weight decay of {ad_wd} not set to configured value"
 
         return optims
 

@@ -59,6 +59,8 @@ cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100)
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50), num_classes=10, num_in=1)
 
+single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=1)
+
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_params_cfg = non_dist_params_cfg(   
@@ -75,6 +77,13 @@ sp_pix_params_cfg = non_dist_params_cfg(
     betas=(0.9, 0.99)
 )
 
+single_opt_params_cfg = non_dist_params_cfg(   
+    model=single_opt_resnet_model_s_cfg,
+    lr_each=(1e-1, 1e-5), 
+    weight_decay_each=(0, 0), 
+    betas=(0.9, 0.99)
+)
+
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = non_dist_params_cfg(   
     model=sbg_rob_model_clb_cfg,
@@ -86,15 +95,16 @@ sbg_rob_params_cfg = non_dist_params_cfg(
 
 # Define base optimiser cfg
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
-non_dist_optims = [pbuilds(Muon), pbuilds(Adam)]
+non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
+single_optim_pcfg = [pbuilds(Adam)]
 
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_module_cfg = builds(
     NonDistLitModule, 
     model=cls_imb_model_s_cfg,
     params=cls_imb_params_cfg,
-    optims=non_dist_optims,
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
+    optims=non_dist_optims_pcfg,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = 10
 )
@@ -103,8 +113,18 @@ sp_pix_module_cfg = builds(
     NonDistLitModule, 
     model=sp_pix_model_cfg,
     params=sp_pix_params_cfg,
-    optims=non_dist_optims,
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims[0]), pbuilds(LRScheduler, non_dist_optims[1])],
+    optims=non_dist_optims_pcfg,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    num_classes = 10
+)
+
+single_opt_module_cfg = builds(
+    NonDistLitModule, 
+    model=sp_pix_model_cfg,
+    params=single_opt_params_cfg,
+    optims=single_optim_pcfg,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = 10
 )
@@ -243,9 +263,9 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
-    lit_module=cls_imb_module_cfg,
+    lit_module=single_opt_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cls_imb_datamdl_s_cfg
+    datamodule=sp_pix_datamdl_cfg
 )
 
 # pre_seed = zen(lambda seed: pl.seed_everything(seed))
