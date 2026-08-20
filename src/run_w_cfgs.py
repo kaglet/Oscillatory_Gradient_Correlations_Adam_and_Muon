@@ -28,7 +28,7 @@ from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_We
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
-from pl_bolts.models.mnist_module import LitMNIST
+from pl_bolts.models.vision import #TODO Copy over what I need for MNIST into my setup rather and ddelete pl_bolts
 from pl_bolts.datamodules import MNISTDataModule as PLMNISTDataModule
 
 builds = make_custom_builds_fn(populate_full_signature=True)
