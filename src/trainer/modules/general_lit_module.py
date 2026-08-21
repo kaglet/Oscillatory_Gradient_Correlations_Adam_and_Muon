@@ -81,7 +81,7 @@ class SingleOptLitModule(pl.LightningModule):
         curr_grad_corr_store = []
 
         for i, (n, p) in enumerate(trainable_params):
-            assert p.grad is not None, "None gradients detected when trainable params expected"
+            assert p.requires_grad == True, "None gradients detected when trainable params expected"
             if p.grad is not None:
                 curr_p_grad = p.grad.detach().clone()
                 curr_param_grads.append(curr_p_grad) 
@@ -113,6 +113,10 @@ class SingleOptLitModule(pl.LightningModule):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform a single model step on a batch of data."""
         input, targets = batch
+
+        self.trainable_params = [(n, p) for (n,p) in self.model.named_parameters() if p.requires_grad]
+        self.store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
+
         if is_Train:
             logits = self.model(input)
             loss = self.criterion(logits, targets)
@@ -144,7 +148,6 @@ class SingleOptLitModule(pl.LightningModule):
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        print(loss)
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
@@ -162,7 +165,7 @@ class SingleOptLitModule(pl.LightningModule):
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
-        # _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
+        _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
         print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
 
         rows = np.array(self.global_grad_corr_store, np.float32)
@@ -259,15 +262,12 @@ class DualOptimLitModule(pl.LightningModule):
         return optims
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
-        """
-        
-        """
         curr_param_grads = []
         prev_grads_exist = len(self.prev_grads) != 0
         curr_grad_corr_store = []
 
         for i, (n, p) in enumerate(trainable_params):
-            assert p.grad is not None, "None gradients detected when trainable params expected"
+            assert p.requires_grad == True, "None gradients detected when trainable params expected"
             if p.grad is not None:
                 curr_p_grad = p.grad.detach().clone()
                 curr_param_grads.append(curr_p_grad) 
@@ -342,9 +342,6 @@ class DualOptimLitModule(pl.LightningModule):
                 loss = self.criterion(logits, targets)
 
         preds = torch.argmax(logits, dim=1)
-        # print(logits[:3, :])
-        # print(preds[:3])
-        # print(targets[:3])
 
         return loss, preds, targets
 
@@ -367,7 +364,6 @@ class DualOptimLitModule(pl.LightningModule):
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        # print(loss)
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
@@ -385,8 +381,7 @@ class DualOptimLitModule(pl.LightningModule):
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
-        # _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
-        self.log(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
+        print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
 
         rows = np.array(self.global_grad_corr_store, np.float32)
         with open('GCS.csv', 'w', newline='') as f:

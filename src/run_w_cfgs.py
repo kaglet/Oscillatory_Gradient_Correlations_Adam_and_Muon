@@ -173,7 +173,7 @@ create_sp_pix_clbks_cfg = create_cls_imb_clbks_cfg
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=3,
+    max_epochs=1,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
