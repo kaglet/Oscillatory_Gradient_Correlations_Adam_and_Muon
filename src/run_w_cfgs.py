@@ -180,8 +180,8 @@ trainer_cfg = builds(
     callbacks=create_cls_imb_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    devices=1
-    # precision = "bf16-mixed"
+    devices=1,
+    precision = "bf16-mixed"
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
@@ -269,13 +269,14 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
+    seed=1,
     lit_module=single_opt_module_cfg,
     trainer=trainer_cfg,
     datamodule=sp_pix_datamdl_cfg
 )
 
-# pre_seed = zen(lambda seed: pl.seed_everything(seed))
-task_function = zen(train_and_val)
+pre_seed = zen(lambda seed: pl.seed_everything(seed))
+task_function = zen(train_and_val, pre_call=pre_seed)
 
 if __name__ == "__main__":
     # enables us to call
