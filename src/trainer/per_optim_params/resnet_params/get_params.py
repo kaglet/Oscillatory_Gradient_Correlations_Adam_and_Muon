@@ -25,6 +25,7 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
+    print("Model id/reference in memory is:", id(model))
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) != 2 and p.requires_grad]
     high_dim_params = [p for p in model.parameters() if (len(p.shape) == 2) and (p.requires_grad)]
@@ -40,6 +41,8 @@ def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each:
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
     # Norm biases are not innately 2D, but a collation of 1D vectors
+    print("Model id/reference in memory is:", id(model))
+
     all_params = [p for p in model.parameters() if p.requires_grad]
     
     adam_groups = [dict(params=all_params)]

@@ -30,6 +30,7 @@ class SingleOptLitModule(pl.LightningModule):
         super().__init__()
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
+        print("Model id/reference in memory is:", id(model))
         
         # metric objects for calculating and averaging accuracy across batches
         self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
@@ -161,7 +162,7 @@ class SingleOptLitModule(pl.LightningModule):
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
-        _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
+        # _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
         print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
 
         rows = np.array(self.global_grad_corr_store, np.float32)
@@ -341,9 +342,9 @@ class DualOptimLitModule(pl.LightningModule):
                 loss = self.criterion(logits, targets)
 
         preds = torch.argmax(logits, dim=1)
-        print(logits[:3, :])
-        print(preds[:3])
-        print(targets[:3])
+        # print(logits[:3, :])
+        # print(preds[:3])
+        # print(targets[:3])
 
         return loss, preds, targets
 
@@ -366,7 +367,7 @@ class DualOptimLitModule(pl.LightningModule):
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self.batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        print(loss)
+        # print(loss)
         self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
@@ -384,8 +385,8 @@ class DualOptimLitModule(pl.LightningModule):
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
         fields = self.per_param_names
-        _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
-        print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
+        # _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
+        self.log(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
 
         rows = np.array(self.global_grad_corr_store, np.float32)
         with open('GCS.csv', 'w', newline='') as f:
