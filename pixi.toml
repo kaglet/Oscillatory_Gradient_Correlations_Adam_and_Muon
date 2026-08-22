@@ -6,7 +6,7 @@ platforms = [{ platform = "win-64", cuda = "13.1" }]
 version = "0.1.0"
 
 [tasks]
-random_tests = "python src/random_tests.py +dbase=postgresql"
+random_tests = "python src/random_tests.py +db=postgresql"
 jobs = "python jobs.py"
 nerd = "python nerd.py"
 nerdy = "python nerdy.py"
