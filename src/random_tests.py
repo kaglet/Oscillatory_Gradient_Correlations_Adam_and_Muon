@@ -21,7 +21,7 @@ class PostGreSQLConfig:
 @dataclass
 class Config:
     # We will populate db using composition.
-    db: Any
+    dbase: Any
 
 # Create config group `db` with options 'mysql' and 'postgreqsl'
 cs = ConfigStore.instance()
