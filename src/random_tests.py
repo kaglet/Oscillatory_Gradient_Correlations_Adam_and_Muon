@@ -1,10 +1,37 @@
-import multiprocessing
+from dataclasses import dataclass
+from typing import Any
 
-from torchvision.models import resnet18
+import hydra
+from hydra.core.config_store import ConfigStore
+from omegaconf import OmegaConf
 
-# names = set()
-# for n,p in resnet18().named_parameters():
-#     names.add(n)
-#     print(n)
+@dataclass
+class MySQLConfig:
+    driver: str = "mysql"
+    host: str = "localhost"
+    port: int = 3306
 
-print(multiprocessing.cpu_count())
+@dataclass
+class PostGreSQLConfig:
+    driver: str = "postgresql"
+    host: str = "localhost"
+    port: int = 5432
+    timeout: int = 10
+
+@dataclass
+class Config:
+    # We will populate db using composition.
+    db: Any
+
+# Create config group `db` with options 'mysql' and 'postgreqsl'
+cs = ConfigStore.instance()
+cs.store(name="config", node=Config)
+cs.store(group="dbase", name="mysql", node=MySQLConfig)
+cs.store(group="dbase", name="postgresql", node=PostGreSQLConfig)
+
+@hydra.main(config_name="config")
+def my_app(cfg: Config) -> None:
+    print(OmegaConf.to_yaml(cfg))
+
+if __name__ == "__main__":
+    my_app()

@@ -63,7 +63,7 @@ cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_i
 cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100) 
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_clb_cfg = resnet_model_cfg(net=just(resnet50), num_classes=10, num_in=1)
+sbg_rob_model_cfg = resnet_model_cfg(net=just(resnet50), num_classes=10, num_in=1)
 
 single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=1)
 
@@ -92,7 +92,7 @@ single_opt_params_cfg = single_opt_params_cfg(
 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = non_dist_params_cfg(   
-    model=sbg_rob_model_clb_cfg,
+    model=sbg_rob_model_cfg,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99),
@@ -116,6 +116,17 @@ cls_imb_module_cfg = builds(
 )
 
 sp_pix_module_cfg = builds(
+    NonDistLitModule, 
+    model=sp_pix_model_cfg,
+    params=sp_pix_params_cfg,
+    optims=non_dist_optims_pcfg,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    num_classes = 10
+)
+
+# TODO: Fix this copied placeholder
+sbg_rob_module_cfg = builds(
     NonDistLitModule, 
     model=sp_pix_model_cfg,
     params=sp_pix_params_cfg,
@@ -265,6 +276,14 @@ sp_pix_datamdl_cfg = mnist_datamdl_cfg(
     num_workers = total_local_cores
 )
 
+sbg_rob_datamdl_cfg = mnist_datamdl_cfg(
+    train_transforms = sp_pix_transforms,
+    val_transforms = sp_pix_transforms,
+    test_transforms = sp_pix_transforms,
+    batch_size = 64,
+    num_workers = total_local_cores
+)
+
 # TODO: Import only this
 # TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
 # Make a pure dict object like a class, but immediately configurable
@@ -274,6 +293,17 @@ ExperimentConfig = make_config(
     trainer=trainer_cfg,
     datamodule=sp_pix_datamdl_cfg
 )
+
+# Create groups: Key value pairs 
+model_store = store(group="model/class_imbalance")
+model_store(cls_imb_model_s_cfg, name="small", group="model/class_imbalance")
+model_store(cls_imb_model_l_cfg, name="large", group="model/class_imbalance")
+
+model_store(sbg_rob_model_cfg, name="resnet50", group="model/subgroup_robustness")
+model_store(sp_pix_model_cfg, name="simple_cnn", group="model/spurious_pixel")
+
+model_store(single_opt_resnet_model_s_cfg, name="resnet_test", group="model/single_optimiser")
+
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
