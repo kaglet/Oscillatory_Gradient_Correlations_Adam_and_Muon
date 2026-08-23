@@ -11,7 +11,7 @@ advanced_gear = InventoryConf(gold=500, weapon="wand", costume="${player.invento
 hard_mode_gear = InventoryConf(gold=0, weapon="inner thoughts", costume="rags")
 
 # Register inventory configs under group: player/inventory
-inv_store = store(group="player/inventor")
+inv_store = store(group="player/inventory")
 
 # inventory can take one of the 3 values, given by an alias
 # names don't feature in actual config, as I stated
@@ -45,7 +45,7 @@ player_store(rakesh_conf, name="rakesh")
 # The `hydra_defaults` field is specified in our task function's config.
 # It instructs Hydra to use the player config that named 'base' in our
 # config store as the default config for our app.
-@store(name="my_app",  hydra_defaults=["_self_", {"player": "base"}])
+@store(name="my_app")
 def task_function(player: Character):
 
     print(player)
