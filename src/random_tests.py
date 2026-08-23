@@ -11,7 +11,7 @@ advanced_gear = InventoryConf(gold=500, weapon="wand", costume="${player.invento
 hard_mode_gear = InventoryConf(gold=0, weapon="inner thoughts", costume="rags")
 
 # Register inventory configs under group: player/inventory
-inv_store = store(group="player/inventory")
+inv_store = store(group="player/inventor")
 
 # inventory can take one of the 3 values, given by an alias
 # names don't feature in actual config, as I stated
