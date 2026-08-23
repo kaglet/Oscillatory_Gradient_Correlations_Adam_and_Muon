@@ -1,0 +1,10 @@
+Game session log:
+Player: alice, lvl: 1, has: {'gold': 10, 'weapon': 'stick', 'costume': 'robe'}
+Game session log:
+Player: brinda, lvl: 1, has: {'gold': 10, 'weapon': 'stick', 'costume': 'robe'}
+Game session log:
+Player: brinda, lvl: 47, has: {'gold': 52, 'weapon': 'flute', 'costume': 'robe'}
+Game session log:
+Player: rakesh, lvl: 300, has: {'gold': 41, 'weapon': 'pillow', 'costume': 'robe'}
+Game session log:
+Player: rakesh, lvl: 300, has: {'gold': 500, 'weapon': 'wand', 'costume': 'magic robe'}

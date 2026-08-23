@@ -1,37 +1,65 @@
-from dataclasses import dataclass
-from typing import Any
+from hydra_zen import store, make_custom_builds_fn, zen
 
-import hydra
-from hydra.core.config_store import ConfigStore
-from omegaconf import OmegaConf
+from game_library import inventory, Character
 
-@dataclass
-class MySQLConfig:
-    driver: str = "mysql"
-    host: str = "localhost"
-    port: int = 3306
+builds = make_custom_builds_fn(populate_full_signature=True)
 
-@dataclass
-class PostGreSQLConfig:
-    driver: str = "postgresql"
-    host: str = "localhost"
-    port: int = 5432
-    timeout: int = 10
+# Create inventory configs
+InventoryConf = builds(inventory)
+starter_gear = InventoryConf(gold=10, weapon="stick", costume="tunic")
+advanced_gear = InventoryConf(gold=500, weapon="wand", costume="magic robe")
+hard_mode_gear = InventoryConf(gold=0, weapon="inner thoughts", costume="rags")
 
-@dataclass
-class Config:
-    # We will populate db using composition.
-    dbase: Any
+# Register inventory configs under group: player/inventory
+inv_store = store(group="player/inventory", package="player/inventory", provider="player/inventory")
 
-# Create config group `db` with options 'mysql' and 'postgreqsl'
-cs = ConfigStore.instance()
-cs.store(name="config", node=Config)
-cs.store(group="dbase", name="mysql", node=MySQLConfig)
-cs.store(group="dbase", name="postgresql", node=PostGreSQLConfig)
+# inventory can take one of the 3 values, given by an alias
+# names don't feature in actual config, as I stated
+inv_store(starter_gear, name="starter")
+inv_store(advanced_gear, name="advanced")
+inv_store(hard_mode_gear, name="hard_mode")
 
-@hydra.main(config_name="config")
-def my_app(cfg: Config) -> None:
-    print(OmegaConf.to_yaml(cfg))
+# Create player-profile configs
+CharConf = builds(Character, inventory=starter_gear)
+
+brinda_conf = CharConf(
+    name="brinda",
+    level=47,
+    inventory=InventoryConf(costume="cape", weapon="flute", gold=52),
+)
+
+rakesh_conf = CharConf(
+    name="rakesh",
+    level=300,
+    inventory=InventoryConf(costume="PJs", weapon="pillow", gold=41),
+)
+
+# Register player-profile configs under group: player
+player_store = store(group="player")
+
+player_store(CharConf, name="base")
+player_store(brinda_conf, name="brinda")
+player_store(rakesh_conf, name="rakesh")
+
+
+# The `hydra_defaults` field is specified in our task function's config.
+# It instructs Hydra to use the player config that named 'base' in our
+# config store as the default config for our app.
+@store(name="my_app",  hydra_defaults=["_self_", {"player": "base"}])
+def task_function(player: Character):
+
+    print(player)
+
+    with open("player_log.txt", "a") as f:
+        f.write("Game session log:\n")
+        f.write(f"Player: {player}\n")
+
+    return player
+
 
 if __name__ == "__main__":
-    my_app()
+    store.add_to_hydra_store()
+    zen(task_function).hydra_main(config_name="my_app",
+                                  version_base="1.3",
+                                  config_path=".",
+                                  )

@@ -191,8 +191,8 @@ trainer_cfg = builds(
     callbacks=create_cls_imb_clbks_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
-    devices=1,
-    precision = "bf16-mixed"
+    devices=1
+    # precision = "bf16-mixed"
 )  
 
 # ---- TRAINER CONFIGS COMPLETE ---- #
@@ -317,6 +317,6 @@ if __name__ == "__main__":
 
     task_function.hydra_main(
         config_name="lit_app",
-        version_base="1.2",
+        version_base="1.3",
         config_path=".",
     )
