@@ -6,12 +6,12 @@ builds = make_custom_builds_fn(populate_full_signature=True)
 
 # Create inventory configs
 InventoryConf = builds(inventory)
-starter_gear = InventoryConf(gold=10, weapon="stick", costume="tunic")
-advanced_gear = InventoryConf(gold=500, weapon="wand", costume="magic robe")
+starter_gear = InventoryConf(gold=10, weapon="stick", costume="{weapon}")
+advanced_gear = InventoryConf(gold=500, weapon="wand", costume="${.weapon}")
 hard_mode_gear = InventoryConf(gold=0, weapon="inner thoughts", costume="rags")
 
 # Register inventory configs under group: player/inventory
-inv_store = store(group="player/inventory", package="player/inventory", provider="player/inventory")
+inv_store = store(group="player/inventory")
 
 # inventory can take one of the 3 values, given by an alias
 # names don't feature in actual config, as I stated
