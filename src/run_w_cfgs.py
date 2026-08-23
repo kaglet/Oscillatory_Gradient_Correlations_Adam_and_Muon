@@ -33,9 +33,6 @@ from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, im
 from pl_bolts.models.mnist_module import LitMNIST
 from pl_bolts.datamodules import MNISTDataModule as PLMNISTDataModule
 
-built_cls_imb_s_model = create_resnet_model
-OmegaConf.register_new_resolver('dummy_model', built_cls_imb_s_model)
-
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
@@ -70,7 +67,7 @@ single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_s_params_cfg = non_dist_params_cfg(   
-    model="${dummy_model}",
+    model="${.params.model}",
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
@@ -115,7 +112,7 @@ single_optim_pcfg = pbuilds(Adam)
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_s_module_cfg = builds(
     DualOptLitModule, 
-    model="${dummy_model}",
+    model="${.params.model}",
     params=cls_imb_s_params_cfg,
     optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
@@ -357,7 +354,7 @@ ExperimentConfig = make_config(
     lit_module=cls_imb_s_module_cfg,
     trainer=trainer_cfg,
     datamodule=cls_imb_datamdl_s_cfg,
-    model_cache="${dummy_model}"
+    model_cache="${.params.model}"
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
