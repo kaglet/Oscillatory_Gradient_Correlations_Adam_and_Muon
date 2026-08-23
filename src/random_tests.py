@@ -7,7 +7,7 @@ builds = make_custom_builds_fn(populate_full_signature=True)
 # Create inventory configs
 InventoryConf = builds(inventory)
 starter_gear = InventoryConf(gold=10, weapon="stick", costume="{weapon}")
-advanced_gear = InventoryConf(gold=500, weapon="wand", costume="${.weapon}")
+advanced_gear = InventoryConf(gold=500, weapon="wand", costume="${player.inventory.weapon}")
 hard_mode_gear = InventoryConf(gold=0, weapon="inner thoughts", costume="rags")
 
 # Register inventory configs under group: player/inventory

@@ -14,3 +14,5 @@ Game session log:
 Player: rakesh, lvl: 300, has: {'gold': 500, 'weapon': 'wand', 'costume': '{weapon}'}
 Game session log:
 Player: rakesh, lvl: 300, has: {'gold': 500, 'weapon': 'wand', 'costume': 'wand'}
+Game session log:
+Player: rakesh, lvl: 300, has: {'gold': 500, 'weapon': 'wand', 'costume': 'wand'}
