@@ -35,7 +35,7 @@ rakesh_conf = CharConf(
 )
 
 # Register player-profile configs under group: player
-player_store = store(group="player")
+player_store = store(group="playe")
 
 player_store(CharConf, name="base")
 player_store(brinda_conf, name="brinda")
@@ -46,15 +46,15 @@ player_store(rakesh_conf, name="rakesh")
 # It instructs Hydra to use the player config that named 'base' in our
 # config store as the default config for our app.
 @store(name="my_app")
-def task_function(player: Character):
+def task_function(playe: Character):
 
-    print(player)
+    print(playe)
 
     with open("player_log.txt", "a") as f:
         f.write("Game session log:\n")
-        f.write(f"Player: {player}\n")
+        f.write(f"Player: {playe}\n")
 
-    return player
+    return playe
 
 
 if __name__ == "__main__":
