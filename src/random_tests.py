@@ -56,7 +56,7 @@ def task_function(playe: Character):
 
     return playe
 
-
+# Allows CLI run
 if __name__ == "__main__":
     store.add_to_hydra_store()
     zen(task_function).hydra_main(config_name="my_app",
