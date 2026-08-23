@@ -20,7 +20,7 @@ from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
 from src.trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
 from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
-from src.trainer.modules.general_lit_module import NonDistLitModule, SingleOptLitModule 
+from src.trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
 from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
 from src.trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
@@ -50,10 +50,6 @@ dist_params_cfg = builds(
     get_dist_Muon_Adam_params,
 )
 
-single_opt_params_cfg = builds(
-    get_Adam_params,
-)
-
 # Define base vision model cfg
 resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
@@ -69,8 +65,15 @@ single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_params_cfg = non_dist_params_cfg(   
+cls_imb_s_params_cfg = non_dist_params_cfg(   
     model=cls_imb_model_s_cfg,
+    lr_each=(1e-1, 1e-5), 
+    weight_decay_each=(0, 0), 
+    betas=(0.9, 0.99)
+)
+
+cls_imb_l_params_cfg = non_dist_params_cfg(   
+    model=cls_imb_model_l_cfg,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
@@ -83,7 +86,8 @@ sp_pix_params_cfg = non_dist_params_cfg(
     betas=(0.9, 0.99)
 )
 
-single_opt_params_cfg = single_opt_params_cfg(   
+single_opt_params_cfg = builds(
+    get_Adam_params,
     model=single_opt_resnet_model_s_cfg,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
@@ -105,45 +109,55 @@ non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = pbuilds(Adam)
 
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
-cls_imb_module_cfg = builds(
-    NonDistLitModule, 
-    model=cls_imb_model_s_cfg,
-    params=cls_imb_params_cfg,
+cls_imb_s_module_cfg = builds(
+    DualOptLitModule, 
+    model="${.params.model}",
+    params=cls_imb_s_params_cfg,
     optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = 10
+    num_classes = "${.params.num_classes}"
+)
+
+cls_imb_l_module_cfg = builds(
+    DualOptLitModule, 
+    model="${.params.model}",
+    params=cls_imb_s_params_cfg,
+    optims=non_dist_optims_pcfg,
+    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
+    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    num_classes = "${.params.num_classes}"
 )
 
 sp_pix_module_cfg = builds(
-    NonDistLitModule, 
-    model=sp_pix_model_cfg,
+    DualOptLitModule, 
+    model="${.params.model}",
     params=sp_pix_params_cfg,
     optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = 10
+    num_classes = "${.params.num_classes}"
 )
 
 # TODO: Fix this copied placeholder
 sbg_rob_module_cfg = builds(
-    NonDistLitModule, 
-    model=sp_pix_model_cfg,
+    DualOptLitModule, 
+    model="${.params.model}",
     params=sp_pix_params_cfg,
     optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = 10
+    num_classes = "${.params.num_classes}"
 )
 
-single_opt_module_cfg = builds(
+test_single_opt_module_cfg = builds(
     SingleOptLitModule, 
-    model=single_opt_resnet_model_s_cfg,
+    model="${.params.model}",
     params=single_opt_params_cfg,
     optim=single_optim_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = 10
+    num_classes = "${.params.num_classes}"
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
@@ -164,8 +178,6 @@ cls_imb_chkpt_cfg = chkpt_cfg(
     monitor="val/acc", 
     save_last=True
 )
-
-sp_pix_chkpt_cfg = cls_imb_chkpt_cfg
 
 # Create static list of checkpoint behaviours, TODO: can be saved into group later
 chkpts = [cls_imb_chkpt_cfg]
@@ -284,26 +296,64 @@ sbg_rob_datamdl_cfg = mnist_datamdl_cfg(
     num_workers = total_local_cores
 )
 
-# TODO: Import only this
-# TODO: See file mnist_trainer.py where I have matching note and instructions, that is the task_eval function to adopt
+sp_pix_lbl = "sp_pix"
+sbg_rob_lbl = "sbg_rob"
+cls_imb_s_lbl = "cls_imb_s"
+cls_imb_l_lbl = "cls_imb_l"
+base_lbl = "base"
+dummy_lbl = "dummy"
+
+# Create groups: Key value pairs (At current granularity level desired to register options per group)
+lit_module_store = store(group="lit_module/")
+lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
+lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")
+lit_module_store(sp_pix_module_cfg, name=sp_pix_lbl)
+lit_module_store(sbg_rob_module_cfg, name=sbg_rob_lbl)
+lit_module_store(cls_imb_s_module_cfg, name=cls_imb_s_lbl)
+lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
+# Tests single optimiser with specific params copied from dual optimizer
+lit_module_store(test_single_opt_module_cfg, name="dummy_single")
+
+trainer_store = store(group="trainer/")
+trainer_store(trainer_cfg, name=f"{base_lbl}")
+
+dataloader_store = store(group="dataloader/")
+dataloader_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
+dataloader_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
+dataloader_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
+dataloader_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
+
+model_store = store(group="lit_module/model")
+model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
+model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
+model_store(sp_pix_model_cfg, name=sp_pix_lbl)
+model_store(sbg_rob_model_cfg, name=sbg_rob_lbl)
+
+params_store = store(group="lit_module/params")
+params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
+params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
+params_store(sp_pix_params_cfg, name=sp_pix_lbl)
+params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
+
+schdlr_store = store(group="lit_module/schdlrs")
+
+grad_accum_schedule = store(group="lit_module/schdlrs")
+
+lit_module_store(cls_imb_model_s_cfg, name="small", group="model/class_imbalance")
+lit_module_store(cls_imb_model_l_cfg, name="large", group="model/class_imbalance")
+
+lit_module_store(sbg_rob_model_cfg, name="resnet50", group="model/subgroup_robustness")
+lit_module_store(sp_pix_model_cfg, name="simple_cnn", group="model/spurious_pixel")
+
+lit_module_store(single_opt_resnet_model_s_cfg, name="resnet_test", group="model/single_optimiser")
+
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
-    lit_module=single_opt_module_cfg,
+    lit_module=cls_imb_s_module_cfg,
     trainer=trainer_cfg,
-    datamodule=sp_pix_datamdl_cfg
+    datamodule=cls_imb_datamdl_s_cfg
 )
-
-# Create groups: Key value pairs 
-model_store = store(group="model/class_imbalance")
-model_store(cls_imb_model_s_cfg, name="small", group="model/class_imbalance")
-model_store(cls_imb_model_l_cfg, name="large", group="model/class_imbalance")
-
-model_store(sbg_rob_model_cfg, name="resnet50", group="model/subgroup_robustness")
-model_store(sp_pix_model_cfg, name="simple_cnn", group="model/spurious_pixel")
-
-model_store(single_opt_resnet_model_s_cfg, name="resnet_test", group="model/single_optimiser")
-
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
@@ -313,10 +363,12 @@ if __name__ == "__main__":
     from hydra_zen import ZenStore
 
     store = ZenStore(deferred_hydra_store=False)
-    store(ExperimentConfig, name="lit_app")
+    # No need to store under group name only to replace (in-place) its name alias if needed later 
+    # Though for now it is a default to refer to by name as config to pass through
+    store(ExperimentConfig, name="adam_muon_benchmarks", group="experiments")
 
     task_function.hydra_main(
-        config_name="lit_app",
+        config_name="adam_muon_benchmarks",
         version_base="1.3",
         config_path=".",
     )

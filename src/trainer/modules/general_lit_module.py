@@ -73,7 +73,7 @@ class SingleOptLitModule(pl.LightningModule):
     def configure_optimizers(self) -> Optimizer:
         optim = self.optim(self.params)
 
-        return torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optim
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         curr_param_grads = []
@@ -187,7 +187,7 @@ class SingleOptLitModule(pl.LightningModule):
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
 
-class DualOptimLitModule(pl.LightningModule):
+class DualOptLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -401,40 +401,7 @@ class DualOptimLitModule(pl.LightningModule):
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
-class NonDistLitModule(DualOptimLitModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        params: list[list[dict[str, Any]]],
-        optims: list[Partial[Optimizer]],
-        schdlrs: list[Partial[LRScheduler]],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
-        num_classes: int=10,
-    ):
-        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        """Save scheduler states to checkpoint.
-
-        Args:
-            checkpoint: The checkpoint dictionary to save state into.
-        """
-        checkpoint["optimizer_step_count"] = self._optimizer_step_count
-        
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        """Load scheduler states from checkpoint.
-
-        Note:
-            Actual scheduler state restoration happens in on_fit_start()
-            because schedulers don't exist yet at this point.
-
-        Args:
-            checkpoint: The checkpoint dictionary to load state from.
-        """
-        self._optimizer_step_count = checkpoint.get("optimizer_step_count", 0)
-
-class DistLitModule(DualOptimLitModule):
+class DistLitModule(DualOptLitModule):
     def __init__(
         self,
         model: nn.Module,
