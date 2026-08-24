@@ -25,11 +25,11 @@ def train_and_val(
     # Set matrix multiplication precision
     # TODO Fit this where it is more sensible, or make configurable, seems it should be in main loop at some torch.config level not composed into anything
     # torch.set_float32_matmul_precision("high")
-    print("Passed objects: ", params_cache, model_cache, datamodule, lit_module, trainer,)
+    logger = logging.getLogger(__name__)
+    logger.info("Logging from train and val input args", optims_cache[0], params_cache, model_cache, lit_module, datamodule)
+
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
-    logger = logging.getLogger(__name__)
-    logger.info(optims[0], params_cache, model_cache, lit_module, datamodule)
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
     trainer.fit(model=lit_module_built, datamodule=datamodule)
