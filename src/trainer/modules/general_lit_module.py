@@ -20,9 +20,9 @@ class SingleOptLitModule(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        params: list[dict[str, Any]],
-        optim: Partial[Optimizer],
-        schdlrs: list[Partial[LRScheduler]],
+        params: list[list[dict[str, Any]]],
+        optims: list[Optimizer],
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -47,8 +47,8 @@ class SingleOptLitModule(pl.LightningModule):
 
         self.model = model
 
-        self.optim = optim
-        self.params = params
+        self.optim = optims[0]
+        self.params = params[0]
 
         self.init_grad_corr_stores()
         self.save_hyperparameters(logger=False, ignore=["model"])
@@ -71,9 +71,7 @@ class SingleOptLitModule(pl.LightningModule):
         return self.model(input)
 
     def configure_optimizers(self) -> Optimizer:
-        optim = self.optim(self.params)
-
-        return optim
+        return self.optim
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         curr_param_grads = []
@@ -192,8 +190,8 @@ class DualOptLitModule(pl.LightningModule):
         self,
         model: nn.Module,
         params: list[list[dict[str, Any]]],
-        optims: list[Partial[Optimizer]],
-        schdlrs: list[Partial[LRScheduler]],
+        optims: list[Optimizer],
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -249,7 +247,6 @@ class DualOptLitModule(pl.LightningModule):
 
     def configure_optimizers(self) -> list[Optimizer]:
         # optims = self.optims if isinstance(self.optims, list) else [self.optims]
-        optims = [optim(params) for optim, params in zip(self.optims, self.params)]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
         # mu_lr = optims[0].param_groups[0]["lr"]
         # ad_lr = optims[1].param_groups[0]["lr"]
@@ -259,7 +256,7 @@ class DualOptLitModule(pl.LightningModule):
         # assert ad_lr == 1e-5, f"Adam lr of {ad_lr} not set to configured value"
         # assert ad_wd == 0, f"Adam weight decay of {ad_wd} not set to configured value"
 
-        return optims
+        return self.optims
 
     def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         curr_param_grads = []
@@ -407,8 +404,8 @@ class DistLitModule(DualOptLitModule):
         model: nn.Module,
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
-        optims: list[Partial[Optimizer]],
-        schdlrs: list[Partial[LRScheduler]],
+        optims: list[Optimizer],
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):

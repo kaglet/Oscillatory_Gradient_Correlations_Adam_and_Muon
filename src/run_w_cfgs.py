@@ -16,7 +16,6 @@ from hydra_zen import instantiate, just, make_custom_builds_fn, make_config, mak
 from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
-from src.hydra_plugins.resolvers import register_resolvers
 from src.train_and_val import train_and_val
 from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
@@ -30,8 +29,6 @@ from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_We
 from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
-from pl_bolts.models.mnist_module import LitMNIST
-from pl_bolts.datamodules import MNISTDataModule as PLMNISTDataModule
 
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
@@ -44,11 +41,11 @@ pbuilds = make_custom_builds_fn(
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
 
 # Define base params cfg
-non_dist_params_cfg = builds(
+non_dist_params_cfg = pbuilds(
     get_nondist_Muon_Adam_params,
 )
 
-dist_params_cfg = builds(
+dist_params_cfg = pbuilds(
     get_dist_Muon_Adam_params,
 )
 
@@ -56,48 +53,54 @@ dist_params_cfg = builds(
 resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
 
+cls_imb_s_num_classes = 10
+cls_imb_l_num_classes = 100
+sbg_rob_num_classes = 5
+sp_pix_num_classes = 10
+
+# TODO: Add setting for num_in
+
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=3)
-cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=100) 
+cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=cls_imb_s_num_classes, num_in=3)
+cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=cls_imb_l_num_classes) 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_cfg = resnet_model_cfg(net=just(resnet50), num_classes=10, num_in=1)
+sbg_rob_model_cfg = resnet_model_cfg(net=just(resnet50), num_classes=sbg_rob_num_classes, num_in=1)
 
 single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=1)
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
-cls_imb_s_params_cfg = non_dist_params_cfg(   
-    model="${.params.model}",
+cls_imb_s_params_cfg = pbuilds(  
+    get_nondist_Muon_Adam_params,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
-cls_imb_l_params_cfg = non_dist_params_cfg(   
-    model=cls_imb_model_l_cfg,
+cls_imb_l_params_cfg = pbuilds(  
+    get_nondist_Muon_Adam_params, 
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
-sp_pix_params_cfg = non_dist_params_cfg(   
-    model=sp_pix_model_cfg,
+sp_pix_params_cfg = pbuilds(   
+    get_nondist_Muon_Adam_params,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
-single_opt_params_cfg = builds(
+single_opt_params_cfg = pbuilds(
     get_Adam_params,
-    model=single_opt_resnet_model_s_cfg,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 # Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_params_cfg = non_dist_params_cfg(   
-    model=sbg_rob_model_cfg,
+sbg_rob_params_cfg = pbuilds(   
+    get_nondist_Muon_Adam_params,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99),
@@ -107,58 +110,43 @@ sbg_rob_params_cfg = non_dist_params_cfg(
 # Define base optimiser cfg
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
-single_optim_pcfg = pbuilds(Adam)
+single_optim_pcfg = [pbuilds(Adam)]
 
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
-cls_imb_s_module_cfg = builds(
+cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
-    model="${.params.model}",
-    params=cls_imb_s_params_cfg,
-    optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = "${.params.model.num_classes}"
+    num_classes = cls_imb_s_num_classes
 )
 
-cls_imb_l_module_cfg = builds(
+cls_imb_l_module_cfg = pbuilds(
     DualOptLitModule, 
-    model="${.params.model}",
-    params=cls_imb_s_params_cfg,
-    optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = "${.params.model.num_classes}"
+    num_classes = cls_imb_l_num_classes
 )
 
-sp_pix_module_cfg = builds(
+sp_pix_module_cfg = pbuilds(
     DualOptLitModule, 
-    model="${.params.model}",
-    params=sp_pix_params_cfg,
-    optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = "${.params.model.num_classes}"
+    num_classes = sp_pix_num_classes
 )
 
 # TODO: Fix this copied placeholder
-sbg_rob_module_cfg = builds(
+sbg_rob_module_cfg = pbuilds(
     DualOptLitModule, 
-    model="${.params.model}",
-    params=sp_pix_params_cfg,
-    optims=non_dist_optims_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = "${.params.model.num_classes}"
+    num_classes = sbg_rob_num_classes
 )
 
-test_single_opt_module_cfg = builds(
+test_single_opt_module_cfg = pbuilds(
     SingleOptLitModule, 
-    model="${.params.model}",
-    params=single_opt_params_cfg,
-    optim=single_optim_pcfg,
     schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
-    num_classes = "${.params.model.num_classes}"
+    num_classes = sp_pix_num_classes
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
@@ -324,7 +312,7 @@ dataloader_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
 dataloader_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
 dataloader_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
 
-model_store = store(group="lit_module/model")
+model_store = store(group="model/")
 model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
 model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
 model_store(sp_pix_model_cfg, name=sp_pix_lbl)
@@ -354,7 +342,9 @@ ExperimentConfig = make_config(
     lit_module=cls_imb_s_module_cfg,
     trainer=trainer_cfg,
     datamodule=cls_imb_datamdl_s_cfg,
-    model_cache="${.params.model}"
+    model_cache=cls_imb_model_s_cfg,
+    params_cache=cls_imb_s_params_cfg,
+    optims_cache = non_dist_optims_pcfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
@@ -364,7 +354,6 @@ task_function = zen(train_and_val, pre_call=pre_seed)
 if __name__ == "__main__":
     # enables us to call
     from hydra_zen import ZenStore
-    register_resolvers()
     store = ZenStore(deferred_hydra_store=False)
     # No need to store under group name only to replace (in-place) its name alias if needed later 
     # Though for now it is a default to refer to by name as config to pass through

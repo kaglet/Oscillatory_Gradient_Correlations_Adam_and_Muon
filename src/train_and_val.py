@@ -1,20 +1,29 @@
-from typing import Any
+from typing import Any, Callable
 
 import torch
+import torch.nn as nn
+from torch.optim import Optimizer  
 from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
+from hydra_zen.typing import Partial
 
 def train_and_val(
-    lit_module: LightningModule,
+    lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,
     trainer: Trainer,
-    dummy_model: Any
+    model_cache: nn.Module, # as built class instance
+    params_cache: Callable, # as getter method instance
+    optims_cache: list[Partial[Optimizer]]
 ):
     # Set matrix multiplication precision
     # TODO Fit this where it is more sensible, or make configurable, seems it should be in main loop at some torch.config level not composed into anything
     # torch.set_float32_matmul_precision("high")
-    trainer.fit(model=lit_module, datamodule=datamodule)
+    params = params_cache(model=model_cache)
+    optims = [optim(params) for optim, params in zip(optims_cache, params)]
+
+    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
+    trainer.fit(model=lit_module_built, datamodule=datamodule)
     # TODO: When you run test evaluate best AND last for Muon to see if degradation is a notably suffered effect
-    trainer.test(model=lit_module, datamodule=datamodule)
+    trainer.test(model=lit_module_built, datamodule=datamodule)
     
     return 1

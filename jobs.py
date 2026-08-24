@@ -1,5 +1,4 @@
 from hydra_zen import launch, instantiate
-from src.hydra_plugins.resolvers import register_resolvers
 from src.run_w_cfgs import ExperimentConfig, task_function
 import torch 
 
