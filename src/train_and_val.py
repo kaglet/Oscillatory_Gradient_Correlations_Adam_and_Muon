@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+import logging
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer  
@@ -22,6 +23,8 @@ def train_and_val(
     # torch.set_float32_matmul_precision("high")
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
+    logger = logging.getLogger(__name__)
+    logger.info(optims[0])
     schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims, schdlrs=schdlrs)
     trainer.fit(model=lit_module_built, datamodule=datamodule)
