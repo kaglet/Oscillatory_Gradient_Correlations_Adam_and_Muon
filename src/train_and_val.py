@@ -12,7 +12,6 @@ from hydra_zen import ZenStore, store
 
 __all__ = ["train_and_val"]
 
-@store(name="my_app",  hydra_defaults=["_self_", {"player": "base"}])
 def train_and_val(
     lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,

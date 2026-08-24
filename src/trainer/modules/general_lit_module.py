@@ -12,7 +12,7 @@ from hydra_zen.typing import Partial
 from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
-from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
+from trainer.modules.components.custom_grad_accum import GradAccumSchedule
 
 __all__ = ["NonDistLitModule", "DistLitModule", "SingleOptLitModule"]
 

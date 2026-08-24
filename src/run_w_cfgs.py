@@ -12,19 +12,19 @@ import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
-from hydra_zen import instantiate, just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen, ZenStore
+from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, zen, store
 from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
-from src.train_and_val import train_and_val
-from src.trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
-from src.trainer.dataloader.components.mnist_normalization import mnist_normalization
-from src.trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
-from src.trainer.modules.components.custom_grad_accum import GradAccumSchedule
-from src.trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
-from src.trainer.modules.components.custom_resnet import create_resnet_model
-from src.trainer.modules.components.simple_net import SimpleCNN
-from src.trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
+from train_and_val import train_and_val
+from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
+from trainer.dataloader.components.mnist_normalization import mnist_normalization
+from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
+from trainer.modules.components.custom_grad_accum import GradAccumSchedule
+from trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
+from trainer.modules.components.custom_resnet import create_resnet_model
+from trainer.modules.components.simple_net import SimpleCNN
+from trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
@@ -111,36 +111,38 @@ mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = [pbuilds(Adam)]
 
+grad_accum_schedule_cls_imb_cfg = builds(GradAccumSchedule, {0: 32})
+
 dummy_schdlrs_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = cls_imb_s_num_classes
 )
 
 cls_imb_l_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = cls_imb_l_num_classes
 )
 
 sp_pix_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = sp_pix_num_classes
 )
 
 # TODO: Fix this copied placeholder
 sbg_rob_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = sbg_rob_num_classes
 )
 
 test_single_opt_module_cfg = pbuilds(
     SingleOptLitModule, 
-    grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
+    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = sp_pix_num_classes
 )
 
@@ -288,8 +290,7 @@ base_lbl = "base"
 dummy_lbl = "dummy"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
-store = ZenStore(deferred_hydra_store=False, overwrite_ok=True, deferred_to_config=False)
-lit_module_store = store(group="experiment/lit_module")
+lit_module_store = store(group="lit_module")
 lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
 lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")
 lit_module_store(sp_pix_module_cfg, name=sp_pix_lbl)
@@ -299,33 +300,35 @@ lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
 # Tests single optimiser with specific params copied from dual optimizer
 lit_module_store(test_single_opt_module_cfg, name="dummy_single")
 
-trainer_store = store(group="experiment/trainer")
-trainer_store(trainer_cfg, name=f"{base_lbl}")
+trainer_store = store(group="trainer")
+trainer_store(trainer_cfg, name=base_lbl)
 
-datamodule_store = store(group="experiment/datamodule")
+datamodule_store = store(group="datamodule")
 datamodule_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
 datamodule_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
 datamodule_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
 datamodule_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
 
-model_store = store(group="experiment/model_cache")
+model_store = store(group="model_cache")
 model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
 model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
 model_store(sp_pix_model_cfg, name=sp_pix_lbl)
 model_store(sbg_rob_model_cfg, name=sbg_rob_lbl)
 
-params_store = store(group="experiment/params_cache")
+params_store = store(group="params_cache")
 params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
 params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
 params_store(single_opt_params_cfg, name="single")
 
-schdlr_store = store(group="experiment/schdlrs_cache")
+schdlr_store = store(group="schdlrs_cache")
+schdlr_store(dummy_schdlrs_pcfg, name=base_lbl)
 
-grad_accum_schedule = store(group="experiment/grad_acc_schdlrs")
+grad_accum_schedule_store = store(group="grad_accum_schedule")
+grad_accum_schedule_store(grad_accum_schedule_cls_imb_cfg, name=base_lbl)
 
-optims_store = store(group="experiment/optims_cache")
+optims_store = store(group="optims_cache")
 optims_store(non_dist_optims_pcfg, name=cls_imb_s_lbl)
 optims_store(non_dist_optims_pcfg, name=cls_imb_l_lbl)
 optims_store(non_dist_optims_pcfg, name=sp_pix_lbl)
@@ -334,25 +337,43 @@ optims_store(non_dist_optims_pcfg, name=sbg_rob_lbl)
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
-    lit_module=sp_pix_module_cfg,
-    trainer=trainer_cfg,
-    datamodule=sp_pix_datamdl_cfg,
-    model_cache=sp_pix_model_cfg,
-    params_cache=sp_pix_params_cfg,
-    optims_cache = non_dist_optims_pcfg,
-    schdlrs_cache = dummy_schdlrs_pcfg
+    hydra_defaults=[
+        {'lit_module': sp_pix_lbl},
+        {'params_cache': sp_pix_lbl},
+        {'model_cache': sp_pix_lbl},
+        {'datamodule': sp_pix_lbl},
+        {'trainer': base_lbl},        
+        {'optims_cache': sp_pix_lbl},
+        {'schdlrs_cache': base_lbl},
+        {'grad_accum_schedule': base_lbl},
+        '_self_'
+    ]
 )
 
-store(ExperimentConfig, name="adam_muon_benchmarks", group="experiment")
-store.add_to_hydra_store()
-print("Example group entry", store["experiment/params_cache", sp_pix_lbl])
+store(ExperimentConfig, name="adam_muon_benchmarks")
+print("Example group entry", store["params_cache", sp_pix_lbl])
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
 # Allows CLI run
 if __name__ == "__main__":
-    task_function.hydra_main(
+    store.add_to_hydra_store()
+    job = launch(
+        ExperimentConfig,
+        task_function,
         config_name="adam_muon_benchmarks",
+        
         version_base="1.2",
-        config_path=".",
+        overrides=[
+            f"model_cache={cls_imb_s_lbl}", 
+            f"datamodule={cls_imb_s_lbl}", 
+            f"params_cache={cls_imb_s_lbl}", 
+            f"optims_cache={cls_imb_s_lbl}", 
+            f"lit_module={cls_imb_s_lbl}"
+        ]
     )
+    # task_function.hydra_main(
+    #     config_name="adam_muon_benchmarks",
+    #     version_base="1.3",
+    #     config_path=".",
+    # )
