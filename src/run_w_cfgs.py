@@ -112,7 +112,7 @@ mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = [pbuilds(Adam)]
 
-dummy_schdlrs_pcfg = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])]
+dummy_schdlrs_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
