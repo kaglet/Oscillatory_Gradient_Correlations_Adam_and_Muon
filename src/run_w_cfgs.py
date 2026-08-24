@@ -71,28 +71,28 @@ single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_s_params_cfg = pbuilds(  
     get_nondist_Muon_Adam_params,
-    lr_each=(1e-1, 1e-5), 
+    lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 cls_imb_l_params_cfg = pbuilds(  
     get_nondist_Muon_Adam_params, 
-    lr_each=(1e-1, 1e-5), 
+    lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 sp_pix_params_cfg = pbuilds(   
     get_nondist_Muon_Adam_params,
-    lr_each=(1e-1, 1e-3), 
+    lr_each=(1e-5, 1e-3), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 single_opt_params_cfg = pbuilds(
     get_Adam_params,
-    lr_each=(1e-1, 1e-5), 
+    lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
@@ -106,6 +106,7 @@ sbg_rob_params_cfg = pbuilds(
     use_layer_recs=False
 )
 
+# TODO: Debug performance on 2 optimisers even if Adam is on both according to old successful run on CIFAR10  
 # Define base optimiser cfg
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
@@ -288,6 +289,7 @@ cls_imb_s_lbl = "cls_imb_s"
 cls_imb_l_lbl = "cls_imb_l"
 base_lbl = "base"
 dummy_lbl = "dummy"
+single_lbl = "single"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
 lit_module_store = store(group="lit_module")
@@ -320,7 +322,7 @@ params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
 params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
-params_store(single_opt_params_cfg, name="single")
+params_store(single_opt_params_cfg, name=single_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
 schdlr_store(dummy_schdlrs_pcfg, name=base_lbl)
