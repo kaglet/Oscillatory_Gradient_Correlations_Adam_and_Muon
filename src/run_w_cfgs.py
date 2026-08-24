@@ -112,24 +112,22 @@ mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = [pbuilds(Adam)]
 
+dummy_schdlrs_pcfg = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])]
 # Class imbalance experiment: Define default (configurable) lit_module cfg  
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = cls_imb_s_num_classes
 )
 
 cls_imb_l_module_cfg = pbuilds(
     DualOptLitModule, 
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = cls_imb_l_num_classes
 )
 
 sp_pix_module_cfg = pbuilds(
     DualOptLitModule, 
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = sp_pix_num_classes
 )
@@ -137,14 +135,12 @@ sp_pix_module_cfg = pbuilds(
 # TODO: Fix this copied placeholder
 sbg_rob_module_cfg = pbuilds(
     DualOptLitModule, 
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = sbg_rob_num_classes
 )
 
 test_single_opt_module_cfg = pbuilds(
     SingleOptLitModule, 
-    schdlrs = [pbuilds(LRScheduler, non_dist_optims_pcfg[0]), pbuilds(LRScheduler, non_dist_optims_pcfg[1])],
     grad_accum_schedule = builds(GradAccumSchedule, {0: 32}),
     num_classes = sp_pix_num_classes
 )
@@ -344,7 +340,8 @@ ExperimentConfig = make_config(
     datamodule=cls_imb_datamdl_s_cfg,
     model_cache=cls_imb_model_s_cfg,
     params_cache=cls_imb_s_params_cfg,
-    optims_cache = non_dist_optims_pcfg
+    optims_cache = non_dist_optims_pcfg,
+    schdlrs_cache = dummy_schdlrs_pcfg
 )
 
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
