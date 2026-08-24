@@ -12,7 +12,7 @@ import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
-from hydra_zen import instantiate, just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen
+from hydra_zen import instantiate, just, make_custom_builds_fn, make_config, make_custom_builds_fn, zen, ZenStore
 from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
@@ -86,7 +86,7 @@ cls_imb_l_params_cfg = pbuilds(
 
 sp_pix_params_cfg = pbuilds(   
     get_nondist_Muon_Adam_params,
-    lr_each=(1e-1, 1e-5), 
+    lr_each=(1e-1, 1e-3), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
@@ -181,7 +181,7 @@ create_sp_pix_clbks_cfg = create_cls_imb_clbks_cfg
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=1,
+    max_epochs=4,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -289,6 +289,7 @@ base_lbl = "base"
 dummy_lbl = "dummy"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
+store = ZenStore(deferred_hydra_store=False, overwrite_ok=True)
 lit_module_store = store(group="lit_module/")
 lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
 lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")
@@ -302,44 +303,42 @@ lit_module_store(test_single_opt_module_cfg, name="dummy_single")
 trainer_store = store(group="trainer/")
 trainer_store(trainer_cfg, name=f"{base_lbl}")
 
-dataloader_store = store(group="dataloader/")
-dataloader_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
-dataloader_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
-dataloader_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
-dataloader_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
+datamodule_store = store(group="datamodule/")
+datamodule_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
+datamodule_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
+datamodule_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
+datamodule_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
 
-model_store = store(group="model/")
+model_store = store(group="model_cache/")
 model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
 model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
 model_store(sp_pix_model_cfg, name=sp_pix_lbl)
 model_store(sbg_rob_model_cfg, name=sbg_rob_lbl)
 
-params_store = store(group="lit_module/params")
+params_store = store(group="params_cache/")
 params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
 params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
 
-schdlr_store = store(group="lit_module/schdlrs")
+schdlr_store = store(group="schdlrs_cache/")
 
-grad_accum_schedule = store(group="lit_module/schdlrs")
+grad_accum_schedule = store(group="grad_acc_schdlrs/")
 
-lit_module_store(cls_imb_model_s_cfg, name="small", group="model/class_imbalance")
-lit_module_store(cls_imb_model_l_cfg, name="large", group="model/class_imbalance")
-
-lit_module_store(sbg_rob_model_cfg, name="resnet50", group="model/subgroup_robustness")
-lit_module_store(sp_pix_model_cfg, name="simple_cnn", group="model/spurious_pixel")
-
-lit_module_store(single_opt_resnet_model_s_cfg, name="resnet_test", group="model/single_optimiser")
+optims_store = store(group="optims_cache/")
+optims_store(non_dist_optims_pcfg, name=cls_imb_s_lbl)
+optims_store(non_dist_optims_pcfg, name=cls_imb_l_lbl)
+optims_store(non_dist_optims_pcfg, name=sp_pix_lbl)
+optims_store(non_dist_optims_pcfg, name=sbg_rob_lbl)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
-    lit_module=cls_imb_s_module_cfg,
+    lit_module=sp_pix_module_cfg,
     trainer=trainer_cfg,
-    datamodule=cls_imb_datamdl_s_cfg,
-    model_cache=cls_imb_model_s_cfg,
-    params_cache=cls_imb_s_params_cfg,
+    datamodule=sp_pix_datamdl_cfg,
+    model_cache=sp_pix_model_cfg,
+    params_cache=sp_pix_params_cfg,
     optims_cache = non_dist_optims_pcfg,
     schdlrs_cache = dummy_schdlrs_pcfg
 )
@@ -350,11 +349,10 @@ task_function = zen(train_and_val, pre_call=pre_seed)
 # Allows CLI run
 if __name__ == "__main__":
     # enables us to call
-    from hydra_zen import ZenStore
-    store = ZenStore(deferred_hydra_store=False)
+    store = ZenStore(deferred_hydra_store=False, overwrite_ok=True)
     # No need to store under group name only to replace (in-place) its name alias if needed later 
     # Though for now it is a default to refer to by name as config to pass through
-    store(ExperimentConfig, name="adam_muon_benchmarks", group="experiments")
+    store(ExperimentConfig, name="adam_muon_benchmarks")
 
     task_function.hydra_main(
         config_name="adam_muon_benchmarks",

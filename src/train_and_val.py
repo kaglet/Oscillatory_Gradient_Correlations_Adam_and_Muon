@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
 
+__all__ = ["train_and_val"]
+
 def train_and_val(
     lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,
@@ -24,9 +26,9 @@ def train_and_val(
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     logger = logging.getLogger(__name__)
-    logger.info(optims[0])
-    schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
-    lit_module_built = lit_module(model=model_cache, params=params, optims=optims, schdlrs=schdlrs)
+    logger.info(optims[0], params_cache, model_cache, lit_module, datamodule)
+    # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
+    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
     trainer.fit(model=lit_module_built, datamodule=datamodule)
     # TODO: When you run test evaluate best AND last for Muon to see if degradation is a notably suffered effect
     trainer.test(model=lit_module_built, datamodule=datamodule)

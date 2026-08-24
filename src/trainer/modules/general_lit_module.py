@@ -22,7 +22,7 @@ class SingleOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -191,7 +191,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -405,8 +405,8 @@ class DistLitModule(DualOptLitModule):
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
         num_classes: int=10,
     ):
-        super().__init__(model=model, schdlrs=schdlrs, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
+        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
