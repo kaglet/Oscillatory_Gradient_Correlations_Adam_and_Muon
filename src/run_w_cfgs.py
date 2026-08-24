@@ -288,7 +288,7 @@ base_lbl = "base"
 dummy_lbl = "dummy"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
-store = ZenStore(deferred_hydra_store=True, overwrite_ok=True, deferred_to_config=True)
+store = ZenStore(deferred_hydra_store=False, overwrite_ok=True, deferred_to_config=False)
 lit_module_store = store(group="experiment/lit_module")
 lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
 lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")

@@ -8,10 +8,11 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
-from hydra_zen import ZenStore
+from hydra_zen import ZenStore, store
 
 __all__ = ["train_and_val"]
 
+@store(name="my_app",  hydra_defaults=["_self_", {"player": "base"}])
 def train_and_val(
     lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,
