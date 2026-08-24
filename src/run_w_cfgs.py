@@ -26,7 +26,6 @@ from src.trainer.modules.components.custom_resnet import create_resnet_model
 from src.trainer.modules.components.simple_net import SimpleCNN
 from src.trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
-from hydra_zen import store
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
@@ -289,8 +288,8 @@ base_lbl = "base"
 dummy_lbl = "dummy"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
-store = ZenStore(deferred_hydra_store=False, overwrite_ok=True)
-lit_module_store = store(group="lit_module/")
+store = ZenStore(deferred_hydra_store=True, overwrite_ok=True, deferred_to_config=True)
+lit_module_store = store(group="experiment/lit_module/")
 lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
 lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")
 lit_module_store(sp_pix_module_cfg, name=sp_pix_lbl)
@@ -300,32 +299,32 @@ lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
 # Tests single optimiser with specific params copied from dual optimizer
 lit_module_store(test_single_opt_module_cfg, name="dummy_single")
 
-trainer_store = store(group="trainer/")
+trainer_store = store(group="experiment/trainer/")
 trainer_store(trainer_cfg, name=f"{base_lbl}")
 
-datamodule_store = store(group="datamodule/")
+datamodule_store = store(group="experiment/datamodule/")
 datamodule_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
 datamodule_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
 datamodule_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
 datamodule_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
 
-model_store = store(group="model_cache/")
+model_store = store(group="experiment/model_cache/")
 model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
 model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
 model_store(sp_pix_model_cfg, name=sp_pix_lbl)
 model_store(sbg_rob_model_cfg, name=sbg_rob_lbl)
 
-params_store = store(group="params_cache/")
+params_store = store(group="experiment/params_cache/")
 params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
 params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
 
-schdlr_store = store(group="schdlrs_cache/")
+schdlr_store = store(group="experiment/schdlrs_cache/")
 
-grad_accum_schedule = store(group="grad_acc_schdlrs/")
+grad_accum_schedule = store(group="experiment/grad_acc_schdlrs/")
 
-optims_store = store(group="optims_cache/")
+optims_store = store(group="experiment/optims_cache/")
 optims_store(non_dist_optims_pcfg, name=cls_imb_s_lbl)
 optims_store(non_dist_optims_pcfg, name=cls_imb_l_lbl)
 optims_store(non_dist_optims_pcfg, name=sp_pix_lbl)
@@ -344,7 +343,8 @@ ExperimentConfig = make_config(
 )
 
 store(ExperimentConfig, name="adam_muon_benchmarks", group="experiment")
-
+store.add_to_hydra_store()
+print("Example group entry", store["experiment/params_cache/", sp_pix_lbl])
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 

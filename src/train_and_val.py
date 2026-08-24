@@ -8,6 +8,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
+from hydra_zen import ZenStore
 
 __all__ = ["train_and_val"]
 
@@ -20,6 +21,7 @@ def train_and_val(
     optims_cache: list[Partial[Optimizer]],
     schdlrs_cache: list[Partial[LRScheduler]]
 ):
+    # print(store.has_enqueued())
     # Set matrix multiplication precision
     # TODO Fit this where it is more sensible, or make configurable, seems it should be in main loop at some torch.config level not composed into anything
     # torch.set_float32_matmul_precision("high")
