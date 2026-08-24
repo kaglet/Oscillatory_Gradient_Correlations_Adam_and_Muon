@@ -11,12 +11,13 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
-        version_base="1.3",
+        
+        version_base="1.2",
         overrides=[
-            "+model_cache=sp_pix", 
-            "+datamodule=sp_pix", 
-            "+params_cache=sp_pix", 
-            "+optims_cache=sp_pix", 
-            "+lit_module=sp_pix"
+            "model_cache=sp_pix", 
+            "datamodule=sp_pix", 
+            "params_cache=sp_pix", 
+            "optims_cache=sp_pix", 
+            "lit_module=sp_pix"
         ]
     )
