@@ -313,7 +313,7 @@ class DualOptLitModule(pl.LightningModule):
 
             grad_accum = self._get_current_grad_accum()
             scaled_loss = loss / grad_accum
-            self.manual_backward(loss=loss)
+            self.manual_backward(loss=scaled_loss)
 
             should_step = (batch_idx + 1) % grad_accum == 0
 
