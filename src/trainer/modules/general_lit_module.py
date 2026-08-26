@@ -23,6 +23,7 @@ class SingleOptLitModule(pl.LightningModule):
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
         schdlrs: Optional[list[LRScheduler]] = None,
+        # TODO: Try grad accum to target commit 944f0df to be equivalent to dual opt
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
