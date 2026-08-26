@@ -248,15 +248,7 @@ class DualOptLitModule(pl.LightningModule):
         return self.model(input)
 
     def configure_optimizers(self) -> list[Optimizer]:
-        # optims = self.optims if isinstance(self.optims, list) else [self.optims]
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-        # mu_lr = optims[0].param_groups[0]["lr"]
-        # ad_lr = optims[1].param_groups[0]["lr"]
-        # ad_wd = optims[1].param_groups[0]["weight_decay"]
-
-        # assert mu_lr == 1e-1, f"Muon lr of {mu_lr} not set to configured value"
-        # assert ad_lr == 1e-5, f"Adam lr of {ad_lr} not set to configured value"
-        # assert ad_wd == 0, f"Adam weight decay of {ad_wd} not set to configured value"
 
         return self.optims
 
@@ -276,8 +268,6 @@ class DualOptLitModule(pl.LightningModule):
                     dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
                     norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
                     curr_grad_corr_store.append(dot_prod / norm)
-                else:
-                    self.per_param_names.append(n)
 
         self.prev_grads = curr_param_grads 
 
@@ -328,7 +318,7 @@ class DualOptLitModule(pl.LightningModule):
 
                 for i, opt in enumerate(optims):
                     if i == 0:
-                        opt.step()  # This increments global_step
+                        opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
                     else:
                         # Access underlying optimizer directly to avoid double-counting
                         opt.optimizer.step()
@@ -379,6 +369,7 @@ class DualOptLitModule(pl.LightningModule):
 
     def on_fit_end(self) -> None:
         print("Saving Gradient Correlation Store at root")
+        self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
         print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
 
