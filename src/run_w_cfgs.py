@@ -95,7 +95,7 @@ sp_pix_params_cfg = pbuilds(
 
 single_opt_params_cfg = pbuilds(
     get_Adam_params,
-    lr_each=(1e-5, 1e-5), 
+    lr_each=(1e-3, 1e-3), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
@@ -313,7 +313,7 @@ lit_module_store(sbg_rob_module_cfg, name=sbg_rob_lbl)
 lit_module_store(cls_imb_s_module_cfg, name=cls_imb_s_lbl)
 lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
 # Tests single optimiser with specific params copied from dual optimizer
-lit_module_store(test_single_opt_module_cfg, name="dummy_single")
+lit_module_store(test_single_opt_module_cfg, name=single_lbl)
 
 trainer_store = store(group="trainer")
 trainer_store(trainer_cfg, name=base_lbl)
@@ -385,9 +385,9 @@ if __name__ == "__main__":
         overrides=[
             f"model_cache={cls_imb_s_lbl}", 
             f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={no_muon_lbl}", 
-            f"optims_cache={no_muon_lbl}", 
-            f"lit_module={cls_imb_s_lbl}"
+            f"params_cache={single_lbl}", 
+            f"optims_cache={single_lbl}", 
+            f"lit_module={single_lbl}"
         ]
     )
     # task_function.hydra_main(
