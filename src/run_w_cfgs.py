@@ -102,7 +102,7 @@ single_opt_params_cfg = pbuilds(
 
 no_muon_params_cfg = pbuilds(
     get_nondist_Muon_Adam_params,
-    lr_each=(1e-5, 1e-3), 
+    lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99),
     use_muon=False
