@@ -48,6 +48,10 @@ dist_params_cfg = pbuilds(
     get_dist_Muon_Adam_params,
 )
 
+single_params_cfg = pbuilds(
+    get_Adam_params
+)
+
 # Define base vision model cfg
 resnet_model_cfg = builds(create_resnet_model)
 sp_pix_model_cfg = builds(SimpleCNN)
@@ -64,7 +68,6 @@ cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=cls_imb_s
 cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=cls_imb_l_num_classes) 
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_model_cfg = resnet_model_cfg(net=just(resnet50), num_classes=sbg_rob_num_classes, num_in=1)
-
 single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=1)
 
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
@@ -97,6 +100,14 @@ single_opt_params_cfg = pbuilds(
     betas=(0.9, 0.99)
 )
 
+no_muon_params_cfg = pbuilds(
+    get_nondist_Muon_Adam_params,
+    lr_each=(1e-5, 1e-3), 
+    weight_decay_each=(0, 0), 
+    betas=(0.9, 0.99),
+    use_muon=False
+)
+
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = pbuilds(   
     get_nondist_Muon_Adam_params,
@@ -111,6 +122,7 @@ sbg_rob_params_cfg = pbuilds(
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = [pbuilds(Adam)]
+no_muon_optims_pcfg = [pbuilds(Adam), pbuilds(Adam)]
 
 grad_accum_schedule_cls_imb_cfg = builds(GradAccumSchedule, {0: 32})
 
@@ -290,6 +302,7 @@ cls_imb_l_lbl = "cls_imb_l"
 base_lbl = "base"
 dummy_lbl = "dummy"
 single_lbl = "single"
+no_muon_lbl = "no_muon"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
 lit_module_store = store(group="lit_module")
@@ -323,6 +336,7 @@ params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
 params_store(single_opt_params_cfg, name=single_lbl)
+params_store(no_muon_params_cfg, name=no_muon_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
 schdlr_store(dummy_schdlrs_pcfg, name=base_lbl)
@@ -335,6 +349,8 @@ optims_store(non_dist_optims_pcfg, name=cls_imb_s_lbl)
 optims_store(non_dist_optims_pcfg, name=cls_imb_l_lbl)
 optims_store(non_dist_optims_pcfg, name=sp_pix_lbl)
 optims_store(non_dist_optims_pcfg, name=sbg_rob_lbl)
+optims_store(single_optim_pcfg, name=single_lbl)
+optims_store(no_muon_optims_pcfg, name=no_muon_lbl)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
@@ -369,8 +385,8 @@ if __name__ == "__main__":
         overrides=[
             f"model_cache={cls_imb_s_lbl}", 
             f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={cls_imb_s_lbl}", 
-            f"optims_cache={cls_imb_s_lbl}", 
+            f"params_cache={no_muon_params_cfg}", 
+            f"optims_cache={no_muon_optims_pcfg}", 
             f"lit_module={cls_imb_s_lbl}"
         ]
     )

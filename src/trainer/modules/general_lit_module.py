@@ -214,6 +214,7 @@ class DualOptLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
+        print("Model id/reference in memory is:", id(model))
         self._grad_accum_schedule = grad_accum_schedule
 
         self.optims = optims

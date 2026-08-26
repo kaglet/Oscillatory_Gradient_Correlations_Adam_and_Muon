@@ -7,6 +7,7 @@ def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_d
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
+    print("Model id/reference in memory is:", id(model))
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) != 2 and p.requires_grad]
     high_dim_params = [p for n, p in model.named_parameters() if (len(p.shape) == 2) and (p.requires_grad)]
@@ -21,7 +22,7 @@ def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_d
 
     return param_groups
 
-def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[list[dict[str, Any]]]:
+def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8, use_muon: bool = True) -> list[list[dict[str, Any]]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
@@ -29,12 +30,18 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) != 2 and p.requires_grad]
     high_dim_params = [p for p in model.parameters() if (len(p.shape) == 2) and (p.requires_grad)]
+
+    if use_muon == True:
+        muon_groups = [dict(params=high_dim_params, lr=lr_each[0], weight_decay=weight_decay_each[0], momentum=betas[0], nesterov=False)]
+        adam_groups = [dict(params=low_dim_params)]
+        adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
     
-    muon_groups = [dict(params=high_dim_params, lr=lr_each[0], weight_decay=weight_decay_each[0], momentum=betas[0], nesterov=False)]
-    adam_groups = [dict(params=low_dim_params)]
-    adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
+        return [muon_groups, adam_groups]
+    else: 
+        adam_groups = [dict(params=low_dim_params), dict(params=high_dim_params)]
+        adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
     
-    return [muon_groups, adam_groups]
+        return [adam_groups, adam_groups]
 
 def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[list[dict[str, Any]]]:
     """
