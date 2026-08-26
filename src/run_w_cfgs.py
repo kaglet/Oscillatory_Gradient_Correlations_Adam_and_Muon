@@ -381,12 +381,12 @@ if __name__ == "__main__":
         task_function,
         config_name="adam_muon_benchmarks",
         
-        version_base="1.2",
+        version_base="1.3",
         overrides=[
             f"model_cache={cls_imb_s_lbl}", 
             f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={no_muon_params_cfg}", 
-            f"optims_cache={no_muon_optims_pcfg}", 
+            f"params_cache={no_muon_lbl}", 
+            f"optims_cache={no_muon_lbl}", 
             f"lit_module={cls_imb_s_lbl}"
         ]
     )
