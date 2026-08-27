@@ -297,7 +297,15 @@ if __name__ == "__main__":
             f"datamodule={cls_imb_s_lbl}", 
             f"params_cache={dual_lbl}", 
             f"optims_cache={dual_lbl}", 
-            f"lit_module={dual_lbl}"
+            f"lit_module={dual_lbl}",
+            "++params_cache.lr_muon=0.02",
+            "++params_cache.lr_adam=0.001",
+            "++params_cache.momentum_muon=0.2",
+            "++params_cache.beta_1_adam=0.95",
+            "++params_cache.beta_2_adam=0.99",
+            "++params_cache.nesterov=True",
+            "++params_cache.use_layer_recs=False",
+            "++params_cache.eps=1e-10",
         ]
     )
 

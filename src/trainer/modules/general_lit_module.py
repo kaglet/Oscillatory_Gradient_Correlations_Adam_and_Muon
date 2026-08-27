@@ -38,9 +38,9 @@ class DualOptLitModule(pl.LightningModule):
         self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
 
         # for averaging loss across batches
-        self.train_loss = Metric()
-        self.val_loss = Metric()
-        self.test_loss = Metric()
+        self.train_loss = MeanMetric()
+        self.val_loss = MeanMetric()
+        self.test_loss = MeanMetric()
 
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
@@ -166,7 +166,7 @@ class DualOptLitModule(pl.LightningModule):
 
         return loss, preds, targets
 
-    def update_log_metrics(self, loss_store: Metric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+    def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
