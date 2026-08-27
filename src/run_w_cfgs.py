@@ -21,7 +21,7 @@ from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10Data
 from trainer.dataloader.components.mnist_normalization import mnist_normalization
 from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
 from trainer.modules.components.custom_grad_accum import GradAccumSchedule
-from trainer.modules.general_lit_module import DualOptLitModule 
+from trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
 from trainer.modules.components.custom_resnet import create_resnet_model
 from trainer.modules.components.simple_net import SimpleCNN
 from trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params
@@ -49,6 +49,7 @@ single_optim_params_cfg = pbuilds(
 # Define base vision model cfg
 resnet18_model_cfg = builds(create_resnet_model, net=just(resnet18))
 resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
+simple_cnn_cfg = builds(SimpleCNN)
 
 cls_imb_s_num_classes = 10
 cls_imb_l_num_classes = 100
@@ -58,7 +59,7 @@ sp_pix_num_classes = 10
 cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_in=3)
 cls_imb_model_l_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_in=3) 
 sbg_rob_model_cfg = resnet50_model_cfg(num_classes=sbg_rob_num_classes, num_in=3)
-sp_pix_model_cfg = builds(SimpleCNN, num_classes=sp_pix_num_classes, num_in=1)
+sp_pix_model_cfg = simple_cnn_cfg(num_classes=sp_pix_num_classes, num_in=1)
 
 # Optimiser variations
 # Default in distributed
@@ -74,7 +75,11 @@ grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 # LR Schedulers
 lr_sch_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
 
-# Lighning Module variations 
+dual_lit_module_cfg = pbuilds(DualOptLitModule)
+single_lit_module_cfg = pbuilds(SingleOptLitModule)
+
+# Lighning Module variations (for groups mainly for swap in and out, TODO: Defer, ideas below)
+# Top level DualOptLit module cannot be changed, the top can be registered or even try dictionary keys to unpack as keyword arguments
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
@@ -126,53 +131,55 @@ trainer_cfg = builds(
     # precision = "bf16-mixed"
 )  
 
-# ---- TRAINER CONFIGS COMPLETE ---- #
 # ---- DATAMODULE CONFIGS START ---- #
-def create_transforms(transforms: torchvision.transforms.Compose) -> torchvision.transforms.Compose:
-    """"
-    Simplest workaround to define and configure lists as per Hydra-zen GitH discussion
-    """
-    return transforms
+#
+horizontal_flip_cfg = builds(torchvision.transforms.RandomHorizontalFlip)
+vertical_flip_cfg = builds(torchvision.transforms.RandomVerticalFlip)
+crops_cfg = builds(torchvision.transforms.RandomCrop)
+to_tensor_cfg = builds(torchvision.transforms.ToTensor)
 
-horizontal_flip = builds(torchvision.transforms.RandomHorizontalFlip)
-vertical_flip = builds(torchvision.transforms.RandomVerticalFlip)
-crops = builds(torchvision.transforms.RandomCrop, 20)
-to_tensor = builds(torchvision.transforms.ToTensor)
-cifar_10_norm = builds(cifar10_normalization)
-cifar_100_norm = builds(imagenet_normalization)
-mnist_norm = builds(mnist_normalization)
-
-resnet18_transforms_cfg = builds(ResNet18_Weights.DEFAULT.transforms)
-resnet50_transforms_cfg = builds(ResNet50_Weights.DEFAULT.transforms)
+cifar_10_norm_cfg = builds(cifar10_normalization)
+cifar_100_norm_cfg = builds(imagenet_normalization)
+mnist_norm_cfg = builds(mnist_normalization)
 
 # Certain order of transforms matters 
 cls_imb_s_transforms = builds(
     torchvision.transforms.Compose,
     [
-        horizontal_flip,
-        crops,
-        to_tensor,
-        cifar_10_norm,
+        horizontal_flip_cfg,
+        crops_cfg(size=20),
+        to_tensor_cfg,
+        cifar_10_norm_cfg,
     ]
 )
 
 cls_imb_l_transforms = builds(
     torchvision.transforms.Compose,
     [
-        horizontal_flip,
-        crops,
-        to_tensor,
-        cifar_100_norm,
+        horizontal_flip_cfg,
+        crops_cfg(size=20),
+        to_tensor_cfg,
+        cifar_100_norm_cfg,
     ]
 )
 
 sp_pix_transforms = builds(
     torchvision.transforms.Compose,
     [
-        horizontal_flip,
-        crops,
-        to_tensor,
-        mnist_norm
+        horizontal_flip_cfg,
+        crops_cfg(size=20),
+        to_tensor_cfg,
+        mnist_norm_cfg
+    ]
+)
+
+sbg_rob_transforms = builds(
+    torchvision.transforms.Compose,
+    [
+        horizontal_flip_cfg,
+        crops_cfg(size=20),
+        to_tensor_cfg,
+        mnist_norm_cfg
     ]
 )
 
@@ -215,27 +222,23 @@ sbg_rob_datamdl_cfg = mnist_datamdl_cfg(
     num_workers = total_local_cores
 )
 
+# TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
+default_lbl = "default"
+single_lbl = "single"
+dual_lbl = "dual"
+
+# Create groups: Key value pairs (At current granularity level desired to register options per group)
+lit_module_store = store(group="lit_module")
+lit_module_store(dual_lit_module_cfg, name=dual_lbl)
+lit_module_store(single_lit_module_cfg, name=single_lbl)
+
+trainer_store = store(group="trainer")
+trainer_store(trainer_cfg, name=default_lbl)
+
 sp_pix_lbl = "sp_pix"
 sbg_rob_lbl = "sbg_rob"
 cls_imb_s_lbl = "cls_imb_s"
 cls_imb_l_lbl = "cls_imb_l"
-base_lbl = "base"
-dummy_lbl = "dummy"
-single_lbl = "single"
-no_muon_lbl = "no_muon"
-
-# Create groups: Key value pairs (At current granularity level desired to register options per group)
-lit_module_store = store(group="lit_module")
-lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
-lit_module_store(sp_pix_module_cfg, name=sp_pix_lbl)
-lit_module_store(sbg_rob_module_cfg, name=sbg_rob_lbl)
-lit_module_store(cls_imb_s_module_cfg, name=cls_imb_s_lbl)
-lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
-# Tests single optimiser with specific params copied from dual optimizer
-
-trainer_store = store(group="trainer")
-trainer_store(trainer_cfg, name=base_lbl)
-
 datamodule_store = store(group="datamodule")
 datamodule_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
 datamodule_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
@@ -243,49 +246,41 @@ datamodule_store(sp_pix_datamdl_cfg, name=sp_pix_lbl)
 datamodule_store(sbg_rob_datamdl_cfg, name=sbg_rob_lbl)
 
 model_store = store(group="model_cache")
-model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
-model_store(cls_imb_model_l_cfg, name=cls_imb_l_lbl)
-model_store(sp_pix_model_cfg, name=sp_pix_lbl)
-model_store(sbg_rob_model_cfg, name=sbg_rob_lbl)
+model_store(resnet18_model_cfg, name="resnet18")
+model_store(resnet50_model_cfg, name="resnet50")
+model_store(simple_cnn_cfg, name="simple_cnn")
 
 params_store = store(group="params_cache")
-params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
-params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
-params_store(sp_pix_params_cfg, name=sp_pix_lbl)
-params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
+params_store(dual_optim_params_cfg, name=dual_lbl)
+params_store(single_optim_params_cfg, name=single_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
-schdlr_store(lr_sch_pcfg, name=base_lbl)
+schdlr_store(lr_sch_pcfg, name=default_lbl)
 
 grad_accum_schedule_store = store(group="grad_accum_schedule")
-grad_accum_schedule_store(grad_accum_schedule_cfg, name=base_lbl)
+grad_accum_schedule_store(grad_accum_schedule_cfg, name=default_lbl)
 
 optims_store = store(group="optims_cache")
-optims_store(dual_optims_pcfg, name=cls_imb_s_lbl)
-optims_store(dual_optims_pcfg, name=cls_imb_l_lbl)
-optims_store(dual_optims_pcfg, name=sp_pix_lbl)
-optims_store(dual_optims_pcfg, name=sbg_rob_lbl)
+optims_store(dual_optims_pcfg, name=dual_lbl)
 optims_store(single_optim_pcfg, name=single_lbl)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
-        {'lit_module': sp_pix_lbl},
-        {'params_cache': sp_pix_lbl},
-        {'params_cache.use_muon': "False"},
-        {'model_cache': sp_pix_lbl},
+        {'lit_module': dual_lbl},
+        {'params_cache': dual_lbl},
+        {'model_cache': "resnet18"},
         {'datamodule': sp_pix_lbl},
-        {'trainer': base_lbl},        
-        {'optims_cache': sp_pix_lbl},
-        {'schdlrs_cache': base_lbl},
-        {'grad_accum_schedule': base_lbl},
+        {'trainer': default_lbl},        
+        {'optims_cache': dual_lbl},
+        {'schdlrs_cache': default_lbl},
+        {'grad_accum_schedule': default_lbl},
         '_self_'
     ]
 )
 
 store(ExperimentConfig, name="adam_muon_benchmarks")
-print("Example group entry", store["params_cache", sp_pix_lbl])
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
@@ -298,12 +293,11 @@ if __name__ == "__main__":
         
         version_base="1.3",
         overrides=[
-            f"model_cache={cls_imb_s_lbl}", 
+            f"model_cache=resnet18", 
             f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={cls_imb_s_lbl}", 
-            f"optims_cache={cls_imb_s_lbl}", 
-            f"lit_module={cls_imb_s_lbl}",
-            "params_cache.use_muon=False"
+            f"params_cache={dual_lbl}", 
+            f"optims_cache={dual_lbl}", 
+            f"lit_module={dual_lbl}"
         ]
     )
 

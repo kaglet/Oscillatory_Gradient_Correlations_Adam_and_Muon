@@ -15,7 +15,7 @@ from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 from trainer.modules.components.custom_grad_accum import GradAccumSchedule
 
-__all__ = ["DualOptLitModule", "DistOptLitModule"]
+__all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]
 
 class DualOptLitModule(pl.LightningModule):
     def __init__(
@@ -225,15 +225,18 @@ class DualOptLitModule(pl.LightningModule):
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
+class SingleOptLitModule(DualOptLitModule):
+    def __init__(
+        self,
+        *args: Any, 
+        **kwargs: Any
+    ):
+        super().__init__(*args, **kwargs)
+
 class DistOptLitModule(DualOptLitModule):
     def __init__(
         self,
-        model: nn.Module,
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),
-        num_classes: int=10,
+        *args: Any, 
+        **kwargs: Any
     ):
-        super().__init__(model=model, num_classes=num_classes, grad_accum_schedule=grad_accum_schedule, params=params, optims=optims)
+        super().__init__(*args, **kwargs)

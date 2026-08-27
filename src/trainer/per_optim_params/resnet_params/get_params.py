@@ -38,14 +38,16 @@ def get_dual_opt_params(model: Any, lr_each: Tuple[float, float], weight_decay_e
     
         return [muon_groups, adam_groups]
     else: 
+        # This existed only for debugging TODO: Remove and put more graceful error handling and assurance 
         adam_groups = [dict(params=low_dim_params), dict(params=high_dim_params)]
         adam_groups = [dict(**g, betas=betas, eps=eps, lr=lr_each[1], weight_decay=weight_decay_each[1]) for g in adam_groups]
     
         return [adam_groups, adam_groups]
 
+# TODO: Name these to be Adam native parameters not accepting same args as Muon
 def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[list[dict[str, Any]]]:
     """
-    This is for testing purposes of equivalence to dual opt method; the preferred method.  
+    Use to get Adam native parameters   
     """
     # Norm biases are not innately 2D, but a collation of 1D vectors
     print("Model id/reference in memory is:", id(model))
