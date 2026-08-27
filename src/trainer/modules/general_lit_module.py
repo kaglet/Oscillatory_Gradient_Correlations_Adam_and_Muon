@@ -317,7 +317,8 @@ class DualOptLitModule(pl.LightningModule):
                 optims = optims if isinstance(optims, list) else [optims]
 
                 for i, opt in enumerate(optims):
-                    if i == 0:
+                    # Call global opt step only at the end to help hooks
+                    if i == len(optims) - 1:
                         opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
                     else:
                         # Access underlying optimizer directly to avoid double-counting
@@ -338,8 +339,12 @@ class DualOptLitModule(pl.LightningModule):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
-        self.log(f"{metric_name}/loss", loss_store, on_step=True, on_epoch=True, prog_bar=True)
-        self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
+        self.log_dict({
+            f"{metric_name}/loss": loss_store, 
+            f"{metric_name}/acc": acc_store
+            }, 
+            on_step=True, on_epoch=True, prog_bar=True
+        )
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
