@@ -1,7 +1,7 @@
 import torch.nn as nn
 from typing import Any, Dict, Tuple
 
-__all__ = ["get_dist_Muon_Adam_params", "get_nondist_Muon_Adam_params", "get_Adam_params"]
+__all__ = ["get_dist_Muon_Adam_params", "get_dual_opt_params", "get_Adam_params"]
 
 def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-10) -> list[dict[str, Any]]:
     """
@@ -22,7 +22,7 @@ def get_dist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_d
 
     return param_groups
 
-def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8, use_muon: bool = True) -> list[list[dict[str, Any]]]:
+def get_dual_opt_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8, use_muon: bool = True) -> list[list[dict[str, Any]]]:
     """
     For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
     """
@@ -45,7 +45,7 @@ def get_nondist_Muon_Adam_params(model: Any, lr_each: Tuple[float, float], weigh
 
 def get_Adam_params(model: Any, lr_each: Tuple[float, float], weight_decay_each: Tuple[float, float], betas: Tuple[float, float], use_layer_recs: bool = True, eps: float = 1e-8) -> list[list[dict[str, Any]]]:
     """
-    For a tuple (m, a) m sets Muon's and a Adam's parameters, respectively.  
+    This is for testing purposes of equivalence to dual opt method; the preferred method.  
     """
     # Norm biases are not innately 2D, but a collation of 1D vectors
     print("Model id/reference in memory is:", id(model))

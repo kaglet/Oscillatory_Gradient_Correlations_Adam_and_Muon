@@ -1,3 +1,4 @@
+from logging import log
 from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
 
 import csv
@@ -14,177 +15,7 @@ from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 from trainer.modules.components.custom_grad_accum import GradAccumSchedule
 
-__all__ = ["NonDistLitModule", "DistLitModule", "SingleOptLitModule"]
-
-class SingleOptLitModule(pl.LightningModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
-        # TODO: Try grad accum to target commit 944f0df to be equivalent to dual opt
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        num_classes: int = 10,
-    ):
-        super().__init__()
-        # Loss function
-        self.criterion = nn.CrossEntropyLoss()
-        print("Model id/reference in memory is:", id(model))
-        
-        # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
-
-        # for averaging loss across batches
-        self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
-
-        # for tracking best so far validation accuracy
-        self.max_val_acc = MaxMetric()
-
-        self.model = model
-
-        self.optim = optims[0]
-        self.params = params[0]
-
-        self.init_grad_corr_stores()
-        self.save_hyperparameters(logger=False, ignore=["model"])
-
-    def init_grad_corr_stores(self) -> bool:
-        self.trainable_params = []
-        self.global_grad_corr_store = []
-        self.prev_grads = []
-        self.per_param_names = []
-        return True
-
-    def on_train_start(self) -> None:
-        """Lightning hook that is called when training begins."""
-        self.val_loss.reset()
-        self.val_acc.reset()
-        self.max_val_acc.reset()
-        self.init_grad_corr_stores()
-
-    def forward(self, input):
-        return self.model(input)
-
-    def configure_optimizers(self) -> Optimizer:
-        return self.optim
-
-    def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
-        curr_param_grads = []
-        prev_grads_exist = len(self.prev_grads) != 0
-        curr_grad_corr_store = []
-
-        for i, (n, p) in enumerate(trainable_params):
-            assert p.requires_grad == True, "None gradients detected when trainable params expected"
-            if p.grad is not None:
-                curr_p_grad = p.grad.detach().clone()
-                curr_param_grads.append(curr_p_grad) 
-                
-                if prev_grads_exist:
-                    prev_p_grad = self.prev_grads[i].detach().clone()
-                    dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
-                    norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
-                    curr_grad_corr_store.append(dot_prod / norm)
-                else:
-                    self.per_param_names.append(n)
-
-        self.prev_grads = curr_param_grads 
-
-        if len(curr_grad_corr_store) != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step for accum
-            self.global_grad_corr_store.append(curr_grad_corr_store)
-
-        if len(self.global_grad_corr_store) >= 2:
-            prev_store_len = len(self.global_grad_corr_store[-1])
-            curr_store_len = len(self.global_grad_corr_store[-1])
-
-            assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {batch_idx}"
-        
-        return 1
-    
-    # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
-    def batch_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, is_Train: bool = True
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Perform a single model step on a batch of data."""
-        input, targets = batch
-
-        self.trainable_params = [(n, p) for (n,p) in self.model.named_parameters() if p.requires_grad]
-        self.store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
-
-        if is_Train:
-            logits = self.model(input)
-            loss = self.criterion(logits, targets)
-        else: 
-            with torch.no_grad():
-                logits = self.model(input)
-                loss = self.criterion(logits, targets)
-
-        preds = torch.argmax(logits, dim=1)
-
-        return loss, preds, targets
-
-    def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
-        loss, preds, targets = metrics
-        loss_store(loss)
-        acc_store(preds, targets)
-        self.log(f"{metric_name}/loss", loss_store, on_step=True, on_epoch=True, prog_bar=True)
-        self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
-
-    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
-        """Perform a single training step on a batch of data from the training set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=True)
-        loss, _, _ = metrics
-        self.update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
-        # return loss or backpropagation will fail
-        return loss
-    
-    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
-        """Perform a single validation step on a batch of data from the validation set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=False)
-        loss, _, _ = metrics
-        self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
-        return loss 
-    
-    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
-        """Perform a single test step on a batch of data from the test set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=False)
-        loss, _, _ = metrics
-        self.update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
-        return loss
-
-    def on_train_epoch_end(self) -> None:
-        "Lightning hook that is called when a training epoch ends."
-        pass
-
-    def on_fit_end(self) -> None:
-        print("Saving Gradient Correlation Store at root")
-        fields = self.per_param_names
-        _ = [print(len(step_corr_store)) for step_corr_store in self.global_grad_corr_store]
-        print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
-
-        rows = np.array(self.global_grad_corr_store, np.float32)
-        with open('GCS.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(fields)     # Write header
-            writer.writerows(rows)      # Write data rows
-
-    # TODO: Get best value after a batch is run for validation step NOT for epoch
-    def on_validation_epoch_end(self) -> None:
-        """
-        Lightning hook that is called when a validation epoch ends.
-        """
-        acc = self.val_acc.compute() # get current val acc
-        self.max_val_acc(acc)  # auto update store with best so far val acc
-        
-        # Recall metric is reset by us with lightning after each epoch.
-        # So log value computed at this moment, not a reference to Metric object.
-        self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
-
+__all__ = ["DualOptLitModule", "DistOptLitModule"]
 
 class DualOptLitModule(pl.LightningModule):
     def __init__(
@@ -207,9 +38,9 @@ class DualOptLitModule(pl.LightningModule):
         self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
 
         # for averaging loss across batches
-        self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
+        self.train_loss = Metric()
+        self.val_loss = Metric()
+        self.test_loss = Metric()
 
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
@@ -237,8 +68,8 @@ class DualOptLitModule(pl.LightningModule):
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
-        # by default lightning executes validation step sanity checks before training starts,
-        # so it's worth to make sure validation metrics don't store results from these checks
+        # By default lightning executes validation step sanity checks before training starts,
+        # So it's worth to make sure validation metrics don't store results from these checks
         self.val_loss.reset()
         self.val_acc.reset()
         self.max_val_acc.reset()
@@ -335,7 +166,7 @@ class DualOptLitModule(pl.LightningModule):
 
         return loss, preds, targets
 
-    def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+    def update_log_metrics(self, loss_store: Metric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
@@ -343,7 +174,7 @@ class DualOptLitModule(pl.LightningModule):
             f"{metric_name}/loss": loss_store, 
             f"{metric_name}/acc": acc_store
             }, 
-            on_step=True, on_epoch=True, prog_bar=True
+            on_step=False, on_epoch=True, prog_bar=True
         )
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
@@ -376,8 +207,6 @@ class DualOptLitModule(pl.LightningModule):
         print("Saving Gradient Correlation Store at root")
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
-        print(f"train/size_grad_corr_store", len(self.global_grad_corr_store))
-
         rows = np.array(self.global_grad_corr_store, np.float32)
         with open('GCS.csv', 'w', newline='') as f:
             writer = csv.writer(f)
@@ -396,7 +225,7 @@ class DualOptLitModule(pl.LightningModule):
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
-class DistLitModule(DualOptLitModule):
+class DistOptLitModule(DualOptLitModule):
     def __init__(
         self,
         model: nn.Module,

@@ -21,10 +21,10 @@ from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10Data
 from trainer.dataloader.components.mnist_normalization import mnist_normalization
 from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
 from trainer.modules.components.custom_grad_accum import GradAccumSchedule
-from trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
+from trainer.modules.general_lit_module import DualOptLitModule 
 from trainer.modules.components.custom_resnet import create_resnet_model
 from trainer.modules.components.simple_net import SimpleCNN
-from trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_nondist_Muon_Adam_params
+from trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
@@ -40,16 +40,12 @@ pbuilds = make_custom_builds_fn(
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
 
 # Define base params cfg
-non_dist_params_cfg = pbuilds(
-    get_nondist_Muon_Adam_params,
+dual_optim_params_cfg = pbuilds(
+    get_dual_opt_params,
 )
 
-dist_params_cfg = pbuilds(
-    get_dist_Muon_Adam_params,
-)
-
-single_params_cfg = pbuilds(
-    get_Adam_params
+single_optim_params_cfg = pbuilds(
+    get_Adam_params,
 )
 
 # Define base vision model cfg
@@ -73,44 +69,29 @@ single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes
 # TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
 # Class imbalance experiment: Define new instance overriding default values
 cls_imb_s_params_cfg = pbuilds(  
-    get_nondist_Muon_Adam_params,
+    get_dual_opt_params,
     lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 cls_imb_l_params_cfg = pbuilds(  
-    get_nondist_Muon_Adam_params, 
+    get_dual_opt_params, 
     lr_each=(1e-5, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
 sp_pix_params_cfg = pbuilds(   
-    get_nondist_Muon_Adam_params,
+    get_dual_opt_params,
     lr_each=(1e-5, 1e-3), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99)
 )
 
-single_opt_params_cfg = pbuilds(
-    get_Adam_params,
-    lr_each=(1e-3, 1e-3), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99)
-)
-
-no_muon_params_cfg = pbuilds(
-    get_nondist_Muon_Adam_params,
-    lr_each=(1e-5, 0.001), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99),
-    use_muon=False
-)
-
 # Subgroup robustness experiment: Define new instance overriding default values
 sbg_rob_params_cfg = pbuilds(   
-    get_nondist_Muon_Adam_params,
+    get_dual_opt_params,
     lr_each=(1e-1, 1e-5), 
     weight_decay_each=(0, 0), 
     betas=(0.9, 0.99),
@@ -120,9 +101,8 @@ sbg_rob_params_cfg = pbuilds(
 # TODO: Debug performance on 2 optimisers even if Adam is on both according to old successful run on CIFAR10  
 # Define base optimiser cfg
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
-non_dist_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
+dual_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 single_optim_pcfg = [pbuilds(Adam)]
-no_muon_optims_pcfg = [pbuilds(Adam), pbuilds(Adam)]
 
 grad_accum_schedule_cls_imb_cfg = builds(GradAccumSchedule, {0: 32})
 
@@ -151,12 +131,6 @@ sbg_rob_module_cfg = pbuilds(
     DualOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
     num_classes = sbg_rob_num_classes
-)
-
-test_single_opt_module_cfg = pbuilds(
-    SingleOptLitModule, 
-    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
-    num_classes = sp_pix_num_classes
 )
 
 # ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
@@ -307,13 +281,11 @@ no_muon_lbl = "no_muon"
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
 lit_module_store = store(group="lit_module")
 lit_module_store(DualOptLitModule, name=f"{base_lbl}_dual")
-lit_module_store(SingleOptLitModule, name=f"{base_lbl}_single")
 lit_module_store(sp_pix_module_cfg, name=sp_pix_lbl)
 lit_module_store(sbg_rob_module_cfg, name=sbg_rob_lbl)
 lit_module_store(cls_imb_s_module_cfg, name=cls_imb_s_lbl)
 lit_module_store(cls_imb_l_module_cfg, name=cls_imb_l_lbl)
 # Tests single optimiser with specific params copied from dual optimizer
-lit_module_store(test_single_opt_module_cfg, name=single_lbl)
 
 trainer_store = store(group="trainer")
 trainer_store(trainer_cfg, name=base_lbl)
@@ -335,8 +307,6 @@ params_store(cls_imb_s_params_cfg, name=cls_imb_s_lbl)
 params_store(cls_imb_l_params_cfg, name=cls_imb_l_lbl)
 params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
-params_store(single_opt_params_cfg, name=single_lbl)
-params_store(no_muon_params_cfg, name=no_muon_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
 schdlr_store(dummy_schdlrs_pcfg, name=base_lbl)
@@ -345,12 +315,11 @@ grad_accum_schedule_store = store(group="grad_accum_schedule")
 grad_accum_schedule_store(grad_accum_schedule_cls_imb_cfg, name=base_lbl)
 
 optims_store = store(group="optims_cache")
-optims_store(non_dist_optims_pcfg, name=cls_imb_s_lbl)
-optims_store(non_dist_optims_pcfg, name=cls_imb_l_lbl)
-optims_store(non_dist_optims_pcfg, name=sp_pix_lbl)
-optims_store(non_dist_optims_pcfg, name=sbg_rob_lbl)
+optims_store(dual_optims_pcfg, name=cls_imb_s_lbl)
+optims_store(dual_optims_pcfg, name=cls_imb_l_lbl)
+optims_store(dual_optims_pcfg, name=sp_pix_lbl)
+optims_store(dual_optims_pcfg, name=sbg_rob_lbl)
 optims_store(single_optim_pcfg, name=single_lbl)
-optims_store(no_muon_optims_pcfg, name=no_muon_lbl)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
@@ -358,6 +327,7 @@ ExperimentConfig = make_config(
     hydra_defaults=[
         {'lit_module': sp_pix_lbl},
         {'params_cache': sp_pix_lbl},
+        {'params_cache.use_muon': "False"},
         {'model_cache': sp_pix_lbl},
         {'datamodule': sp_pix_lbl},
         {'trainer': base_lbl},        
@@ -373,7 +343,6 @@ print("Example group entry", store["params_cache", sp_pix_lbl])
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
-# Allows CLI run
 if __name__ == "__main__":
     store.add_to_hydra_store()
     job = launch(
@@ -385,13 +354,10 @@ if __name__ == "__main__":
         overrides=[
             f"model_cache={cls_imb_s_lbl}", 
             f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={single_lbl}", 
-            f"optims_cache={single_lbl}", 
-            f"lit_module={single_lbl}"
+            f"params_cache={cls_imb_s_lbl}", 
+            f"optims_cache={cls_imb_s_lbl}", 
+            f"lit_module={cls_imb_s_lbl}",
+            "params_cache.use_muon=False"
         ]
     )
-    # task_function.hydra_main(
-    #     config_name="adam_muon_benchmarks",
-    #     version_base="1.3",
-    #     config_path=".",
-    # )
+

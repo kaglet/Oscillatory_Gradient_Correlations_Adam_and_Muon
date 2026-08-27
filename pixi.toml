@@ -7,11 +7,10 @@ version = "0.1.0"
 
 [tasks]
 random_tests = "python src/random_tests.py +db=postgresql"
-jobs = "python jobs.py"
+jobs = "python src/run_w_cfgs.py"
 nerd = "python nerd.py"
 nerdy = "python nerdy.py"
 mnist_test = "python src/.pixi/envs/default/Lib/site-packages/pl_bolts/models/mnist_module.py"
-jobs_help = "python src/run_w_cfgs.py"
 
 [dependencies]
 pytorch-gpu = "*"
