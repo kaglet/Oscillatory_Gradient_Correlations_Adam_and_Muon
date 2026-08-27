@@ -286,6 +286,7 @@ task_function = zen(train_and_val, pre_call=pre_seed)
 
 if __name__ == "__main__":
     store.add_to_hydra_store()
+    # TODO: Print yaml config at the end for seeing saved structure
     job = launch(
         ExperimentConfig,
         task_function,

@@ -171,7 +171,7 @@ class DualOptLitModule(pl.LightningModule):
         loss_store(loss)
         acc_store(preds, targets)
         self.log_dict({
-            f"{metric_name}/loss": loss_store, 
+            f"{metric_name}/loss": loss, 
             f"{metric_name}/acc": acc_store
             }, 
             on_step=False, on_epoch=True, prog_bar=True
