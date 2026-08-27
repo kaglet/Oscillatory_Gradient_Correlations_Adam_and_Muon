@@ -36,9 +36,7 @@ pbuilds = make_custom_builds_fn(
     zen_wrappers=validates_with_beartype
 )
 
-# TODO: For all below, set base cfg defaults or correct fill behaviour for error handling as this base cfg cannot be used as is
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
-
 # Define base params cfg
 dual_optim_params_cfg = pbuilds(
     get_dual_opt_params,
@@ -49,102 +47,62 @@ single_optim_params_cfg = pbuilds(
 )
 
 # Define base vision model cfg
-resnet_model_cfg = builds(create_resnet_model)
-sp_pix_model_cfg = builds(SimpleCNN)
+resnet18_model_cfg = builds(create_resnet_model, net=just(resnet18))
+resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
 
 cls_imb_s_num_classes = 10
 cls_imb_l_num_classes = 100
 sbg_rob_num_classes = 5
 sp_pix_num_classes = 10
 
-# TODO: Add setting for num_in
+cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_in=3)
+cls_imb_model_l_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_in=3) 
+sbg_rob_model_cfg = resnet50_model_cfg(num_classes=sbg_rob_num_classes, num_in=3)
+sp_pix_model_cfg = builds(SimpleCNN, num_classes=sp_pix_num_classes, num_in=1)
 
-# Class imbalance experiment: Define new instance overriding default values
-cls_imb_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=cls_imb_s_num_classes, num_in=3)
-cls_imb_model_l_cfg = resnet_model_cfg(net=just(resnet50), num_classes=cls_imb_l_num_classes) 
-# Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_model_cfg = resnet_model_cfg(net=just(resnet50), num_classes=sbg_rob_num_classes, num_in=1)
-single_opt_resnet_model_s_cfg = resnet_model_cfg(net=just(resnet18), num_classes=10, num_in=1)
-
-# TODO: Remove error for this possibly just Pylance not well configured for hydra-zen type checking
-# Class imbalance experiment: Define new instance overriding default values
-cls_imb_s_params_cfg = pbuilds(  
-    get_dual_opt_params,
-    lr_each=(1e-5, 1e-5), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99)
-)
-
-cls_imb_l_params_cfg = pbuilds(  
-    get_dual_opt_params, 
-    lr_each=(1e-5, 1e-5), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99)
-)
-
-sp_pix_params_cfg = pbuilds(   
-    get_dual_opt_params,
-    lr_each=(1e-5, 1e-3), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99)
-)
-
-# Subgroup robustness experiment: Define new instance overriding default values
-sbg_rob_params_cfg = pbuilds(   
-    get_dual_opt_params,
-    lr_each=(1e-1, 1e-5), 
-    weight_decay_each=(0, 0), 
-    betas=(0.9, 0.99),
-    use_layer_recs=False
-)
-
-# TODO: Debug performance on 2 optimisers even if Adam is on both according to old successful run on CIFAR10  
-# Define base optimiser cfg
+# Optimiser variations
+# Default in distributed
 mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
+# Custom for non-distributed
 dual_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
+# single optimiser training  
 single_optim_pcfg = [pbuilds(Adam)]
 
-grad_accum_schedule_cls_imb_cfg = builds(GradAccumSchedule, {0: 32})
+# Gradient accum schedules 
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
-dummy_schdlrs_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
-# Class imbalance experiment: Define default (configurable) lit_module cfg  
+# LR Schedulers
+lr_sch_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
+
+# Lighning Module variations 
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
+    grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
 
 cls_imb_l_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
+    grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes
 )
 
 sp_pix_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
+    grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sp_pix_num_classes
 )
 
-# TODO: Fix this copied placeholder
 sbg_rob_module_cfg = pbuilds(
     DualOptLitModule, 
-    grad_accum_schedule = grad_accum_schedule_cls_imb_cfg,
+    grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sbg_rob_num_classes
 )
 
-# ---- LIGHTNING MODULE CONFIGS COMPLETE ---- #
-
 # ---- TRAINER CONFIGS START ---- #
-
-# Define base chkpt cfg
-chkpt_cfg = builds(
-    ModelCheckpoint,
-) 
-
 # TODO: Change val accuracy to be the best on on a subgroup not overall
-# Class imbalance experiment: Define new instance overriding default values
-cls_imb_chkpt_cfg = chkpt_cfg(    
+max_checkp_cfg = builds(
+    ModelCheckpoint,    
     save_top_k=1, 
     mode="max", 
     # TODO: As Unit 6.1 of PL docs do not cover ensuring consistency, find out how across names.
@@ -152,19 +110,7 @@ cls_imb_chkpt_cfg = chkpt_cfg(
     save_last=True
 )
 
-# Create static list of checkpoint behaviours, TODO: can be saved into group later
-chkpts = [cls_imb_chkpt_cfg]
-
-def create_callbacks(callbacks: list[Callback]) -> list[Callback]:
-    """"
-    Simplest workaround to define and configure lists as per Hydra-zen GitH discussion
-    """
-    return callbacks
-
-# TODO: Fix this current error stopping file
-# Define base chkpt cfg list returned, TODO: cfg can have non-generic instances to override later
-create_cls_imb_clbks_cfg = builds(create_callbacks, callbacks=chkpts) 
-create_sp_pix_clbks_cfg = create_cls_imb_clbks_cfg
+chkpts = [max_checkp_cfg]
 
 # Define base trainer cfg
 trainer_cfg = builds(
@@ -173,7 +119,7 @@ trainer_cfg = builds(
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
-    callbacks=create_cls_imb_clbks_cfg,
+    callbacks=max_checkp_cfg,
     default_root_dir=os.getcwd(),
     detect_anomaly=False,
     devices=1
@@ -309,10 +255,10 @@ params_store(sp_pix_params_cfg, name=sp_pix_lbl)
 params_store(sbg_rob_params_cfg, name=sbg_rob_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
-schdlr_store(dummy_schdlrs_pcfg, name=base_lbl)
+schdlr_store(lr_sch_pcfg, name=base_lbl)
 
 grad_accum_schedule_store = store(group="grad_accum_schedule")
-grad_accum_schedule_store(grad_accum_schedule_cls_imb_cfg, name=base_lbl)
+grad_accum_schedule_store(grad_accum_schedule_cfg, name=base_lbl)
 
 optims_store = store(group="optims_cache")
 optims_store(dual_optims_pcfg, name=cls_imb_s_lbl)

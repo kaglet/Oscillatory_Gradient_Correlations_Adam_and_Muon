@@ -7,6 +7,8 @@ __all__ = ["SimpleCNN"]
 class SimpleCNN(nn.Module):
     def __init__(
         self,
+        num_in: int,
+        num_classes: int
     ) -> None:
         """Initialize a hardcoded SimpleCNN for the spurious pixel task
         """
