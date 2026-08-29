@@ -56,10 +56,10 @@ class DualOptLitModule(pl.LightningModule):
         self._optimizer_step_count = 0
 
         # TODO: DO NOT leave this as default without it being set for specific stages
-        self.init_grad_corr_stores()
+        self._init_grad_corr_stores()
         self.save_hyperparameters(logger=False, ignore=["model"])
 
-    def init_grad_corr_stores(self) -> bool:
+    def _init_grad_corr_stores(self) -> bool:
         self.trainable_params = []
         self.global_grad_corr_store = []
         self.prev_grads = []
@@ -73,7 +73,7 @@ class DualOptLitModule(pl.LightningModule):
         self.val_loss.reset()
         self.val_acc.reset()
         self.max_val_acc.reset()
-        self.init_grad_corr_stores()
+        self._init_grad_corr_stores()
 
     def forward(self, input):
         return self.model(input)
@@ -83,7 +83,7 @@ class DualOptLitModule(pl.LightningModule):
 
         return self.optims
 
-    def store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
+    def _store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
         curr_param_grads = []
         prev_grads_exist = len(self.prev_grads) != 0
         curr_grad_corr_store = []
@@ -125,7 +125,7 @@ class DualOptLitModule(pl.LightningModule):
         return accum
     
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
-    def batch_step(
+    def _batch_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, is_Train: bool = True
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform a single model step on a batch of data."""
@@ -142,7 +142,7 @@ class DualOptLitModule(pl.LightningModule):
 
             if should_step:
                 self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
-                self.store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
+                self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
 
                 optims = self.optimizers()
                 optims = optims if isinstance(optims, list) else [optims]
@@ -166,7 +166,7 @@ class DualOptLitModule(pl.LightningModule):
 
         return loss, preds, targets
 
-    def update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+    def _update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
@@ -179,24 +179,24 @@ class DualOptLitModule(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=True)
+        metrics = self._batch_step(batch, batch_idx, is_Train=True)
         loss, _, _ = metrics
-        self.update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
+        self._update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
         return loss
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=False)
+        metrics = self._batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        self.update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
+        self._update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
-        metrics = self.batch_step(batch, batch_idx, is_Train=False)
+        metrics = self._batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        self.update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
+        self._update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
         return loss
 
     def on_train_epoch_end(self) -> None:
