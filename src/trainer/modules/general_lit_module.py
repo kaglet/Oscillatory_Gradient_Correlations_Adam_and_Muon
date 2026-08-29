@@ -83,19 +83,27 @@ class DualOptLitModule(pl.LightningModule):
 
         return self.optims
 
-    def _store_grad_corr(self, trainable_params: list[tuple[str, nn.Parameter]], batch_idx: int):
+    def _store_grad_corr(self):
+        if self.global_step != 0:
+            return 
+        
+        self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.grad is not None]
+        
         curr_param_grads = []
         prev_grads_exist = len(self.prev_grads) != 0
         curr_grad_corr_store = []
+        names_store = [n for (n,p) in self.trainable_params]
+        print("Not None grad store", names_store)
+        return 
 
-        for i, (n, p) in enumerate(trainable_params):
+        for i, (n, p) in enumerate(self.trainable_params):
             assert p.requires_grad == True, "None gradients detected when trainable params expected"
             if p.grad is not None:
                 curr_p_grad = p.grad.detach().clone()
                 curr_param_grads.append(curr_p_grad) 
                 
                 if prev_grads_exist:
-                    print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(trainable_params))
+                    print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(self.trainable_params))
                     prev_p_grad = self.prev_grads[i].detach().clone()
                     dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
                     norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
@@ -111,7 +119,7 @@ class DualOptLitModule(pl.LightningModule):
             prev_store_len = len(self.global_grad_corr_store[-1])
             curr_store_len = len(self.global_grad_corr_store[-1])
 
-            assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {batch_idx}"
+            assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {self.global_step}"
         
         return 1
     
@@ -143,9 +151,8 @@ class DualOptLitModule(pl.LightningModule):
             should_step = (batch_idx + 1) % grad_accum == 0
 
             if should_step:
-                self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
-                self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=self.global_step) 
-
+                print("Storing gradd corr from batch step")
+                self._store_grad_corr()
                 optims = self.optimizers()
                 optims = optims if isinstance(optims, list) else [optims]
 
@@ -223,11 +230,11 @@ class DualOptLitModule(pl.LightningModule):
         # Recall metric is reset by us with lightning after each epoch.
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
-
+    
     def on_before_optimizer_step(self, optimizer) -> None:
-        # self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
-        # self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=self.global_step) 
-        pass
+        print("Storing grad corr from on before optimizer step")
+        self._store_grad_corr() 
+
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
         self,
