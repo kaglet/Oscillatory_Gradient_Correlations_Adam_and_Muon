@@ -84,18 +84,17 @@ class DualOptLitModule(pl.LightningModule):
         return self.optims
 
     def _store_grad_corr(self):
-        if self.global_step != 0:
-            return 
+        if self.global_step == 0:
+            # names_store = [n for (n,p) in self.trainable_params]
+            # print("Not None grad store", names_store)
+            return
         
         self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.grad is not None]
         
         curr_param_grads = []
         prev_grads_exist = len(self.prev_grads) != 0
         curr_grad_corr_store = []
-        names_store = [n for (n,p) in self.trainable_params]
-        print("Not None grad store", names_store)
-        return 
-
+         
         for i, (n, p) in enumerate(self.trainable_params):
             assert p.requires_grad == True, "None gradients detected when trainable params expected"
             if p.grad is not None:
@@ -160,9 +159,12 @@ class DualOptLitModule(pl.LightningModule):
                     # Call global opt step only at the end to help hooks
                     if i == len(optims) - 1:
                         opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
+                        self._print_params_per_opt(opt)
                     else:
                         # Access underlying optimizer directly to avoid double-counting
                         opt.optimizer.step()
+                        self._print_params_per_opt(opt)
+                        
                     opt.zero_grad()
 
                 self._optimizer_step_count += 1
@@ -174,6 +176,11 @@ class DualOptLitModule(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
 
         return loss, preds, targets
+
+    def _print_params_per_opt(self, opt: Any) -> None:
+        print(opt.__class__.__name__)
+        for p in opt.param_groups:
+            print(p)
 
     def _update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
