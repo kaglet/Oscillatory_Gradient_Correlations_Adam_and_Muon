@@ -95,11 +95,13 @@ class DualOptLitModule(pl.LightningModule):
                 curr_param_grads.append(curr_p_grad) 
                 
                 if prev_grads_exist:
+                    print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(trainable_params))
                     prev_p_grad = self.prev_grads[i].detach().clone()
                     dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
                     norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
                     curr_grad_corr_store.append(dot_prod / norm)
-
+            else: 
+                print("p.grad is None detected on i: ", i)
         self.prev_grads = curr_param_grads 
 
         if len(curr_grad_corr_store) != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step for accum
@@ -142,7 +144,7 @@ class DualOptLitModule(pl.LightningModule):
 
             if should_step:
                 self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
-                self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=batch_idx)
+                self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=self.global_step) 
 
                 optims = self.optimizers()
                 optims = optims if isinstance(optims, list) else [optims]
@@ -223,8 +225,9 @@ class DualOptLitModule(pl.LightningModule):
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
     def on_before_optimizer_step(self, optimizer) -> None:
+        # self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.requires_grad]
+        # self._store_grad_corr(trainable_params=self.trainable_params, batch_idx=self.global_step) 
         pass
-
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
         self,
