@@ -17,6 +17,7 @@ from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 from train_and_val import train_and_val
+from lightning.pytorch.loggers import TensorBoardLogger
 from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from trainer.dataloader.components.mnist_normalization import mnist_normalization
 from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
@@ -115,12 +116,15 @@ max_checkp_cfg = builds(
     save_last=True
 )
 
-chkpts = [max_checkp_cfg]
+chkpts_cfg_list = [max_checkp_cfg]
+
+tb_logger_cfg = builds(TensorBoardLogger, "logs/", name="default")
 
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    max_epochs=4,
+    logger = tb_logger_cfg,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,

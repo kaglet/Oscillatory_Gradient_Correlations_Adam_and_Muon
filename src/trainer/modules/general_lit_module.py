@@ -199,31 +199,31 @@ class DualOptLitModule(pl.LightningModule):
         self._update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
         return loss
 
-    def on_train_epoch_end(self) -> None:
-        "Lightning hook that is called when a training epoch ends."
-        pass
-
-    def on_fit_end(self) -> None:
-        print("Saving Gradient Correlation Store at root")
+    def _log_store(self) -> None:
+        print(f"Saving GCS of train at root")
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
         rows = np.array(self.global_grad_corr_store, np.float32)
-        with open('GCS.csv', 'w', newline='') as f:
+        with open(f'src/logs/Train_GCS_epoch_{self.current_epoch}.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write data rows
+        self._init_grad_corr_stores()
+
+    def on_train_epoch_end(self) -> None:
+        self._log_store()
 
     # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:
-        """
-        Lightning hook that is called when a validation epoch ends.
-        """
         acc = self.val_acc.compute() # get current val acc
         self.max_val_acc(acc)  # auto update store with best so far val acc
         
         # Recall metric is reset by us with lightning after each epoch.
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
+
+    def on_before_optimizer_step(self, optimizer) -> None:
+        pass
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
