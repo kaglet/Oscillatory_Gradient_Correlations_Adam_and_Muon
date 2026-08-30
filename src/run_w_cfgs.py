@@ -17,7 +17,7 @@ from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 from train_and_val import train_and_val
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
 from trainer.dataloader.components.mnist_normalization import mnist_normalization
 from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
@@ -118,7 +118,12 @@ max_checkp_cfg = builds(
 
 chkpts_cfg_list = [max_checkp_cfg]
 
-tb_logger_cfg = builds(TensorBoardLogger, "logs/", name="default")
+log_dir = "src/logs/"
+gcs_log_dir = log_dir + "Train_GCS/"
+os.makedirs(log_dir, exist_ok=True)
+os.makedirs(gcs_log_dir, exist_ok=True)
+tb_logger_cfg = builds(TensorBoardLogger, log_dir, name="per_epoch_metrics")
+csv_logger_cfg = builds(CSVLogger, log_dir, name="per_epoch_metrics")
 
 # Define base trainer cfg
 trainer_cfg = builds(
@@ -170,7 +175,6 @@ cls_imb_l_transforms = builds(
 sp_pix_transforms = builds(
     torchvision.transforms.Compose,
     [
-        horizontal_flip_cfg,
         crops_cfg(size=20),
         to_tensor_cfg,
         mnist_norm_cfg

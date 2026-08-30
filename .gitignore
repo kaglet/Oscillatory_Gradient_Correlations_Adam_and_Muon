@@ -147,6 +147,7 @@ dmypy.json
 *.csv
 *.gz
 MNIST/
+*.ckpt
 
 # Lightning-Hydra-Template
 configs/local/default.yaml
@@ -162,3 +163,6 @@ configs/local/default.yaml
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# Tensorboard logging
+*.tfevents*

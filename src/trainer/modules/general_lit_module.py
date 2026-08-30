@@ -13,7 +13,9 @@ from hydra_zen.typing import Partial
 from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
+import torchvision
 from trainer.modules.components.custom_grad_accum import GradAccumSchedule
+import matplotlib.pyplot as plt
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]
 
@@ -46,7 +48,7 @@ class DualOptLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
-        print("Model id/reference in memory is:", id(model))
+        # print("Model id/reference in memory is:", id(model))
         self._grad_accum_schedule = grad_accum_schedule
 
         self.optims = optims
@@ -102,13 +104,14 @@ class DualOptLitModule(pl.LightningModule):
                 curr_param_grads.append(curr_p_grad) 
                 
                 if prev_grads_exist:
-                    print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(self.trainable_params))
+                    # print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(self.trainable_params))
                     prev_p_grad = self.prev_grads[i].detach().clone()
                     dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
                     norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
                     curr_grad_corr_store.append(dot_prod / norm)
             else: 
-                print("p.grad is None detected on i: ", i)
+                # print("p.grad is None detected on i: ", i)
+                pass
         self.prev_grads = curr_param_grads 
 
         if len(curr_grad_corr_store) != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step for accum
@@ -150,7 +153,7 @@ class DualOptLitModule(pl.LightningModule):
             should_step = (batch_idx + 1) % grad_accum == 0
 
             if should_step:
-                print("Storing gradd corr from batch step")
+                # print("Storing gradd corr from batch step")
                 self._store_grad_corr()
                 optims = self.optimizers()
                 optims = optims if isinstance(optims, list) else [optims]
@@ -159,11 +162,11 @@ class DualOptLitModule(pl.LightningModule):
                     # Call global opt step only at the end to help hooks
                     if i == len(optims) - 1:
                         opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
-                        self._print_params_per_opt(opt)
+                        # self._print_params_per_opt(opt)
                     else:
                         # Access underlying optimizer directly to avoid double-counting
                         opt.optimizer.step()
-                        self._print_params_per_opt(opt)
+                        # self._print_params_per_opt(opt)
                         
                     opt.zero_grad()
 
@@ -182,52 +185,61 @@ class DualOptLitModule(pl.LightningModule):
         for p in opt.param_groups:
             print(p)
 
-    def _update_log_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+    def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
-        self.log_dict({
-            f"{metric_name}/loss": loss, 
-            f"{metric_name}/acc": acc_store
-            }, 
-            on_step=False, on_epoch=True, prog_bar=True
-        )
+        # self.log_dict({
+        #     f"{metric_name}/loss": loss, 
+        #     f"{metric_name}/acc": acc_store
+        #     }, 
+        #     on_step=True, on_epoch=True, prog_bar=True
+        # )
+        self.log(f"{metric_name}/loss", loss)
+        self.log(f"{metric_name}/acc", acc_store)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
         metrics = self._batch_step(batch, batch_idx, is_Train=True)
         loss, _, _ = metrics
-        self._update_log_metrics(self.train_loss, self.train_acc, "train", metrics)
+        self._log_standard_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
+        x, y = batch
+        if self.global_step % 100 == 0:
+            x = x[:10]
+            grid = torchvision.utils.make_grid(x.view(-1, 1, x.size(dim=2), x.size(dim=3)))
+            self.logger.experiment.add_image("experiment_images", grid, self.global_step) # type: ignore
+
         return loss
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
         metrics = self._batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        self._update_log_metrics(self.val_loss, self.val_acc, "val", metrics)
+        self._log_standard_metrics(self.val_loss, self.val_acc, "val", metrics)
         return loss 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
         metrics = self._batch_step(batch, batch_idx, is_Train=False)
         loss, _, _ = metrics
-        self._update_log_metrics(self.test_loss, self.test_acc, "test", metrics)
+        self._log_standard_metrics(self.test_loss, self.test_acc, "test", metrics)
         return loss
 
-    def _log_store(self) -> None:
+    def _log_GCS_store(self) -> None:
         print(f"Saving GCS of train at root")
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
         rows = np.array(self.global_grad_corr_store, np.float32)
-        with open(f'src/logs/Train_GCS_epoch_{self.current_epoch}.csv', 'w', newline='') as f:
+
+        with open(f'src/logs/Train_GCS/Epoch_{self.current_epoch}.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write data rows
         self._init_grad_corr_stores()
 
     def on_train_epoch_end(self) -> None:
-        self._log_store()
+        self._log_GCS_store()
 
     # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:
@@ -237,10 +249,7 @@ class DualOptLitModule(pl.LightningModule):
         # Recall metric is reset by us with lightning after each epoch.
         # So log value computed at this moment, not a reference to Metric object.
         self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
-    
-    def on_before_optimizer_step(self, optimizer) -> None:
-        print("Storing grad corr from on before optimizer step")
-        self._store_grad_corr() 
+     
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
