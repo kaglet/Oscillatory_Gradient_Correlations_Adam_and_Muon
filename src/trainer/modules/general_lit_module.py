@@ -195,8 +195,8 @@ class DualOptLitModule(pl.LightningModule):
         #     }, 
         #     on_step=True, on_epoch=True, prog_bar=True
         # )
-        self.log(f"{metric_name}/loss", loss)
-        self.log(f"{metric_name}/acc", acc_store)
+        self.log(f"{metric_name}/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
