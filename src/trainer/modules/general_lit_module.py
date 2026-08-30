@@ -208,7 +208,7 @@ class DualOptLitModule(pl.LightningModule):
         if self.global_step % 100 == 0:
             x = x[:10]
             grid = torchvision.utils.make_grid(x.view(-1, 1, x.size(dim=2), x.size(dim=3)))
-            self.logger.experiment.add_image("experiment_images", grid, self.global_step) # type: ignore
+            # self.logger.experiment.add_image("experiment_images", grid, self.global_step) # type: ignore
 
         return loss
     
@@ -226,20 +226,22 @@ class DualOptLitModule(pl.LightningModule):
         self._log_standard_metrics(self.test_loss, self.test_acc, "test", metrics)
         return loss
 
-    def _log_GCS_store(self) -> None:
-        print(f"Saving GCS of train at root")
+    def _log_GCH_store(self) -> None:
+        print(f"Saving GCH of train at root")
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
         rows = np.array(self.global_grad_corr_store, np.float32)
+        assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
 
-        with open(f'src/logs/Train_GCS/Epoch_{self.current_epoch}.csv', 'w', newline='') as f:
+        with open(self.trainer.log_dir + f'GCH_Epoch_{self.current_epoch}.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write data rows
         self._init_grad_corr_stores()
+        
 
     def on_train_epoch_end(self) -> None:
-        self._log_GCS_store()
+        self._log_GCH_store()
 
     # TODO: Get best value after a batch is run for validation step NOT for epoch
     def on_validation_epoch_end(self) -> None:

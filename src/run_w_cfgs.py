@@ -116,27 +116,26 @@ max_checkp_cfg = builds(
     save_last=True
 )
 
+log_dir = os.path.join(os.getcwd(), "logs/") 
+os.makedirs(log_dir, exist_ok=True)
+
 chkpts_cfg_list = [max_checkp_cfg]
 
-log_dir = "src/logs/"
-gcs_log_dir = log_dir + "Train_GCS/"
-os.makedirs(log_dir, exist_ok=True)
-os.makedirs(gcs_log_dir, exist_ok=True)
-tb_logger_cfg = builds(TensorBoardLogger, log_dir, name="per_epoch_metrics")
-csv_logger_cfg = builds(CSVLogger, log_dir, name="per_epoch_metrics")
+tb_logger_cfg = builds(TensorBoardLogger, name="per_epoch_metrics", save_dir=log_dir)
+csv_logger_cfg = builds(CSVLogger, name="per_epoch_metrics", save_dir=log_dir)
 
 # Define base trainer cfg
 trainer_cfg = builds(
     pl.Trainer, 
-    logger = tb_logger_cfg,
+    logger = csv_logger_cfg,
     max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
     callbacks=max_checkp_cfg,
-    default_root_dir=os.getcwd(),
+    default_root_dir=log_dir,
     detect_anomaly=False,
-    devices=1
+    devices=1,
     # precision = "bf16-mixed"
 )  
 
