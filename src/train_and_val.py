@@ -33,7 +33,5 @@ def train_and_val(
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
     trainer.fit(model=lit_module_built, datamodule=datamodule)
-    # TODO: When you run test evaluate best AND last for Muon to see if degradation is a notably suffered effect
-    trainer.test(model=lit_module_built, datamodule=datamodule)
     
     return 1
