@@ -1,0 +1,113 @@
+[33me7839aa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mminimal_baselines[m[33m, [m[1;31morigin/minimal_baselines[m[33m)[m Create new folder structure, files. Add celeb_a custom code, near done
+[33mdd06c95[m Log with CSV logger standard metrics
+[33m0be846c[m Show all metrics in tensorboard, with confusing/harmless(?) TypeError
+[33m67549a9[m Remove test set run
+[33m319ba44[m Add tensorb pixi cmd, do manual logs into tensorboad with half success
+[33m35e882d[m Show Muon and Adam params on step, for d4d9014, with explainable err
+[33md4d9014[m Print params with grad not None, before step hook and manually
+[33mb8c93b3[m Run with GCS index and length check prints, in batch_step
+[33m7431f5d[m Log GCS per train epoch not on fit end
+[33mf168f28[m Denote custom lit_module methods as private
+[33ma659069[m Simply replace mean loss store logged with actual loss for that step
+[33m05b349f[m Replace tuple or list configurable params with explicit single values
+[33m81e042b[m Reduce confused and over nested names, ready for multi run, & sep files
+[33m59d5fa5[m Replace function to return list of checkpoints with direct method
+[33mdb161e8[m Remove single opt lit module and deprecate some old uses of single
+[33mab660b5[m Modify global optim step calling stage to help hooks and streamline logs
+[33md98c8a6[m Untested: Fix repeated printed param names as header for GCS
+[33m7ffbb3a[m Add TODO for commit 944f0df task on grad accum single opt
+[33m944f0df[m Try full old single opt lr 1e-5, 1e-3 set, test acc 0.6, 0.73
+[33m4ab1f19[m Test for 74d10bd at 0.001 again leads to best results 0.76 test acc
+[33m2e2cff5[m Try 0.003 and 0.0003 for 74d10bd with 0.67 and 0.37 test acc
+[33m974cf2a[m Run test for 74d10bd acc falls to 0.37 by decreasing lr to 1e-5
+[33m3b408be[m Fix err LexerNoViableAltException simply, then run no_muon with 0.76 acc
+[33m74d10bd[m Fix dual opt Adam only sets Muon type keyword param values
+[33m12547f7[m Try dual Adam optim, results are still poor 0.4, vs past single opt
+[33m7c9b95d[m TODO 9ebacf9 (done): Add loss scaling back with success, better acc
+[33m9ebacf9[m Get working run thanks to Hydra-zen GH discussion
+[33mf1cbd43[m Merge branch 'minimal_baselines' of github.com:kaglet/Oscillatory_Gradient_Correlations_Adam_and_Muon into minimal_baselines
+[33m9f1ae03[m Try add missing decorator on task function with defaults, not as dict
+[33m43f8cce[m Make cleanest possible run but 'str' object is read in not group name
+[33m59b3b4f[m Make cleanest possible run but 'str' object is read in not group name
+[33m7c4c64b[m Expose store group name with "/" vs none as postfix affects detection
+[33m8d3d776[m Add configs to root to access names, err: "No match in defaults list"
+[33m74a2d5d[m Try run but group keys not detected except as string
+[33m0a9ade3[m Near complete confusing group based job launch per zen docs
+[33me4fab94[m Get error lr expected in scheduler though optimizer has it, removing
+[33mf04bfa4[m Include unsaved changes meant for ea991bf
+[33mea991bf[m Fix lr schdlr expects optimizer not pcfg version
+[33m212c05f[m Fix various errs and "conventions(?)" except 1 repeat list type error
+[33mdd6dbfa[m Remove custom resolver pieces, but keep new model_cache idea I had
+[33m1e20677[m Try use OmegaConf to cache single version of model with custom resolver
+[33mb6efcdb[m Complete config groups to test cls_imb, sp_pix, sbg_rob experiments
+[33m4e8dbca[m Change input to task function as player -> playe to test several points
+[33mc52074f[m Remove default list print output config with --help
+[33md2bc161[m Mispell group not according to root config keys
+[33m9488203[m Show alternative interpolation method
+[33m2ecdd3c[m Test correct interpolation at same nesting level
+[33m7784f9e[m Test add package, provider with same group name throws error
+[33mfe1fc32[m Print example after 6cbecae and 61128ed to show `+` function
+[33m6cbecae[m Print no key err working example in contrast to 61128ed
+[33m61128ed[m Try hydra, omegaconf test of group key vs config key match
+[33m4f9609e[m Return seeding, mixed precision trainer, medium precision mat mult
+[33mea3fa5b[m Fix GCS not on single opt lit modle, and assert err on None grad in it
+[33m3f8522c[m Print near full culprit issue for 2500cf1 (config model ref mismatch)
+[33m2500cf1[m SOLVED: From 411860b first spot and e1d0691 first debug (acc/loss)
+[33m1a1ef19[m Add TODO at PL_bolts import for what to do next
+[33m0e15805[m Try import and use Pybolts MNIST module and dataloader, fails
+[33m7174015[m Run with simpler MNIST dataloader, fails to improve
+[33m022322d[m Train with single Adam optimiser (Done TODO of e1d0691), same loss/acc
+[33me1d0691[m Add configs and train with single opt to debug loss/acc not lowering
+[33macec537[m Rmv possible inconsistent set seeds to debug
+[33ma244dba[m Fix diff dims in grad corr store, try fix acc/loss
+[33mfcad65f[m Return err of 441d162 to deal with issue exposed by grad accum or store
+[33m49de0f3[m Fix err in 441d162, remove on_fit as unused and uneeded
+[33m441d162[m Fix grad accum not passed as config class, w/ err on grad corr shape
+[33ma26ccad[m Configure grad accum to 4 starting at epoch 0 correctly (was 0:1)
+[33m01e8d11[m Fix lr and weight decay not initialised for Adam group params
+[33m4994501[m Merge branch 'minimal_baselines' of github.com:kaglet/Oscillatory_Gradient_Correlations_Adam_and_Muon into minimal_baselines
+[33m5e54f56[m Output valid grad corr matrix at end of 1 epoch
+[33md997a89[m Output valid grad corr matrix at end of 1 epoch
+[33m463d44d[m Generate osc corr matrix but has logical err: each row is the same
+[33m411860b[m Run working test with precision speedups but accuracy still low
+[33m62a9a38[m Run successfully if pretrained resnet weights are not used (class error)
+[33m11e23c8[m Complete lit module for nondist train, fix mandatory scheduler arg error
+[33m46c3b97[m Add dual optim lit module (unverified and possibly unfinished)
+[33md79dacd[m Add nondist Adam + Muon get_params, and fix `+` to try concat torch tensors
+[33m86a7c0f[m Ignore model in hyperparameter save of lit_module
+[33m81ec762[m Revert to commit 8b25da9 and return if __name__ check on jobs.py
+[33mc1966ac[m Try run distributed, get error num classes expected value 1000
+[33m8b25da9[m Set dataloader to train on tiny cifar dataset for fast debugging
+[33md86f582[m Remove multi-sweep job run, but does not fix error
+[33m746dc0c[m Fix error "Expected parent" raised first on datamodule
+[33m470e76a[m Try fix "Expected a parent"  again from datamodule
+[33mfb0f55f[m Fix create_transforms being used for callback list, shows clearer error
+[33m153de81[m Fix error from module passed in not data module
+[33mf383245[m Unify lightning import to isolate curr error
+[33m07dcd54[m Fix PyLance and/or Hydra typing errors
+[33mca4c6a5[m Fix X args for create_resnet_model, and bad Typing for mnist_dataloader
+[33m299ae68[m Add TODO for next config error callback list
+[33m2b29a56[m Fix src module undetected, builds fn wrong import
+[33m4f38ad7[m Create clean cuda and minimal deps
+[33m7649b3d[m Rmx conda -> pixi, where CUDA not detected yet
+[33m71cdc89[m Allow torch module to be detected and fix malformed pkg download
+[33mf361713[m Change py -v to 3.14 then 3.11 yields WinError 126
+[33m22118d6[m Explicitly add dependencies for hydra-zen to try fix errors
+[33m69eb55a[m Near finish default cfgs for vision tasks, without groups, add dloaders
+[33m8b09c32[m Try create functions to be exported that define and get configs
+[33m888e383[m Fix passing custom class args throws build error for get_callbacks
+[33m2df7e24[m Add default transformations, try build func to return them
+[33m2296fc4[m Delete moved and extended code in defaults.py for config
+[33m4f19026[m Move and create config groups in initial defaults.py
+[33m453a6da[m Expose params in Trainer with new TODOs incl for groups
+[33m542b163[m Add comment for group swapping in TODO
+[33meab15cf[m Create configs for class_imb runs, and store in groups, add next TODOs
+[33mc022f6a[m Start refactor of main train_eval_loop and add TODOs
+[33m972f8e5[m Add upcoming TODOs and starts for trainer and better config decoupling
+[33m726e5b6[m Complete Muon Aux Adam unified params getter
+[33mf17de0f[m Try set parameters for optimiser in model agnostic way, see TODO
+[33mda94cec[m Adapt MNIST, zen module, base lit module to my module
+[33m36fbbd6[m Add configs guide md + workspace default conda env
+[33mfa3ba6a[m Delete pre-commit hooks to rmv mdformat headache
+[33m86b60cc[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32mfix_setup_bugs[m[33m)[m Fix unsaved muon_optim.py code.
+[33mb65e080[m Extend yaml config and py main folder struct and optim files
