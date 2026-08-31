@@ -7,65 +7,55 @@ from glob import glob
 import torch
 from torchvision.transforms import Resize
 import torchvision
+from torch.utils.data import DataLoader, Dataset
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Adapted from @Veera93
-def extract_data(attr_path: str = "./data/CelebA/list_attr_celeba.txt", imgs_path: str = "./data/CelebA/img_align_celeba/") -> Tuple[Any, Any, Any]:
-    all_imgs_path = os.path.join(imgs_path, '*.jpg')
-    logger.info("Retrieved images!")
-    sorted_imgs_path = sorted(glob(all_imgs_path))
+class CelebADataset(Dataset):
+    def __init__(self, root:str='train', image_loader:Any=torchvision.io.read_image, transform:Any=None) -> None:
+        super().__init__()
+        imgs_path = "./data/CelebA/img_align_celeba/"
+        all_imgs_path = os.path.join(imgs_path, '*.jpg')
+        self.sorted_imgs_paths = sorted(os.listdir(all_imgs_path))
+        n_imgs = len(self.sorted_imgs_paths)
 
-    n_files = len(sorted_imgs_path)
-    size_image1=27
-    size_image2=33
-    all_input_imgs = torch.zeros((n_files, size_image1, size_image2, 3), dtype=torch.float32)
-    all_y = np.zeros(n_files)
-    count = 0
-    for f in sorted_imgs_path:
-        try:
-            img = torchvision.io.read_image(f)
-            all_input_imgs[count] = img.detach().clone()
-            logger.info("Transformed image of count: ", count)
+        logger.info("Retrieved images!")
 
-            all_y[count] = 0
-            count += 1
-        except:
-            continue
-    logger.info("Transformed images with count: ", count)
+        attr_path = "./data/CelebA/list_attr_celeba.txt"
+        attr_f = open(attr_path, 'r')
+        self._num_imgs = int(attr_f.readline())
+        header = attr_f.readline().split()
 
-    attr_target=[]
-    attr_feature=[]
-    f_attributes = open(attr_path, 'r')
-    text = f_attributes.readlines()
-    text = np.array(text)
+        partitions_path = "./data/CelebA/list_eval_partition.txt"
+        partitions_df = pd.read_csv(partitions_path, delimiter=" ", names=["split_num"], usecols=[1])
+        attr_df = pd.read_csv(attr_path, delimiter=" ", skiprows=2, names=header, usecols=["Male", "Blond_Hair"])
+        attr_df.insert(0, "image_path", self.sorted_imgs_paths)
+        attr_df[["Male", "Blond_Hair"]].replace(-1, 0, inplace=True)
+        id_df = pd.read_csv(attr_path, delimiter=" ", skiprows=1, names=["image_id"], usecols=[0])
+        self._final_df = pd.concat([attr_df, id_df, partitions_df], axis=0)
+        self._final_df[0, ["image_path"]].astype(int)
 
-    logger.info("Obtained attributes file and stored as array with size:", len(text))
+        assert self._num_imgs == self._final_df.size, "Size mismatch, num images and dataframe"
 
-    attr2idx = dict()
-    for i, attr in enumerate(text[1].split()):
-        attr2idx[attr] = i
-    attr_index_target = attr2idx['Blond_Hair']
-    attr_index_feature = attr2idx['Male']
+        self._loader = image_loader
+        self.transform = transform
+        logger.info("Obtained imgs, feats, targets")
 
-    for i in text[2:]:
-        value = i.split()
-        attr_target.append(value[attr_index_target + 1]) #First index is image name
-        attr_feature.append(value[attr_index_feature + 1]) #First index is image name
 
-    attr_target = torch.tensor(attr_target, dtype = torch.float32)
-    attr_feature = torch.tensor(attr_feature, dtype = torch.float32)
+    def __len__(self):
+        return self._num_imgs 
 
-    for i in range(0,len(attr_target)):
-        if (attr_target[i] == 1):
-            all_y[i]=1
-        else:
-            all_y[i]=0
-    all_y = torch.tensor(all_y, dtype = torch.float32)
-    logger.info("Obtained imgs, feats, targets")
+    def __getitem__(self, index):
+        path = self._final_df[index, "image_path"].map(str)
+        feats = self._final_df[index, "Male"]
+        y = self._final_df[index, "Blond_Hair"]
+        image = self._loader(path=str(path[0]))
 
-    # Return image, other_feats, targets
-    return all_input_imgs, attr_feature, all_y
+        if self.transform is not None:
+            image = self.transform(image)
+        
+        return image, feats, y
 
 def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/CelebA/list_eval_partition.txt"):
     """ 
