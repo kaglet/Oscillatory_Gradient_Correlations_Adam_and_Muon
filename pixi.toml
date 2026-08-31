@@ -24,6 +24,11 @@ beartype = ">=0.22.9,<0.23"
 numpy = "1.26.4.*"
 tensorboard = ">=2.13.0,<3"
 matplotlib = ">=3.11.1,<4"
+scikit-learn = ">=1.9.0,<2"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
+gdown = ">=6.1.0, <7"
+socks = ">=0, <1"
+scikit-image = ">=0.26.0, <0.27"
+pysocks = "*"
