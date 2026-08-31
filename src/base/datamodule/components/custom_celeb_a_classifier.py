@@ -1,11 +1,12 @@
 from typing import Any, Tuple
 import logging
 import skimage
-from skimage import io
 import numpy as np
 import os
 from glob import glob
 import torch
+from torchvision.transforms import Resize
+import torchvision
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,10 @@ def extract_data(attr_path: str = "./data/CelebA/list_attr_celeba.txt", imgs_pat
     count = 0
     for f in sorted_imgs_path:
         try:
-            img = io.imread(f)
-            new_img = skimage.transform.resize(img, (27, 33, 3))
-            all_input_imgs[count] = torch.tensor(new_img)
+            img = torchvision.io.read_image(f)
+            all_input_imgs[count] = img.detach().clone()
+            logger.info("Transformed image of count: ", count)
+
             all_y[count] = 0
             count += 1
         except:
