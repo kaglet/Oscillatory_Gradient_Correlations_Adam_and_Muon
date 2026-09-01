@@ -63,6 +63,7 @@ class CelebADataset(Dataset):
         
         return image, self._feats[index].unsqueeze(0), self._targets[index].unsqueeze(0)
 
+# TODO: Create DataLoader and adapt this code to decide the splits, and the shuffle mode used, to be like MNIST/CIFAR. 
 def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/CelebA/list_eval_partition.txt"):
     """ 
     * Obtain preset official splits. 
@@ -102,9 +103,13 @@ def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/Ce
     return splits 
 
 if __name__ == "__main__":
+    """
+    Confirms smooth run of dataloader, native image sizes, with minimal transforms
+    """
     logging.basicConfig(filename='custom_celeb_a.log', level=logging.INFO)
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], # ImageNet standard norm
                                     std=[0.229, 0.224, 0.225])
+    # TODO: Resize images smaller and train on subset for efficiency and MVP.
     celeb_a_transforms = v2.Compose([
         v2.ToDtype(torch.float32, scale=True),
         normalize
