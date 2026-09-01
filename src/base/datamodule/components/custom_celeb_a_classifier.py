@@ -9,6 +9,8 @@ from torchvision.transforms import Resize
 import torchvision
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
+from torchvision import transforms
+from torchvision.transforms import v2
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +45,16 @@ class CelebADataset(Dataset):
         assert self._num_imgs == self._final_df.shape[0], f"Size mismatch, num images and dataframe {self._num_imgs} vs {self._final_df.size}"
 
         self._loader = image_loader
-        self.transforms = transform
+        self._transforms = transform
         logger.info("Obtained imgs, feats, targets")
 
-
+        paths = self._final_df.loc[:, "image_path"]
+        feats = torch.tensor(self._final_df.loc[:, "male"]) 
+        y = torch.tensor(self._final_df.loc[:, "blond_hair"]) 
+        self._paths = paths
+        self._targets = y 
+        self._feats = feats
+        
     def __len__(self):
         return self._num_imgs 
 
@@ -54,18 +62,10 @@ class CelebADataset(Dataset):
         """ 
         Returns tuple of image, single spurious feature for experiment, target
         """
-        print("Attributes head top 2", self._final_df.head(2))
-
-        path = self._final_df.loc[index, "image_path"]
-        print("Image path: ", path)
-        feats = torch.tensor(self._final_df.loc[index, "male"]) 
-        y = torch.tensor(self._final_df.loc[index, "blond_hair"]) 
-        image = self._loader(input=path)
-
-        if self.transforms is not None:
-            image = self.transforms(image)
+        # Return image as transformed tensor, on demand 
+        image = self._transforms(self._loader(self._paths.loc[index]))
         
-        return image, feats, y
+        return image, self._feats[index].unsqueeze(0), self._targets[index].unsqueeze(0)
 
 def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/CelebA/list_eval_partition.txt"):
     """ 
@@ -107,7 +107,13 @@ def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/Ce
 
 if __name__ == "__main__":
     logging.basicConfig(filename='custom_celeb_a.log', level=logging.INFO)
-    dataset = CelebADataset()
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225])
+    celeb_a_transforms = v2.Compose([
+        v2.ToDtype(torch.float32, scale=True),
+        normalize
+    ])
+    dataset = CelebADataset(transform=celeb_a_transforms)
     first_data = dataset[0]
     img, feats, target = first_data
     print("Image", img, "Feats", feats, "Target", target)
