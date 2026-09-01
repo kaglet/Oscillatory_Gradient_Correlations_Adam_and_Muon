@@ -13,13 +13,12 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 class CelebADataset(Dataset):
-    def __init__(self, root:str='train', image_loader:Any=torchvision.io.read_image, transform:Any=None) -> None:
+    def __init__(self, root:str='train', image_loader:Any=torchvision.io.decode_image, transform:Any=None) -> None:
         super().__init__()
         imgs_path = "./data/CelebA/img_align_celeba/"
-        all_imgs_path = os.path.join(imgs_path, '*.jpg')
-        self._sorted_imgs_paths = sorted(glob(all_imgs_path))
-        n_imgs = len(self._sorted_imgs_paths)
-
+        all_imgs_path = [imgs_path + local_path for local_path in os.listdir(imgs_path)]  
+        self._sorted_imgs_paths = sorted(all_imgs_path)
+        print("Images top at at: ", self._sorted_imgs_paths[:10])
         logger.info("Retrieved images!")
 
         attr_path = "./data/CelebA/list_attr_celeba.txt"
@@ -31,19 +30,20 @@ class CelebADataset(Dataset):
         partitions_path = "./data/CelebA/list_eval_partition.txt"
         partitions_df = pd.read_csv(partitions_path, sep=r' |  ', engine='python', names=["split_num"], usecols=[1])
         attr_df = pd.read_csv(attr_path, sep=r' |  ', engine='python', skiprows=2, names=["male", "blond_hair"], usecols=[header.index("Male"), header.index("Blond_Hair")], dtype=pd.Int64Dtype)
-        attr_df.insert(loc=0, column="image_path", value=self._sorted_imgs_paths)
         attr_df.replace(-1, 0, inplace=True)
+        attr_df["image_path"] = self._sorted_imgs_paths
 
         id_df = pd.read_csv(attr_path, sep=r' |  ', engine='python', skiprows=2, names=["image_id"], usecols=[header.index("image_id")])
 
         print(attr_df.info(), partitions_df.info(), id_df.info())
         self._final_df = pd.concat([attr_df, id_df, partitions_df], axis=1)
+        print("Attributes head top 2", self._final_df.head(2))
 
         print(self._final_df.info())
         assert self._num_imgs == self._final_df.shape[0], f"Size mismatch, num images and dataframe {self._num_imgs} vs {self._final_df.size}"
 
         self._loader = image_loader
-        self.transform = transform
+        self.transforms = transform
         logger.info("Obtained imgs, feats, targets")
 
 
@@ -54,13 +54,16 @@ class CelebADataset(Dataset):
         """ 
         Returns tuple of image, single spurious feature for experiment, target
         """
-        path = self._final_df[index, "image_path"].map(str)
-        feats = torch.tensor(self._final_df[index, ["Male"]].values) 
-        y = torch.tensor(self._final_df[index, ["Blond_Hair"]].values) 
-        image = self._loader(path=str(path[0]))
+        print("Attributes head top 2", self._final_df.head(2))
 
-        if self.transform is not None:
-            image = self.transform(image)
+        path = self._final_df.loc[index, "image_path"]
+        print("Image path: ", path)
+        feats = torch.tensor(self._final_df.loc[index, "male"]) 
+        y = torch.tensor(self._final_df.loc[index, "blond_hair"]) 
+        image = self._loader(input=path)
+
+        if self.transforms is not None:
+            image = self.transforms(image)
         
         return image, feats, y
 
@@ -107,4 +110,4 @@ if __name__ == "__main__":
     dataset = CelebADataset()
     first_data = dataset[0]
     img, feats, target = first_data
-    print(img, feats, target)
+    print("Image", img, "Feats", feats, "Target", target)
