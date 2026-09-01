@@ -17,8 +17,8 @@ class CelebADataset(Dataset):
         super().__init__()
         imgs_path = "./data/CelebA/img_align_celeba/"
         all_imgs_path = os.path.join(imgs_path, '*.jpg')
-        self.sorted_imgs_paths = sorted(os.listdir(all_imgs_path))
-        n_imgs = len(self.sorted_imgs_paths)
+        self._sorted_imgs_paths = sorted(glob(all_imgs_path))
+        n_imgs = len(self._sorted_imgs_paths)
 
         logger.info("Retrieved images!")
 
@@ -26,17 +26,21 @@ class CelebADataset(Dataset):
         attr_f = open(attr_path, 'r')
         self._num_imgs = int(attr_f.readline())
         header = attr_f.readline().split()
-
+        print("Header is: ", header)
+        print("Male idx", header.index("Male"), "Blond_Hair idx: ", header.index("Blond_Hair"))
         partitions_path = "./data/CelebA/list_eval_partition.txt"
-        partitions_df = pd.read_csv(partitions_path, delimiter=" ", names=["split_num"], usecols=[1])
-        attr_df = pd.read_csv(attr_path, delimiter=" ", skiprows=2, names=header, usecols=["Male", "Blond_Hair"])
-        attr_df.insert(0, "image_path", self.sorted_imgs_paths)
-        attr_df[["Male", "Blond_Hair"]].replace(-1, 0, inplace=True)
-        id_df = pd.read_csv(attr_path, delimiter=" ", skiprows=1, names=["image_id"], usecols=[0])
-        self._final_df = pd.concat([attr_df, id_df, partitions_df], axis=0)
-        self._final_df[0, ["image_path"]].astype(int)
+        partitions_df = pd.read_csv(partitions_path, sep=r' |  ', engine='python', names=["split_num"], usecols=[1])
+        attr_df = pd.read_csv(attr_path, sep=r' |  ', engine='python', skiprows=2, names=["male", "blond_hair"], usecols=[header.index("Male"), header.index("Blond_Hair")], dtype=pd.Int64Dtype)
+        attr_df.insert(loc=0, column="image_path", value=self._sorted_imgs_paths)
+        attr_df.replace(-1, 0, inplace=True)
 
-        assert self._num_imgs == self._final_df.size, "Size mismatch, num images and dataframe"
+        id_df = pd.read_csv(attr_path, sep=r' |  ', engine='python', skiprows=2, names=["image_id"], usecols=[header.index("image_id")])
+
+        print(attr_df.info(), partitions_df.info(), id_df.info())
+        self._final_df = pd.concat([attr_df, id_df, partitions_df], axis=1)
+
+        print(self._final_df.info())
+        assert self._num_imgs == self._final_df.shape[0], f"Size mismatch, num images and dataframe {self._num_imgs} vs {self._final_df.size}"
 
         self._loader = image_loader
         self.transform = transform
@@ -47,9 +51,12 @@ class CelebADataset(Dataset):
         return self._num_imgs 
 
     def __getitem__(self, index):
+        """ 
+        Returns tuple of image, single spurious feature for experiment, target
+        """
         path = self._final_df[index, "image_path"].map(str)
-        feats = self._final_df[index, "Male"]
-        y = self._final_df[index, "Blond_Hair"]
+        feats = torch.tensor(self._final_df[index, ["Male"]].values) 
+        y = torch.tensor(self._final_df[index, ["Blond_Hair"]].values) 
         image = self._loader(path=str(path[0]))
 
         if self.transform is not None:
@@ -97,15 +104,7 @@ def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/Ce
 
 if __name__ == "__main__":
     logging.basicConfig(filename='custom_celeb_a.log', level=logging.INFO)
-    imgs, feats, targets = extract_data()
-    splits = get_preset_splits(imgs, feats, targets)
-    logger.info("Splits obtained")
-
-    train_lens = len(splits["train"]["imgs"]), len(splits["train"]["feats"]), len(splits["train"]["targets"])
-    logger.info("Train has len(s) for imgs, feats, targets: ", train_lens)
-
-    val_lens = len(splits["val"]["imgs"]), len(splits["val"]["feats"]), len(splits["val"]["targets"])
-    logger.info("Val has len(s) for imgs, feats, targets: ", val_lens)
-
-    test_lens = len(splits["test"]["imgs"]), len(splits["test"]["feats"]), len(splits["test"]["targets"])
-    logger.info("Test has len(s) for imgs, feats, targets: ", test_lens)
+    dataset = CelebADataset()
+    first_data = dataset[0]
+    img, feats, target = first_data
+    print(img, feats, target)
