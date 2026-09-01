@@ -1,3 +1,4 @@
+import math
 from typing import Any, Tuple
 import logging
 import skimage
@@ -20,15 +21,12 @@ class CelebADataset(Dataset):
         imgs_path = "./data/CelebA/img_align_celeba/"
         all_imgs_path = [imgs_path + local_path for local_path in os.listdir(imgs_path)]  
         self._sorted_imgs_paths = sorted(all_imgs_path)
-        print("Images top at at: ", self._sorted_imgs_paths[:10])
-        logger.info("Retrieved images!")
 
         attr_path = "./data/CelebA/list_attr_celeba.txt"
         attr_f = open(attr_path, 'r')
         self._num_imgs = int(attr_f.readline())
         header = attr_f.readline().split()
-        print("Header is: ", header)
-        print("Male idx", header.index("Male"), "Blond_Hair idx: ", header.index("Blond_Hair"))
+
         partitions_path = "./data/CelebA/list_eval_partition.txt"
         partitions_df = pd.read_csv(partitions_path, sep=r' |  ', engine='python', names=["split_num"], usecols=[1])
         attr_df = pd.read_csv(attr_path, sep=r' |  ', engine='python', skiprows=2, names=["male", "blond_hair"], usecols=[header.index("Male"), header.index("Blond_Hair")], dtype=pd.Int64Dtype)
@@ -39,14 +37,12 @@ class CelebADataset(Dataset):
 
         print(attr_df.info(), partitions_df.info(), id_df.info())
         self._final_df = pd.concat([attr_df, id_df, partitions_df], axis=1)
-        print("Attributes head top 2", self._final_df.head(2))
 
-        print(self._final_df.info())
+        logger.info(self._final_df.info())
         assert self._num_imgs == self._final_df.shape[0], f"Size mismatch, num images and dataframe {self._num_imgs} vs {self._final_df.size}"
 
         self._loader = image_loader
         self._transforms = transform
-        logger.info("Obtained imgs, feats, targets")
 
         paths = self._final_df.loc[:, "image_path"]
         feats = torch.tensor(self._final_df.loc[:, "male"]) 
@@ -116,4 +112,17 @@ if __name__ == "__main__":
     dataset = CelebADataset(transform=celeb_a_transforms)
     first_data = dataset[0]
     img, feats, target = first_data
-    print("Image", img, "Feats", feats, "Target", target)
+
+    batch_size = 16
+    dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=8, persistent_workers=True)
+    dataiter = iter(dataloader)
+
+    n_epochs = 2
+    total_samples = len(dataset)
+    n_iterations = math.ceil(total_samples/batch_size)
+    print(total_samples, n_iterations) 
+
+    for epoch in range(n_epochs):
+        for i, (img, feats, y) in enumerate(dataloader):
+            if (i+1) % 5 == 0:
+                print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}, imgs: {img.shape}, feats: {feats.shape}, targets: {y.shape}")
