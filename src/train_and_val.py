@@ -1,3 +1,4 @@
+import inspect
 import os
 from pathlib import Path
 from typing import Any, Callable
@@ -13,6 +14,12 @@ from hydra_zen.typing import Partial
 from hydra_zen import ZenStore, store
 __all__ = ["train_and_val"]
 
+def get_args(*args):
+    frame = inspect.currentframe()
+    assert frame is not None, "Frame is None"
+    args, _, _, locals_ = inspect.getargvalues(frame)
+    return (locals_[arg] for arg in args)
+
 def train_and_val(
     lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,
@@ -21,7 +28,7 @@ def train_and_val(
     params_cache: Callable, # as getter method instance
     optims_cache: list[Partial[Optimizer]],
     schdlrs_cache: list[Partial[LRScheduler]],
-    experiment_data: Any,
+    experiment_info: Any,
     logger_cache: Any,
     chkpt_cache: Any
 ):
@@ -30,8 +37,10 @@ def train_and_val(
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
 
+    exp_inf_built = experiment_info(config_postfix="1")
+
     for i in range(2):
-        path_all = Path(os.path.join(experiment_data.log_path, f"run_{i}"))
+        path_all = Path(os.path.join(exp_inf_built.log_path, f"run_{i}"))
         os.makedirs(path_all, exist_ok=True)
         loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
         trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)

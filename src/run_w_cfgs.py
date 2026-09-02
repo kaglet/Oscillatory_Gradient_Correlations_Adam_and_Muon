@@ -16,7 +16,7 @@ import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, zen, store
-from muon import MuonWithAuxAdam
+from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 from src.base.datamodule.cifar_datamodule import CIFAR100DataModule, CIFAR10DataModule
@@ -24,7 +24,7 @@ from src.base.datamodule.components.mnist_normalization import mnist_normalizati
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
-from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params
+from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
 from src.base.lit_module.components.simple_net import SimpleCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
 from src.train_and_val import train_and_val
@@ -46,8 +46,12 @@ dual_optim_params_cfg = pbuilds(
     get_dual_opt_params,
 )
 
-single_optim_params_cfg = pbuilds(
+adam_optim_params_cfg = pbuilds(
     get_Adam_params,
+)
+
+single_optim_params_cfg = pbuilds(
+    get_nondist_Muon_Adam_params,
 )
 
 # Define base vision model cfg
@@ -67,11 +71,13 @@ sp_pix_model_cfg = simple_cnn_cfg(num_classes=sp_pix_num_classes, num_in=1)
 
 # Optimiser variations
 # Default in distributed
-mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
+dist_mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 # Custom for non-distributed
 dual_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
-# single optimiser training  
+# Single optimiser training  
 single_optim_pcfg = [pbuilds(Adam)]
+# Single device 
+single_mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
 grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
@@ -268,6 +274,7 @@ model_store(simple_cnn_cfg, name="simple_cnn")
 
 params_store = store(group="params_cache")
 params_store(dual_optim_params_cfg, name=dual_lbl)
+params_store(adam_optim_params_cfg, name="adam")
 params_store(single_optim_params_cfg, name=single_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
@@ -278,21 +285,25 @@ grad_accum_schedule_store(grad_accum_schedule_cfg, name=default_lbl)
 
 optims_store = store(group="optims_cache")
 optims_store(dual_optims_pcfg, name=dual_lbl)
-optims_store(single_optim_pcfg, name=single_lbl)
+optims_store(single_optim_pcfg, name="adam")
+optims_store(dist_mu_aux_adam_pcfg, name="dist")
+optims_store(single_mu_aux_adam_pcfg, name=single_lbl)
 
 @dataclass
 class Experiment_Info:
     name: str
+    config_postfix: str
     run_num: int = 0
 
     def __post_init__(self):
+        self.name += f"/{self.config_postfix}"
         self.output_path = Path(f"outputs/{self.name}" )
         self.log_path = Path(f"{self.output_path}/logs/" )
 
-experims_store = store(group="experiment_data")
-experims_store(Experiment_Info("class_imbalance_ratios"), name=cls_imb_s_lbl)
-experims_store(Experiment_Info("spurious_pixel"), name=sp_pix_lbl)
-experims_store(Experiment_Info("subgroup_robustness"), name=sbg_rob_lbl)
+experims_store = store(group="experiment_info")
+experims_store(pbuilds(Experiment_Info, "class_imbalance_ratios"), name=cls_imb_s_lbl)
+experims_store(pbuilds(Experiment_Info, "spurious_pixel"), name=sp_pix_lbl)
+experims_store(pbuilds(Experiment_Info, "subgroup_robustness"), name=sbg_rob_lbl)
 
 logger_store = store(group="logger_cache")
 logger_store(csv_logger_cfg, name="csv")
@@ -304,14 +315,14 @@ ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
         {'lit_module': dual_lbl},
-        {'params_cache': dual_lbl},
+        {'params_cache': single_lbl},
         {'model_cache': "simple_cnn"},
         {'datamodule': sp_pix_lbl},
         {'trainer': default_lbl},        
-        {'optims_cache': dual_lbl},
+        {'optims_cache': single_lbl},
         {'schdlrs_cache': default_lbl},
         {'grad_accum_schedule': default_lbl},
-        {'experiment_data': sp_pix_lbl},
+        {'experiment_info': sp_pix_lbl},
         {'logger_cache': "csv"},
         {'chkpt_cache': default_lbl},
         '_self_'
@@ -336,8 +347,8 @@ if __name__ == "__main__":
         overrides=[
             f"model_cache=simple_cnn", 
             f"datamodule={sp_pix_lbl}", 
-            f"params_cache={dual_lbl}", 
-            f"optims_cache={dual_lbl}", 
+            f"params_cache={single_lbl}", 
+            f"optims_cache={single_lbl}", 
             f"lit_module={dual_lbl}",
             "++params_cache.lr_muon=0.02",
             "++params_cache.lr_adam=0.001",

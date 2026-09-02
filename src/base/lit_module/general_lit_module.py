@@ -175,7 +175,8 @@ class DualOptLitModule(pl.LightningModule):
                     # Call global opt step only at the end to help hooks
                     if i == len(optims) - 1:
                         opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
-                        # self._print_params_per_opt(opt)
+                        if self.global_step < 100:
+                            self._print_params_per_opt(opt)
                     else:
                         # Access underlying optimizer directly to avoid double-counting
                         opt.optimizer.step()
@@ -195,8 +196,10 @@ class DualOptLitModule(pl.LightningModule):
 
     def _print_params_per_opt(self, opt: Any) -> None:
         print(opt.__class__.__name__)
-        for p in opt.param_groups:
-            print(p)
+        for g in opt.param_groups:
+            if g["use_muon"] == True:
+                print("Muon group:")
+                print(g)
 
     def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
