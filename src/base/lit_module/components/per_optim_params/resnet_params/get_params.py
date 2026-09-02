@@ -30,7 +30,7 @@ def get_nondist_Muon_Adam_params(model: Any, lr_muon: float, lr_adam: float, w_d
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) == 1 and p.requires_grad]
     conv_params = [p for n, p in model.named_parameters() if (len(p.shape) == 4) and (p.requires_grad) and ("conv" in n)]
-    high_dim_params = [p for n, p in model.named_parameters() if (p not in set(conv_params)) and (p not in set(low_dim_params))]
+    high_dim_params = [p for n, p in model.named_parameters() if (p not in set(conv_params)) and (p not in set(low_dim_params))] # use set NOT list NOR unchanged tensor - shape error is thrown
 
     len_high_dim = len(high_dim_params)
     print(len_high_dim)

@@ -196,10 +196,14 @@ class DualOptLitModule(pl.LightningModule):
 
     def _print_params_per_opt(self, opt: Any) -> None:
         print(opt.__class__.__name__)
+        len_mu = 0
+        len_ad = 0
         for g in opt.param_groups:
             if g["use_muon"] == True:
-                print("Muon group:")
-                print(g)
+                len_mu += len(g["params"])
+            elif g["use_muon"] == False:
+                len_ad += len(g["params"])
+        print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
     def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
         loss, preds, targets = metrics
