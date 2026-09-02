@@ -14,7 +14,7 @@ from hydra_zen import instantiate
 from torchmetrics import MaxMetric, MeanMetric, Metric
 from torchmetrics.classification.accuracy import Accuracy
 import torchvision
-from src.class_imbalance_ratios.lit_module.components.custom_grad_accum import GradAccumSchedule
+from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 import matplotlib.pyplot as plt
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]

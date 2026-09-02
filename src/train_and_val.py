@@ -21,13 +21,6 @@ def train_and_val(
     optims_cache: list[Partial[Optimizer]],
     schdlrs_cache: list[Partial[LRScheduler]]
 ):
-    # print(store.has_enqueued())
-    # Set matrix multiplication precision
-    # TODO Fit this where it is more sensible, or make configurable, seems it should be in main loop at some torch.config level not composed into anything
-    # torch.set_float32_matmul_precision("high")
-    # logger = logging.getLogger(__name__)
-    # logger.info("Logging from train and val input args", optims_cache[0], params_cache, model_cache, lit_module, datamodule)
-
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]

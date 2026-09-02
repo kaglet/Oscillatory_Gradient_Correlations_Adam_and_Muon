@@ -8,6 +8,7 @@ import multiprocessing
 from typing import Any, Type
 
 from omegaconf import OmegaConf
+import torch
 import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
@@ -16,16 +17,16 @@ from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_con
 from muon import MuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
-from train_and_val import train_and_val
+from src.base.datamodule.cifar_datamodule import CIFAR100DataModule, CIFAR10DataModule
+from src.base.datamodule.components.mnist_normalization import mnist_normalization
+from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
+from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
+from src.base.lit_module.components.custom_resnet import create_resnet_model
+from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params
+from src.base.lit_module.components.simple_net import SimpleCNN
+from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
+from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
-from trainer.dataloader.cifar_dataloaders import CIFAR100DataModule, CIFAR10DataModule
-from trainer.dataloader.components.mnist_normalization import mnist_normalization
-from trainer.dataloader.mnist_dataloader import MNISTDataModule, SimpleMNISTDataModule
-from trainer.modules.components.custom_grad_accum import GradAccumSchedule
-from trainer.modules.general_lit_module import DualOptLitModule, SingleOptLitModule 
-from trainer.modules.components.custom_resnet import create_resnet_model
-from trainer.modules.components.simple_net import SimpleCNN
-from trainer.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.beartype import validates_with_beartype
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
@@ -116,7 +117,7 @@ max_checkp_cfg = builds(
     save_last=True
 )
 
-log_dir = os.path.join(os.getcwd(), "logs/") 
+log_dir = os.path.join(os.getcwd(), "outputs/logs/") 
 os.makedirs(log_dir, exist_ok=True)
 
 chkpts_cfg_list = [max_checkp_cfg]
@@ -293,6 +294,8 @@ task_function = zen(train_and_val, pre_call=pre_seed)
 
 if __name__ == "__main__":
     store.add_to_hydra_store()
+    torch.set_float32_matmul_precision(precision="medium")
+
     # TODO: Print yaml config at the end for seeing saved structure
     job = launch(
         ExperimentConfig,
