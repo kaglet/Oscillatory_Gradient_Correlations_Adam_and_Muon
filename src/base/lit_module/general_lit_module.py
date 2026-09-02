@@ -1,5 +1,7 @@
 from logging import log
+import os
 from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
+from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 
 import csv
 import lightning.pytorch as pl
@@ -59,6 +61,17 @@ class DualOptLitModule(pl.LightningModule):
 
         # TODO: DO NOT leave this as default without it being set for specific stages
         self._init_grad_corr_stores()
+    #     self._loggers = [
+    #         CSVLogger(name="train_acc_steps"),
+    #         CSVLogger(name="train_loss_steps"),
+    #         CSVLogger(name="val_acc_steps"), 
+    #         CSVLogger(name="val_loss_steps"),
+
+    #         CSVLogger(name="train_acc_epoch"),
+    # CSVLogger(name="train_loss_epoch"),
+    # CSVLogger(name="val_acc_epoch"), 
+    # CSVLogger(name="val_loss_epoch")]
+
         self.save_hyperparameters(logger=False, ignore=["model"])
 
     def _init_grad_corr_stores(self) -> bool:
@@ -189,14 +202,16 @@ class DualOptLitModule(pl.LightningModule):
         loss, preds, targets = metrics
         loss_store(loss)
         acc_store(preds, targets)
-        # self.log_dict({
-        #     f"{metric_name}/loss": loss, 
-        #     f"{metric_name}/acc": acc_store
-        #     }, 
-        #     on_step=True, on_epoch=True, prog_bar=True
-        # )
-        self.log(f"{metric_name}/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log(f"{metric_name}/acc", acc_store, on_step=True, on_epoch=True, prog_bar=True)
+        
+        metrics_dict = {
+            f"{metric_name}/loss": loss,
+            f"{metric_name}/acc": acc_store.compute()
+        }
+        if metric_name == "train":
+            self.loggers[0].log_metrics(metrics_dict)
+        elif metric_name == "val":
+            self.loggers[1].log_metrics(metrics_dict)
+        # self.log_dict(dictionary=metrics_dict, on_step=True, on_epoch=False, prog_bar=True)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
@@ -232,8 +247,10 @@ class DualOptLitModule(pl.LightningModule):
         fields = self.per_param_names
         rows = np.array(self.global_grad_corr_store, np.float32)
         assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
+        log_dir = os.path.join(self.trainer.log_dir, 'GCH_Epoch')
+        os.makedirs(log_dir, exist_ok=True)
 
-        with open(self.trainer.log_dir + f'GCH_Epoch_{self.current_epoch}.csv', 'w', newline='') as f:
+        with open(log_dir + f'/{self.current_epoch}.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write data rows
@@ -250,8 +267,9 @@ class DualOptLitModule(pl.LightningModule):
         
         # Recall metric is reset by us with lightning after each epoch.
         # So log value computed at this moment, not a reference to Metric object.
-        self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
-     
+        self.loggers[2].log_metrics({"val": float(self.max_val_acc.compute())})
+
+        # self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(

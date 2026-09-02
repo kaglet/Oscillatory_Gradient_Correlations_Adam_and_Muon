@@ -3,8 +3,10 @@
 Anything configurable or static in a configurable aspect is defined here and assembled later.
 """
 
+from dataclasses import dataclass
 import os
 import multiprocessing
+from pathlib import Path
 from typing import Any, Type
 
 from omegaconf import OmegaConf
@@ -108,35 +110,41 @@ sbg_rob_module_cfg = pbuilds(
 
 # ---- TRAINER CONFIGS START ---- #
 # TODO: Change val accuracy to be the best on on a subgroup not overall
-max_checkp_cfg = builds(
+max_checkpt_cfg = pbuilds(
     ModelCheckpoint,    
     save_top_k=1, 
     mode="max", 
     # TODO: As Unit 6.1 of PL docs do not cover ensuring consistency, find out how across names.
     monitor="val/acc", 
-    save_last=True
+    save_last=True,
 )
 
-log_dir = os.path.join(os.getcwd(), "outputs/logs/") 
-os.makedirs(log_dir, exist_ok=True)
+chkpts_cfg_list = [max_checkpt_cfg]
 
-chkpts_cfg_list = [max_checkp_cfg]
+tb_logger_cfg = pbuilds(TensorBoardLogger, name="per_epoch_metrics")
+csv_logger_cfg = [
+    pbuilds(CSVLogger, name="train_steps"),
+    pbuilds(CSVLogger, name="val_steps"), 
+    pbuilds(CSVLogger, name="val_max"), 
 
-tb_logger_cfg = builds(TensorBoardLogger, name="per_epoch_metrics", save_dir=log_dir)
-csv_logger_cfg = builds(CSVLogger, name="per_epoch_metrics", save_dir=log_dir)
+    pbuilds(CSVLogger, name="train_loss_steps"),
+    pbuilds(CSVLogger, name="val_loss_steps"),
+
+    pbuilds(CSVLogger, name="train_acc_epoch"),
+    pbuilds(CSVLogger, name="train_loss_epoch"),
+    pbuilds(CSVLogger, name="val_acc_epoch"), 
+    pbuilds(CSVLogger, name="val_loss_epoch"),
+]
 
 # Define base trainer cfg
-trainer_cfg = builds(
+trainer_cfg = pbuilds(
     pl.Trainer, 
-    logger = csv_logger_cfg,
     max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
-    callbacks=max_checkp_cfg,
-    default_root_dir=log_dir,
     detect_anomaly=False,
-    devices=1,
+    devices=1, 
     # precision = "bf16-mixed"
 )  
 
@@ -272,18 +280,40 @@ optims_store = store(group="optims_cache")
 optims_store(dual_optims_pcfg, name=dual_lbl)
 optims_store(single_optim_pcfg, name=single_lbl)
 
+@dataclass
+class Experiment_Info:
+    name: str
+    run_num: int = 0
+
+    def __post_init__(self):
+        self.output_path = Path(f"outputs/{self.name}" )
+        self.log_path = Path(f"{self.output_path}/logs/" )
+
+experims_store = store(group="experiment_data")
+experims_store(Experiment_Info("class_imbalance_ratios"), name=cls_imb_s_lbl)
+experims_store(Experiment_Info("spurious_pixel"), name=sp_pix_lbl)
+experims_store(Experiment_Info("subgroup_robustness"), name=sbg_rob_lbl)
+
+logger_store = store(group="logger_cache")
+logger_store(csv_logger_cfg, name="csv")
+chkpt_store = store(group="chkpt_cache")
+chkpt_store(max_checkpt_cfg, name=default_lbl)
+
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
         {'lit_module': dual_lbl},
         {'params_cache': dual_lbl},
-        {'model_cache': "resnet18"},
+        {'model_cache': "simple_cnn"},
         {'datamodule': sp_pix_lbl},
         {'trainer': default_lbl},        
         {'optims_cache': dual_lbl},
         {'schdlrs_cache': default_lbl},
         {'grad_accum_schedule': default_lbl},
+        {'experiment_data': sp_pix_lbl},
+        {'logger_cache': "csv"},
+        {'chkpt_cache': default_lbl},
         '_self_'
     ]
 )
@@ -304,8 +334,8 @@ if __name__ == "__main__":
         
         version_base="1.3",
         overrides=[
-            f"model_cache=resnet18", 
-            f"datamodule={cls_imb_s_lbl}", 
+            f"model_cache=simple_cnn", 
+            f"datamodule={sp_pix_lbl}", 
             f"params_cache={dual_lbl}", 
             f"optims_cache={dual_lbl}", 
             f"lit_module={dual_lbl}",
