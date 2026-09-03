@@ -12,7 +12,7 @@ nerd = "python nerd.py"
 nerdy = "python nerdy.py"
 mnist_test = "python src/.pixi/envs/default/Lib/site-packages/pl_bolts/models/mnist_module.py"
 tb = "tensorboard --logdir src/logs/ --bind_all"
-test = "python C:/Users/motlh/coder_life/COS700/src/base/datamodule/components/custom_celeb_a_classifier.py"
+test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
 pytorch-gpu = "*"
@@ -31,6 +31,7 @@ pysocks = ">=1.7.1,<2"
 scikit-image = ">=0.26.0,<0.27"
 pillow = "10.4.0.*"
 pandas = ">=3.0.5,<4"
+imbalanced-learn = ">=0.14.2,<0.15"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
