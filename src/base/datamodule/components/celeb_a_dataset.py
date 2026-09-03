@@ -60,7 +60,7 @@ class CelebADataset(Dataset):
         """
         # Return image as transformed tensor, on demand 
         image = self._transforms(self._loader(self._paths.loc[index]))
-        
+        # TODO: Apply target transforms if necessary, what you do to input space, output space needs e.g. To Tensor as in CIFAR10 dataset
         return image, self._feats[index].unsqueeze(0), self._targets[index].unsqueeze(0)
 
 # TODO: Create DataLoader and adapt this code to decide the splits, and the shuffle mode used, to be like MNIST/CIFAR. 

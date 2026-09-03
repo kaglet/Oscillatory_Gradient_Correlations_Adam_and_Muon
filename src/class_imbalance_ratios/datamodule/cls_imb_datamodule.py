@@ -4,6 +4,7 @@ import os
 import random
 from typing import Any, Callable, Dict, Literal, Optional, Type
 from collections import Counter
+from collections.abc import Mapping
 import torch
 import lightning as L
 from torch.utils.data.sampler import SubsetRandomSampler, RandomSampler
@@ -11,7 +12,7 @@ from torch.utils.data import random_split, DataLoader, TensorDataset
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 import torch.nn as nn
-from torchvision.transforms import v2
+from torchvision.transforms import v2, ToTensor
 
 from imblearn.under_sampling import RandomUnderSampler
 
@@ -46,21 +47,13 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            self._cifar_train, self._cifar_val = random_split(
-                cifar_full, [0.8, 0.2]
-            )
-
             sampler = RandomUnderSampler(sampling_strategy="dict")
-            _, y_full = cifar_full
-            sampler.sampling_strategy_ = self._get_ratios(y_full)
-
-            x_train, y_train = self._cifar_train
-            x_val, y_val = self._cifar_val
-
-            new_samples = sampler.fit_resample(x_train, y_train)
-            self._cifar_train = TensorDataset(torch.tensor(new_samples[0]), torch.tensor(new_samples[1]))
-            new_samples = sampler.fit_resample(x_val, y_val)
-            self._cifar_val = TensorDataset(torch.tensor(new_samples[0]), torch.tensor(new_samples[1]))
+            sampler.sampling_strategy_ = self._get_ratios(cifar_full)
+            all = sampler.fit_resample(cifar_full.data, cifar_full.targets)
+            all = TensorDataset(torch.stack(tensors=[torch.tensor(all[0]), torch.tensor(all[1])], dim=1))
+            self._cifar_train, self._cifar_val = random_split(
+                all, [0.8, 0.2]
+            )
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
@@ -69,32 +62,32 @@ class ClsImbDataModule(CIFARDataModule):
         if stage == "predict":
             self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.test_transforms)
 
-    def _get_ratios(self, targets) -> Dict[int, int]:
+    def _get_ratios(self, ds, labels=range(9)) -> Dict[int, int]:
         """ 
         Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
         If not assignable outputs with appropriate assertion errors violating assumptions. 
         """
-        labels = Counter(targets).keys()
-        len_ds = len(self._cifar_train)
+        len_ds = len(ds)
         len_labels = len(labels)
-        final_weights = None
+        final_ratios = None
 
         if self._target_weights is not None:
             total = sum([val for val in self._target_weights.values()])
             assert total == len_labels, f"Dict given has len {len_labels} != target domain len {len_ds}"
-            final_weights = {i:math.ceil((r/total)*len_ds) for (i,r) in self._target_weights.items()}
+            final_ratios = {i:math.ceil((r/total)*len_ds) for (i,r) in self._target_weights.items()}
         elif self._downsampler_ratio is not None:
             class_ratios = [(i,1) for i in range(len_ds)]
             random.shuffle(class_ratios)
             slice_first = class_ratios[math.ceil(len_ds / 2) : ]
+            slice_first = {i:1 for (i,r) in slice_first}
+
             slice_last = class_ratios[ : math.ceil(len_ds / 2)]
-            slice_last = [(i,self._downsampler_ratio) for (i,r) in slice_last]
-            new_ratios = slice_first + slice_last
-            final_weights = dict(new_ratios)
+            slice_last = {i:self._downsampler_ratio for (i,r) in slice_last}
+            final_ratios = {**slice_first, **slice_last}
 
-        assert final_weights is not None, "Final weights not assigned, aborting"
+        assert final_ratios is not None, "Final weights not assigned, aborting"
 
-        return final_weights
+        return final_ratios
 
 # Entry point
 if __name__ == "__main__":
@@ -107,6 +100,7 @@ if __name__ == "__main__":
     # TODO: Resize images smaller and train on subset for efficiency and MVP.
     celeb_a_transforms = v2.Compose([
         v2.ToDtype(torch.float32, scale=True),
+        ToTensor(),
         normalize
     ])
     

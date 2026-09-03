@@ -7,7 +7,7 @@ from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 import torch.nn as nn
-from torchvision.transforms import v2
+from torchvision.transforms import v2, ToTensor
 
 __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
@@ -22,6 +22,7 @@ class CIFARDataModule(L.LightningDataModule):
         )
         default_transforms = v2.Compose([
             v2.ToDtype(torch.float32, scale=True),
+            ToTensor(),
             normalize
         ])
 
