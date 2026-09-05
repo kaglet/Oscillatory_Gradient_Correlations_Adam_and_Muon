@@ -22,7 +22,7 @@ class DeterministicUnderSampler():
         Returns a subset of the dataset based off the sampling ratios. 
         """
         assert(len(self.data) == len(self.targets)), "Length mismatch, data and targets"
-        choices = np.random.shuffle(np.array(range(len(self.data))))
+        choices = np.random.choice(np.array(range(len(self.data))), size=len(self.data))
         data = self.data[choices]
         targets = self.targets[choices]
         subset_data = []

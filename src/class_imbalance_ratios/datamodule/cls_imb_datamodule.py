@@ -43,13 +43,13 @@ class ClsImbDataModule(CIFARDataModule):
             weighted_ratios = None 
 
         self._target_weights = weighted_ratios
-        self._downsampler_ratio = downsampler_ratio 
+        self.experiment_ratio = downsampler_ratio 
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            sampler = DeterministicUnderSampler(weighted_ratios=self._get_ratios(cifar_full), data= np.asarray(cifar_full.data), targets=np.asarray(cifar_full.targets))
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(cifar_full), data= np.asarray(cifar_full.data), targets=np.asarray(cifar_full.targets))
             
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
@@ -64,50 +64,52 @@ class ClsImbDataModule(CIFARDataModule):
         if stage == "predict":
             self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.test_transforms)
 
-    def _get_ratios(self, ds, labels=range(10)) -> Dict[int, int]:
+    def _set_sample_counts(self, ds) -> Dict[int, int]:
         """ 
         Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
         If not assignable outputs with appropriate assertion errors violating assumptions. 
         """
         len_ds = len(ds) - 1
-        len_labels = len(ds.targets) - 1
-        final_ratios = None
+        targets = np.asarray(ds.targets)
+        labels = np.unique(targets)
+        len_labels = len(labels) - 1
+
+        final_factors = None
 
         if self._target_weights is not None:
             total = sum([val for val in self._target_weights.values()])
             assert total == len_labels, f"Dict given has len {len_labels} != target domain len {len_ds}"
-            final_ratios = {i:math.ceil((r/total)*len_ds) for (i,r) in self._target_weights.items()}
-        elif self._downsampler_ratio is not None:
-            class_ratios = [(i,1) for i in range(len_ds)]
-            random.shuffle(class_ratios)
-            slice_first = class_ratios[math.ceil(len_ds / 2) : ]
-            slice_first = {i:1 for (i,r) in slice_first}
+            final_factors = {i:math.ceil((r/total)*len_ds) for (i,r) in self._target_weights.items()}
+        elif self.experiment_ratio is not None:
+            np.random.shuffle(labels)
+            map_to_num = np.vectorize(lambda lbl: (labels == lbl).sum())
+            totals = map_to_num(labels)
 
-            slice_last = class_ratios[ : math.ceil(len_ds / 2)]
-            slice_last = {i:self._downsampler_ratio for (i,r) in slice_last}
-            final_ratios = {**slice_first, **slice_last}
+            top_n = math.ceil(len(labels) / 2)
+            chosen_idxs = np.random.choice(labels, size=top_n)
+            final_factors = np.ones_like(labels)
+            final_factors[chosen_idxs] = 1 / self.experiment_ratio
 
-        assert final_ratios is not None, "Final weights not assigned, aborting"
+            final_sample_counts = np.dot(totals, final_factors)
+            # FINALLY attach labels with final_sample_counts e.g. as tuples with vectorized operations, don't assume zero indexing
+            label_ratios = [(i,r) for i in range(len_labels)]
+            random.shuffle(label_ratios)
+            slice_first = label_ratios[0: math.ceil(len_labels / 2)]
+            slice_first = {i:r for (i,r) in slice_first}
 
-        return final_ratios
+            slice_last = label_ratios[math.ceil(len_labels / 2): ]
+            slice_last = {i:self.experiment_ratio for (i,r) in slice_last}
+            final_factors = {**slice_first, **slice_last}
+
+        assert final_factors is not None, "Final weights not assigned, aborting"
+
+        return final_factors
 
 # Entry point
 if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
-    import warnings
-
-    warnings.filterwarnings("ignore", "*pkg_resources is deprecated*")
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], # ImageNet standard norm
-                                    std=[0.229, 0.224, 0.225])
-    # TODO: Resize images smaller and train on subset for efficiency and MVP.
-    celeb_a_transforms = v2.Compose([
-        v2.ToDtype(torch.float32, scale=True),
-        ToTensor(),
-        normalize
-    ])
-    
     dmodule = ClsImbDataModule(downsampler_ratio=20) 
     dmodule.prepare_data()
     dmodule.setup("fit")

@@ -18,6 +18,8 @@ class CIFARDataModule(L.LightningDataModule):
     def __init__(self, train_transforms: Optional[Callable] | None = None, val_transforms: Optional[Callable] | None = None, test_transforms: Optional[Callable] | None = None, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
         super().__init__()
         self.data_dir = data_dir
+        # TODO: Resize images smaller and train on subset for efficiency and MVP.
+
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], # ImageNet standard norm
             std=[0.229, 0.224, 0.225]
@@ -90,14 +92,6 @@ if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], # ImageNet standard norm
-                                    std=[0.229, 0.224, 0.225])
-    # TODO: Resize images smaller and train on subset for efficiency and MVP.
-    celeb_a_transforms = v2.Compose([
-        v2.ToDtype(torch.float32, scale=True),
-        normalize
-    ])
-    
     dmodule = CIFARDataModule() 
     dmodule.prepare_data()
     dmodule.setup("fit")
