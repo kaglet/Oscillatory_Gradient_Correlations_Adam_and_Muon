@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import random
+import numpy as np
 from typing import Any, Callable, Dict, Literal, Optional, Type
 from collections import Counter
 from collections.abc import Mapping
@@ -17,6 +18,7 @@ from torchvision.transforms import v2, ToTensor
 from imblearn.under_sampling import RandomUnderSampler
 
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
+from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
 __all__ = ["ClsImbDataModule"]
 
@@ -47,12 +49,12 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            sampler = RandomUnderSampler(sampling_strategy="dict")
-            sampler.sampling_strategy_ = self._get_ratios(cifar_full)
-            all = sampler.fit_resample(cifar_full.data, cifar_full.targets)
-            all = TensorDataset(torch.stack(tensors=[torch.tensor(all[0]), torch.tensor(all[1])], dim=1))
+            sampler = DeterministicUnderSampler(weighted_ratios=self._get_ratios(cifar_full), data= np.asarray(cifar_full.data), targets=np.asarray(cifar_full.targets))
+            
+            # Returns subset of dataset 
+            resampled_subset = sampler.fit_resample()
             self._cifar_train, self._cifar_val = random_split(
-                all, [0.8, 0.2]
+                resampled_subset, [0.8, 0.2]
             )
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
@@ -62,13 +64,13 @@ class ClsImbDataModule(CIFARDataModule):
         if stage == "predict":
             self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.test_transforms)
 
-    def _get_ratios(self, ds, labels=range(9)) -> Dict[int, int]:
+    def _get_ratios(self, ds, labels=range(10)) -> Dict[int, int]:
         """ 
         Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
         If not assignable outputs with appropriate assertion errors violating assumptions. 
         """
-        len_ds = len(ds)
-        len_labels = len(labels)
+        len_ds = len(ds) - 1
+        len_labels = len(ds.targets) - 1
         final_ratios = None
 
         if self._target_weights is not None:
@@ -105,18 +107,10 @@ if __name__ == "__main__":
     ])
     
     dmodule = ClsImbDataModule(downsampler_ratio=20) 
-    dmodule.setup(stage="fit")
-    dataloader = dmodule.train_dataloader()
-    dataiter = iter(dataloader)
-    batch_size = 4
-    n_epochs = 2
-    total_samples = 50000
-    n_iterations = math.ceil(total_samples/batch_size)
-    print(total_samples, n_iterations) 
+    dmodule.prepare_data()
+    dmodule.setup("fit")
+    print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
 
-    for epoch in range(n_epochs):
-        for i, (img, feats, y) in enumerate(dataloader):
-            if (i+1) % 5 == 0:
-                print(f"epoch {epoch+1}/{n_epochs}, step {i+1}/{n_iterations}, imgs: {img.shape}, feats: {feats.shape}, targets: {y.shape}") 
-
-    # TODO: Do the same for stage = "val"
+    for input, target in dmodule.train_dataloader():
+        print(f"Inputs of len {len(input)} targets of len {len(target)}")
+        print(target)
