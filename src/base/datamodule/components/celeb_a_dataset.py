@@ -63,45 +63,6 @@ class CelebADataset(Dataset):
         # TODO: Apply target transforms if necessary, what you do to input space, output space needs e.g. To Tensor as in CIFAR10 dataset
         return image, self._feats[index].unsqueeze(0), self._targets[index].unsqueeze(0)
 
-# TODO: Create DataLoader and adapt this code to decide the splits, and the shuffle mode used, to be like MNIST/CIFAR. 
-def get_preset_splits(imgs, features, targets, partitions_path: str = "./data/CelebA/list_eval_partition.txt"):
-    """ 
-    * Obtain preset official splits. 
-    * To change ratios concatenate the train and val. 
-    * DO NOT alter the test split. 
-    """
-    f_partitions = open(partitions_path, 'r')
-    text = f_partitions.readlines()
-    text = np.array(text)
-    split_idx_assignments = text[:, 1]
-    assert len(split_idx_assignments) == imgs.size(dim=0), "CelebA: Index assignment length does not match input images"
-    logger.info("Read partitions file with size", len(text))
-
-    train_imgs, train_feats, train_targets = [(img, feature, target) for img, feature, target, split_idx in zip(imgs, features, targets, split_idx_assignments) if split_idx == 0]
-    val_imgs, val_feats, val_targets = [(img, feature, target) for img, feature, target, split_idx in zip(imgs, features, targets, split_idx_assignments) if split_idx == 1]
-    test_imgs, test_feats, test_targets = [(img, feature, target) for img, feature, target, split_idx in zip(imgs, features, targets, split_idx_assignments) if split_idx == 2]    
-    logger.info("Created splits", len(text))
-
-    splits = dict({
-        "train": {
-            "imgs": train_imgs,
-            "feats": train_feats,
-            "targets": train_targets
-        },
-        "val": {
-            "imgs": val_imgs,
-            "feats": val_feats,
-            "targets": val_targets
-        },
-        "test": {
-            "imgs": test_imgs,
-            "feats": test_feats,
-            "targets": test_targets
-        }
-    })
-
-    return splits 
-
 if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms

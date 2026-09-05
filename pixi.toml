@@ -35,3 +35,4 @@ imbalanced-learn = ">=0.14.2,<0.15"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
+triton-windows = ">=3.8.0.post28, <4"

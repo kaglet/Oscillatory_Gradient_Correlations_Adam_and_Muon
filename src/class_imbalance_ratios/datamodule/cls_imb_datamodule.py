@@ -96,7 +96,9 @@ if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
-    logging.basicConfig(filename='custom_celeb_a.log', level=logging.INFO)
+    import warnings
+
+    warnings.filterwarnings("ignore", "*pkg_resources is deprecated*")
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], # ImageNet standard norm
                                     std=[0.229, 0.224, 0.225])
     # TODO: Resize images smaller and train on subset for efficiency and MVP.
