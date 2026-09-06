@@ -27,7 +27,7 @@ class ClsImbDataModule(CIFARDataModule):
     def __init__(
         self,
         weighted_ratios: Dict[int, float] | None = None,
-        downsampler_ratio: int | None = None,
+        downsampler_ratio: int = 20,
         *args: Any, 
         **kwargs: Any
     ):
@@ -69,41 +69,25 @@ class ClsImbDataModule(CIFARDataModule):
         Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
         If not assignable outputs with appropriate assertion errors violating assumptions. 
         """
-        len_ds = len(ds) - 1
-        targets = np.asarray(ds.targets)
+        targets = np.asarray(ds.targets, dtype=np.int16)
         labels = np.unique(targets)
-        len_labels = len(labels) - 1
+        labels_data = np.unique(targets, return_counts=True)
+        np.random.shuffle(labels)
+        map_to_num = np.vectorize(lambda lbl: (targets == lbl).sum())
+        totals = map_to_num(labels)
 
-        final_factors = None
+        top_n = math.ceil(len(labels) / 2)
+        chosen_idxs = np.random.choice(labels, size=top_n, replace=False)
+        final_factors = np.ones_like(labels, dtype=np.float32)
+        final_factors[chosen_idxs] = np.divide(1, self.experiment_ratio)
 
-        if self._target_weights is not None:
-            total = sum([val for val in self._target_weights.values()])
-            assert total == len_labels, f"Dict given has len {len_labels} != target domain len {len_ds}"
-            final_factors = {i:math.ceil((r/total)*len_ds) for (i,r) in self._target_weights.items()}
-        elif self.experiment_ratio is not None:
-            np.random.shuffle(labels)
-            map_to_num = np.vectorize(lambda lbl: (labels == lbl).sum())
-            totals = map_to_num(labels)
+        final_sample_counts = np.floor(np.multiply(totals, final_factors))
 
-            top_n = math.ceil(len(labels) / 2)
-            chosen_idxs = np.random.choice(labels, size=top_n)
-            final_factors = np.ones_like(labels)
-            final_factors[chosen_idxs] = 1 / self.experiment_ratio
+        labels.sort(axis=0)
+        mapped = {int(key):int(val) for (key,val) in zip(labels,final_sample_counts)}
+        labels_data = np.unique(targets, return_counts=True)
 
-            final_sample_counts = np.dot(totals, final_factors)
-            # FINALLY attach labels with final_sample_counts e.g. as tuples with vectorized operations, don't assume zero indexing
-            label_ratios = [(i,r) for i in range(len_labels)]
-            random.shuffle(label_ratios)
-            slice_first = label_ratios[0: math.ceil(len_labels / 2)]
-            slice_first = {i:r for (i,r) in slice_first}
-
-            slice_last = label_ratios[math.ceil(len_labels / 2): ]
-            slice_last = {i:self.experiment_ratio for (i,r) in slice_last}
-            final_factors = {**slice_first, **slice_last}
-
-        assert final_factors is not None, "Final weights not assigned, aborting"
-
-        return final_factors
+        return mapped 
 
 # Entry point
 if __name__ == "__main__":

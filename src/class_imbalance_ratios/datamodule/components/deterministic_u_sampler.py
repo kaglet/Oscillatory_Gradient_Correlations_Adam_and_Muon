@@ -13,8 +13,8 @@ class DeterministicUnderSampler():
         Expects dtype set on inputs, preferrably float32 for ML training.
         """
         self.weighted_ratios = weighted_ratios
-        self.data = data.squeeze()
-        self.targets = targets.squeeze()
+        self.data = data
+        self.targets = targets
 
     def fit_resample(self) -> TensorDataset:
         """ 
@@ -22,11 +22,12 @@ class DeterministicUnderSampler():
         Returns a subset of the dataset based off the sampling ratios. 
         """
         assert(len(self.data) == len(self.targets)), "Length mismatch, data and targets"
-        choices = np.random.choice(np.array(range(len(self.data))), size=len(self.data))
+        choices = np.random.choice(np.array(range(len(self.data))), size=len(self.data), replace=False)
         data = self.data[choices]
         targets = self.targets[choices]
         subset_data = []
         subset_targets = []
+        labels_data = np.unique(self.targets, return_counts=True)
 
         for (lbl, R) in self.weighted_ratios.items():
             lbl_matcher = (targets == lbl)
