@@ -1,14 +1,14 @@
 __all__ = ["DeterministicUnderSampler"]
 
 import math
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 import numpy as np
-from numpy import ndarray
+from numpy import array
 import torch
 from torch.utils.data import Dataset, TensorDataset
 
 class DeterministicUnderSampler():
-    def __init__(self, weighted_ratios: Dict[int, int], data: ndarray, targets: ndarray):
+    def __init__(self, weighted_ratios: Dict[int, int], data: Any, targets: Any):
         """
         Expects dtype set on inputs, preferrably float32 for ML training.
         """

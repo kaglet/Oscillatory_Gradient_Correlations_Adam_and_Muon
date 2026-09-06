@@ -50,8 +50,8 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            original_shape = (len(self._cifar_full), *(self._cifar_full[0][0].shape))
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data.reshape(original_shape)), targets=np.asarray(self._cifar_full.targets))
+            self._original_shape = (len(self._cifar_full), *(self._cifar_full[0][0].shape))
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data.reshape(self._original_shape)), targets=np.asarray(self._cifar_full.targets))
             
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
@@ -92,20 +92,25 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     def get_train_data_stats(self):
-        dloader = self.train_dataloader()
-        pix_sum = torch.zeros(size=(3,), dtype=torch.float32)
-        pix_sum_sq = torch.zeros_like(pix_sum)
+        # Stick to single type, numpy OR torch 
+        # Test numpy
+        train_ds = self._cifar_full.data[self._cifar_train.indices]
+        train_shape = len(train_ds), self._original_shape[1], self._original_shape[2], self._original_shape[3]
+        train_ds = train_ds.reshape(train_shape)
+        pix_sum = np.zeros(shape=(3,), dtype=np.float32)
+        pix_sum_sq = np.zeros_like(pix_sum)
         img_dim = self._cifar_train[0][0].shape
         img_pix_count = img_dim[1] * img_dim[2]
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
-        for input, target in self._cifar_train:
-            pix_sum += input.sum(axis=[0,2,3])
-            pix_sum_sq += input.square().sum(axis=[0,2,3])
+        for input in train_ds:
+            np_input = np.array(input, dtype=np.float32)
+            pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(1,2))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(np_input), axis=(1,2))], axis=0) 
 
         total_mean = pix_sum / total_pix_count
-        total_var = (pix_sum_sq / total_pix_count) - (total_mean.square())
-        total_std = torch.sqrt(total_var)
+        total_var = (pix_sum_sq / total_pix_count) - (np.square(total_mean))
+        total_std = np.sqrt(total_var)
 
         return total_mean, total_std
 
