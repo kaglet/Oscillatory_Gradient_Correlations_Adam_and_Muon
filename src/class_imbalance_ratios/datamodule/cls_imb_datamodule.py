@@ -99,7 +99,7 @@ class ClsImbDataModule(CIFARDataModule):
         img_pix_count = img_dim[1] * img_dim[2]
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
-        for input, target in dloader:
+        for input, target in self._cifar_train:
             pix_sum += input.sum(axis=[0,2,3])
             pix_sum_sq += input.square().sum(axis=[0,2,3])
 
