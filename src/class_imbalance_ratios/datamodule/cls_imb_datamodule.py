@@ -50,7 +50,8 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data), targets=np.asarray(self._cifar_full.targets))
+            original_shape = (len(self._cifar_full), *(self._cifar_full[0][0].shape))
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data.reshape(original_shape)), targets=np.asarray(self._cifar_full.targets))
             
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
@@ -95,10 +96,10 @@ class ClsImbDataModule(CIFARDataModule):
         pix_sum = torch.zeros(size=(3,), dtype=torch.float32)
         pix_sum_sq = torch.zeros_like(pix_sum)
         img_dim = self._cifar_train[0][0].shape
-        img_pix_count = img_dim[0] * img_dim[1]
+        img_pix_count = img_dim[1] * img_dim[2]
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
-        for input, target in dloader:
+        for input, target in self._cifar_train:
             pix_sum += input.sum(axis=[1,2])
             pix_sum_sq += input.square().sum(axis=[1,2])
 
