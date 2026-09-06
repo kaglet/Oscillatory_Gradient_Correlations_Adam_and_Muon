@@ -16,6 +16,7 @@ import torch.nn as nn
 from torchvision.transforms import v2, ToTensor
 
 from imblearn.under_sampling import RandomUnderSampler
+from tqdm import tqdm
 
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
@@ -48,8 +49,8 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(cifar_full), data= np.asarray(cifar_full.data), targets=np.asarray(cifar_full.targets))
+            self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data), targets=np.asarray(self._cifar_full.targets))
             
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
@@ -74,7 +75,7 @@ class ClsImbDataModule(CIFARDataModule):
         labels_data = np.unique(targets, return_counts=True)
         np.random.shuffle(labels)
         map_to_num = np.vectorize(lambda lbl: (targets == lbl).sum())
-        totals = map_to_num(labels)
+        totals = map_to_num(labels) 
 
         top_n = math.ceil(len(labels) / 2)
         chosen_idxs = np.random.choice(labels, size=top_n, replace=False)
@@ -89,6 +90,24 @@ class ClsImbDataModule(CIFARDataModule):
 
         return mapped 
 
+    def get_train_data_stats(self):
+        dloader = self.train_dataloader()
+        pix_sum = torch.zeros(size=(3,), dtype=torch.float32)
+        pix_sum_sq = torch.zeros_like(pix_sum)
+        img_dim = self._cifar_train[0][0].shape
+        img_pix_count = img_dim[0] * img_dim[1]
+        num_img = len(self._cifar_train)
+        total_pix_count = num_img * img_pix_count
+        for input, target in dloader:
+            pix_sum += input.sum(axis=[1,2])
+            pix_sum_sq += input.square().sum(axis=[1,2])
+
+        total_mean = pix_sum / total_pix_count
+        total_var = (pix_sum_sq / total_pix_count) - (total_mean.square())
+        total_std = torch.sqrt(total_var)
+
+        return total_mean, total_std
+
 # Entry point
 if __name__ == "__main__":
     """
@@ -98,7 +117,7 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
-
-    for input, target in dmodule.train_dataloader():
-        print(f"Inputs of len {len(input)} targets of len {len(target)}")
-        print(target)
+    print(f"Stats mean, std per RGB channel {dmodule.get_train_data_stats()}")
+    # for input, target in dmodule.train_dataloader():
+    #     print(f"Inputs of len {len(input)} targets of len {len(target)}")
+    #     print(target)

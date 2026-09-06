@@ -7,6 +7,7 @@ from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import MNIST
 from torchvision import transforms
 from torch import nn
+from tqdm import tqdm
 
 __all__ = ["SimpleMNISTDataModule", "MNISTDataModule"]
 
@@ -55,6 +56,24 @@ class MNISTDataModule(L.LightningDataModule):
 
     def predict_dataloader(self) -> DataLoader:
         return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers) 
+
+    def get_train_data_stats(self):
+        dloader = self.train_dataloader()
+        pix_sum = torch.zeros(size=(3,), dtype=torch.float32)
+        pix_sum_sq = torch.zeros_like(pix_sum)
+        img_dim = self.mnist_train[0]
+        img_pix_count = img_dim[1] * img_dim[2]
+        num_img = len(self.mnist_train)
+        total_pix_count = num_img * img_pix_count
+        for input, target in tqdm(dloader):
+            pix_sum += input.sum(axis=[1,2])
+            pix_sum_sq += input.square().sum(axis=[1,2])
+
+        total_mean = pix_sum / total_pix_count
+        total_var = (pix_sum_sq / total_pix_count) - (total_mean.square())
+        total_std = torch.sqrt(total_var)
+
+        return total_mean, total_std
 
 class SimpleMNISTDataModule(L.LightningDataModule):
 
