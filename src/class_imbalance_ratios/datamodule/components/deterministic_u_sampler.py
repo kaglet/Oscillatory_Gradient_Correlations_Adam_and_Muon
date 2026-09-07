@@ -16,7 +16,6 @@ class DeterministicUnderSampler():
         """
         self.weighted_ratios = weighted_ratios
         self.data = data
-        viz_img(self.data[0])
         self.targets = targets
 
     def fit_resample(self) -> TensorDataset:

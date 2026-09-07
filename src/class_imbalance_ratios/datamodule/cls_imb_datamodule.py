@@ -52,12 +52,10 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True)
-            viz_img(self._cifar_full[0][0])
-
             sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data = np.asarray(self._cifar_full.data), targets=np.asarray(self._cifar_full.targets))
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
-            viz_img(resampled_subset[0][0])
+            # viz_img(resampled_subset[0][0])
             self._cifar_train, self._cifar_val = random_split(
                 resampled_subset, [0.8, 0.2]
             )
@@ -108,7 +106,6 @@ class ClsImbDataModule(CIFARDataModule):
         total_pix_count = num_img * img_pix_count
         for input in train_ds:
             input = convert_img_axes(input)
-            viz_img(input)
 
             np_input = np.array(input, dtype=np.float32)
             pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(1,2))], axis=0 )
