@@ -14,7 +14,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 import torch.nn as nn
 from torchvision.transforms import v2, ToTensor
-
+from torchvision.transforms.functional import to_pil_image
 from imblearn.under_sampling import RandomUnderSampler
 from tqdm import tqdm
 
@@ -22,6 +22,8 @@ from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.base.datamodule.components.convert_ax import convert_img_axes
 from src.base.datamodule.components.img_viz import viz_img
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
+
+from PIL import Image
 
 __all__ = ["ClsImbDataModule"]
 
@@ -120,6 +122,15 @@ if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406], # ImageNet standard norm
+        std=[0.229, 0.224, 0.225]
+    )
+    base_transforms = v2.Compose([
+        v2.ToDtype(torch.float32, scale=True),
+        ToTensor(),
+        normalize
+    ])
     dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1) 
     dmodule.prepare_data()
     dmodule.setup("fit")
@@ -130,7 +141,10 @@ if __name__ == "__main__":
     for inputs, targets in dmodule.train_dataloader():
         print(f"Inputs of len {len(inputs)} targets of len {len(targets)}")
         # print(inputs, targets)
-        viz_img(inputs, label=targets[0])
+        img = convert_img_axes(inputs[0])
+        img = to_pil_image(img)
+        img = base_transforms(img)
+        viz_img(img, label=targets[0])
         i += 1
         if i == 10: 
             break
