@@ -51,7 +51,7 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
+            self._cifar_full = self.ds(self.data_dir, train=True)
             viz_img(self._cifar_full[0][0])
             sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= self._cifar_full.data, targets=np.asarray(self._cifar_full.targets))
             similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
@@ -94,6 +94,7 @@ class ClsImbDataModule(CIFARDataModule):
 
         return mapped 
 
+    # TODO: Set .train_transforms post init during setup call the get_stats for each current train, val, test splits
     def get_train_data_stats(self):
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         train_ds = self._cifar_full.data[self._cifar_train.indices]
