@@ -53,14 +53,16 @@ class ClsImbDataModule(CIFARDataModule):
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True)
             viz_img(self._cifar_full[0][0])
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= self._cifar_full.data, targets=np.asarray(self._cifar_full.targets))
-            similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
+
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data = np.asarray(self._cifar_full.data), targets=np.asarray(self._cifar_full.targets))
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
             viz_img(resampled_subset[0][0])
             self._cifar_train, self._cifar_val = random_split(
                 resampled_subset, [0.8, 0.2]
             )
+            # similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
+
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
@@ -95,7 +97,7 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     # TODO: Set .train_transforms post init during setup call the get_stats for each current train, val, test splits
-    def get_train_data_stats(self):
+    def get_train_ds_stats(self):
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         train_ds = self._cifar_full.data[self._cifar_train.indices]
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
-    print(f"Stats mean, std per RGB channel {dmodule.get_train_data_stats()}")
+    print(f"Stats mean, std per RGB channel {dmodule.get_train_ds_stats()}")
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
