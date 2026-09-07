@@ -7,6 +7,8 @@ from numpy import array
 import torch
 from torch.utils.data import Dataset, TensorDataset
 
+from src.base.datamodule.components.img_viz import viz_img
+
 class DeterministicUnderSampler():
     def __init__(self, weighted_ratios: Dict[int, int], data: Any, targets: Any):
         """
@@ -14,6 +16,7 @@ class DeterministicUnderSampler():
         """
         self.weighted_ratios = weighted_ratios
         self.data = data
+        viz_img(self.data[0])
         self.targets = targets
 
     def fit_resample(self) -> TensorDataset:

@@ -19,9 +19,9 @@ from imblearn.under_sampling import RandomUnderSampler
 from tqdm import tqdm
 
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
+from src.base.datamodule.components.convert_ax import convert_img_axes
+from src.base.datamodule.components.img_viz import viz_img
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
-
-import matplotlib.pyplot as plt 
 
 __all__ = ["ClsImbDataModule"]
 
@@ -52,10 +52,9 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
-            viz_img(self._cifar_full.data[0])
-            self._original_shape = (len(self._cifar_full), *(self._cifar_full[0][0].shape))
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data.reshape(self._original_shape)), targets=np.asarray(self._cifar_full.targets))
-            
+            viz_img(self._cifar_full[0][0])
+            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= self._cifar_full.data, targets=np.asarray(self._cifar_full.targets))
+            similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
             viz_img(resampled_subset[0][0])
@@ -96,11 +95,8 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     def get_train_data_stats(self):
-        
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         train_ds = self._cifar_full.data[self._cifar_train.indices]
-        train_shape = len(train_ds), self._original_shape[1], self._original_shape[2], self._original_shape[3]
-        train_ds = train_ds.reshape(train_shape)
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         img_dim = self._cifar_train[0][0].shape
@@ -108,6 +104,7 @@ class ClsImbDataModule(CIFARDataModule):
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
         for input in train_ds:
+            input = convert_img_axes(input)
             viz_img(input)
 
             np_input = np.array(input, dtype=np.float32)
@@ -119,16 +116,6 @@ class ClsImbDataModule(CIFARDataModule):
         total_std = np.sqrt(total_var)
 
         return total_mean, total_std
-
-def viz_img(img, label=1):
-    if img.shape[0] == 3 and type(img) is torch.Tensor:
-        img = img.permute(1,2,0)
-    elif img.shape[0] == 3 and type(img) is np.ndarray:
-        img = np.moveaxis(img, 0, -1) 
-    plt.title('{}'.format(label))
-    plt.axis("off")
-    plt.imshow(img.squeeze(), cmap="gray")
-    plt.show(block=True)
 
 # Entry point
 if __name__ == "__main__":
