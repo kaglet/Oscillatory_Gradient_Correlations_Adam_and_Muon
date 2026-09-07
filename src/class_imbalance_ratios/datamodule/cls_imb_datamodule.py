@@ -21,6 +21,8 @@ from tqdm import tqdm
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
+import matplotlib.pyplot as plt 
+
 __all__ = ["ClsImbDataModule"]
 
 class ClsImbDataModule(CIFARDataModule):
@@ -50,11 +52,13 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
+            viz_img(self._cifar_full.data[0])
             self._original_shape = (len(self._cifar_full), *(self._cifar_full[0][0].shape))
             sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data= np.asarray(self._cifar_full.data.reshape(self._original_shape)), targets=np.asarray(self._cifar_full.targets))
             
             # Returns subset of dataset 
             resampled_subset = sampler.fit_resample()
+            viz_img(resampled_subset[0][0])
             self._cifar_train, self._cifar_val = random_split(
                 resampled_subset, [0.8, 0.2]
             )
@@ -92,8 +96,8 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     def get_train_data_stats(self):
-        # Stick to single type, numpy OR torch 
-        # Test numpy
+        
+        # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         train_ds = self._cifar_full.data[self._cifar_train.indices]
         train_shape = len(train_ds), self._original_shape[1], self._original_shape[2], self._original_shape[3]
         train_ds = train_ds.reshape(train_shape)
@@ -104,6 +108,8 @@ class ClsImbDataModule(CIFARDataModule):
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
         for input in train_ds:
+            viz_img(input)
+
             np_input = np.array(input, dtype=np.float32)
             pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(1,2))], axis=0 )
             pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(np_input), axis=(1,2))], axis=0) 
@@ -114,16 +120,34 @@ class ClsImbDataModule(CIFARDataModule):
 
         return total_mean, total_std
 
+def viz_img(img, label=1):
+    if img.shape[0] == 3 and type(img) is torch.Tensor:
+        img = img.permute(1,2,0)
+    elif img.shape[0] == 3 and type(img) is np.ndarray:
+        img = np.moveaxis(img, 0, -1) 
+    plt.title('{}'.format(label))
+    plt.axis("off")
+    plt.imshow(img.squeeze(), cmap="gray")
+    plt.show(block=True)
+
 # Entry point
 if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
-    dmodule = ClsImbDataModule(downsampler_ratio=20) 
+    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1) 
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
     print(f"Stats mean, std per RGB channel {dmodule.get_train_data_stats()}")
-    # for input, target in dmodule.train_dataloader():
-    #     print(f"Inputs of len {len(input)} targets of len {len(target)}")
-    #     print(target)
+
+    i = 0
+    for inputs, targets in dmodule.train_dataloader():
+        print(f"Inputs of len {len(inputs)} targets of len {len(targets)}")
+        # print(inputs, targets)
+        viz_img(inputs, label=targets[0])
+        i += 1
+        if i == 10: 
+            break
+
+    
