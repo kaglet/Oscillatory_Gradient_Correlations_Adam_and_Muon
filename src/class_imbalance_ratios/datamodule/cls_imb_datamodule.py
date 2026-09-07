@@ -101,15 +101,13 @@ class ClsImbDataModule(CIFARDataModule):
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         img_dim = self._cifar_train[0][0].shape
-        img_pix_count = img_dim[1] * img_dim[2]
+        img_pix_count = img_dim[0] * img_dim[1]
         num_img = len(self._cifar_train)
         total_pix_count = num_img * img_pix_count
         for input in train_ds:
-            input = convert_img_axes(input)
-
             np_input = np.array(input, dtype=np.float32)
-            pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(1,2))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(np_input), axis=(1,2))], axis=0) 
+            pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(0,1))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(np_input), axis=(0,1))], axis=0) 
 
         total_mean = pix_sum / total_pix_count
         total_var = (pix_sum_sq / total_pix_count) - (np.square(total_mean))
