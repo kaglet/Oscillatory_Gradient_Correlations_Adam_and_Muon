@@ -163,7 +163,6 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
-    print(f"Stats mean, std per RGB channel {dmodule.get_ds_stats()}")
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
