@@ -65,12 +65,11 @@ class ClsImbDataModule(CIFARDataModule):
             train, val = random_split(
                 resampled_subset, [0.8, 0.2]
             )
-
+            # TODO: Do same process for train data
             chosen_idxs = train.indices
             train_data = np.asarray(resampled_subset.data[chosen_idxs])
             train_target = np.asarray(resampled_subset.targets[chosen_idxs])
-            self._cifar_train = CIFAR10Helper(train_data, train_target)
-            train_stats = self.get_train_ds_stats()
+            train_stats = self.get_ds_stats(train_data)
             normalize = transforms.Normalize(
                 mean=train_stats[0], # ImageNet standard norm
                 std=train_stats[1]
@@ -111,14 +110,13 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     # TODO: Set .train_transforms post init during setup call the get_stats for each current train, val, test splits
-    def get_train_ds_stats(self):
+    def get_ds_stats(self, train_ds):
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
-        train_ds = self._cifar_full.data[self._cifar_train.indices]
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
-        img_dim = self._cifar_train[0][0].shape
+        img_dim = train_ds[0][0].shape
         img_pix_count = img_dim[0] * img_dim[1]
-        num_img = len(self._cifar_train)
+        num_img = len(train_ds)
         total_pix_count = num_img * img_pix_count
         for input in train_ds:
             np_input = np.array(input, dtype=np.float32)
@@ -165,7 +163,7 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
-    print(f"Stats mean, std per RGB channel {dmodule.get_train_ds_stats()}")
+    print(f"Stats mean, std per RGB channel {dmodule.get_ds_stats()}")
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
