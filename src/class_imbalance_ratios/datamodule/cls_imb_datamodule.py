@@ -69,10 +69,12 @@ class ClsImbDataModule(CIFARDataModule):
             chosen_idxs = train.indices
             train_data = np.asarray(resampled_subset.data[chosen_idxs])
             train_target = np.asarray(resampled_subset.targets[chosen_idxs])
-            train_stats = self.get_ds_stats(train_data)
+            train_stats = self.get_ds_data_stats(train_data)
+            mean = np.ndarray.tolist(train_stats[0])
+            std = np.ndarray.tolist(train_stats[1])
             normalize = transforms.Normalize(
-                mean=train_stats[0], # ImageNet standard norm
-                std=train_stats[1]
+                mean=mean, # ImageNet standard norm
+                std=std
             )
             self.train_transforms.transforms.append(normalize)
             self._cifar_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
@@ -110,18 +112,17 @@ class ClsImbDataModule(CIFARDataModule):
         return mapped 
 
     # TODO: Set .train_transforms post init during setup call the get_stats for each current train, val, test splits
-    def get_ds_stats(self, train_ds):
+    def get_ds_data_stats(self, train_data):
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
-        img_dim = train_ds[0][0].shape
+        img_dim = train_data[0].shape
         img_pix_count = img_dim[0] * img_dim[1]
-        num_img = len(train_ds)
+        num_img = len(train_data)
         total_pix_count = num_img * img_pix_count
-        for input in train_ds:
-            np_input = np.array(input, dtype=np.float32)
-            pix_sum = np.sum([pix_sum, np.sum(np_input, axis=(0,1))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(np_input), axis=(0,1))], axis=0) 
+        for input in train_data:
+            pix_sum = np.sum([pix_sum, np.sum(input, axis=(0,1))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input), axis=(0,1))], axis=0) 
 
         total_mean = pix_sum / total_pix_count
         total_var = (pix_sum_sq / total_pix_count) - (np.square(total_mean))
