@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Literal, Optional, Type
+from typing import Any, Callable, Literal, Optional, Type
 
 import torch
 import lightning as L
@@ -9,13 +9,13 @@ from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 import torch.nn as nn
-from torchvision.transforms import v2, ToTensor
+from torchvision.transforms import ToTensor
 
 __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
-    def __init__(self, train_transforms: Callable, val_transforms: Callable, test_transforms: Callable, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
+    def __init__(self, train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
         super().__init__()
         self.data_dir = data_dir
         # TODO: Resize images smaller and train on subset for efficiency and MVP.
@@ -66,16 +66,16 @@ class CIFAR10DataModule(CIFARDataModule):
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, train_transforms: Callable, val_transforms: Callable, test_transforms: Callable, dataset: Type[CIFAR10] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
-        super().__init__(train_transforms, val_transforms, test_transforms, dataset, data_dir, batch_size, num_workers)
+    def __init__(*args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
 class CIFAR100DataModule(CIFARDataModule):
     """ 
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(self, train_transforms: Callable, val_transforms: Callable, test_transforms: Callable, dataset: Type[CIFAR100] = CIFAR100, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
-        super().__init__(train_transforms, val_transforms, test_transforms, dataset, data_dir, batch_size, num_workers)
+    def __init__(*args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
 
 if __name__ == "__main__":

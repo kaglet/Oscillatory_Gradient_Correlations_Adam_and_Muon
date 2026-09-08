@@ -7,6 +7,7 @@ from numpy import array
 import torch
 from torch.utils.data import Dataset, TensorDataset
 
+from src.base.datamodule.components.cifar_10_helper import CIFAR10Helper
 from src.base.datamodule.components.img_viz import viz_img
 
 class DeterministicUnderSampler():
@@ -18,7 +19,7 @@ class DeterministicUnderSampler():
         self.data = data
         self.targets = targets
 
-    def fit_resample(self) -> TensorDataset:
+    def fit_resample(self) -> CIFAR10Helper:
         """ 
         Stitches together subsets of data selected for a particular label and ratio combination.
         Returns a subset of the dataset based off the sampling ratios. 
@@ -42,10 +43,10 @@ class DeterministicUnderSampler():
             top_r = data_matches[:R, :]
             subset_data.append(top_r)
 
-        subset_targets = torch.tensor(np.concatenate(subset_targets, axis=0))
-        subset_data = torch.tensor(np.concatenate(subset_data, axis=0))
+        subset_targets = np.concatenate(subset_targets, axis=0)
+        subset_data = np.concatenate(subset_data, axis=0)
 
-        return TensorDataset(subset_data, subset_targets)
+        return CIFAR10Helper(data=subset_data, targets=subset_targets)
     
 if __name__ == "__main__":
     pass

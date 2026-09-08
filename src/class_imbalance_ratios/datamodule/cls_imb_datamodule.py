@@ -13,12 +13,13 @@ from torch.utils.data import random_split, DataLoader, TensorDataset
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 import torch.nn as nn
-from torchvision.transforms import v2, ToTensor
+from torchvision.transforms import ToTensor
 from torchvision.transforms.functional import to_pil_image
 from imblearn.under_sampling import RandomUnderSampler
 from tqdm import tqdm
 
-from src.base.datamodule.cifar_datamodule import CIFARDataModule
+from src.base.datamodule.cifar_datamodule import CIFAR10DataModule, CIFARDataModule
+from src.base.datamodule.components.cifar_10_helper import CIFAR10Helper
 from src.base.datamodule.components.convert_ax import convert_img_axes
 from src.base.datamodule.components.img_viz import viz_img
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
@@ -54,14 +55,28 @@ class ClsImbDataModule(CIFARDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             self._cifar_full = self.ds(self.data_dir, train=True)
-            sampler = DeterministicUnderSampler(weighted_ratios=self._set_sample_counts(self._cifar_full), data = np.asarray(self._cifar_full.data), targets=np.asarray(self._cifar_full.targets))
-            # Returns subset of dataset 
+            sampler = DeterministicUnderSampler(
+                weighted_ratios=self._set_sample_counts(self._cifar_full), 
+                data = np.asarray(self._cifar_full.data), 
+                targets=np.asarray(self._cifar_full.targets)
+            )
+            # Returns subset of dataset of under sampler
             resampled_subset = sampler.fit_resample()
-            # viz_img(resampled_subset[0][0])
-            self._cifar_train, self._cifar_val = random_split(
+            train, val = random_split(
                 resampled_subset, [0.8, 0.2]
             )
-            # similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
+
+            chosen_idxs = train.indices
+            train_data = np.asarray(resampled_subset.data[chosen_idxs])
+            train_target = np.asarray(resampled_subset.targets[chosen_idxs])
+            self._cifar_train = CIFAR10Helper(train_data, train_target)
+            train_stats = self.get_train_ds_stats()
+            normalize = transforms.Normalize(
+                mean=train_stats[0], # ImageNet standard norm
+                std=train_stats[1]
+            )
+            self.train_transforms.transforms.append(normalize)
+            self._cifar_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
@@ -133,14 +148,14 @@ if __name__ == "__main__":
     """
     Confirms smooth run of dataloader, native image sizes, with minimal transforms
     """
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406], # ImageNet standard norm
-        std=[0.229, 0.224, 0.225]
-    )
-    base_transforms = v2.Compose([
-        v2.ToDtype(torch.uint8, scale=True),
+    # normalize = transforms.Normalize(
+    #     mean=[0.485, 0.456, 0.406], # ImageNet standard norm
+    #     std=[0.229, 0.224, 0.225]
+    # )
+    base_transforms = transforms.Compose([
         ToTensor(),
     ])
+
     settings = dict(
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
