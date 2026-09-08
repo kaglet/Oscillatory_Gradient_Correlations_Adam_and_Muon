@@ -63,13 +63,12 @@ class ClsImbDataModule(CIFARDataModule):
             )
             # similar = convert_img_axes(self._cifar_full[0][0]) == convert_img_axes(self._cifar_full.data[0]) 
 
-
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
-            self._cifar_test = self.ds(self.data_dir, train=False, transform=self.test_transforms)
+            self._cifar_test = self.ds(self.data_dir, train=False)
 
         if stage == "predict":
-            self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.test_transforms)
+            self._cifar_predict = self.ds(self.data_dir, train=False)
 
     def _set_sample_counts(self, ds) -> Dict[int, int]:
         """ 
@@ -116,7 +115,19 @@ class ClsImbDataModule(CIFARDataModule):
         total_std = np.sqrt(total_var)
 
         return total_mean, total_std
+    
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(self._cifar_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
 
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(self._cifar_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+
+    def test_dataloader(self) -> DataLoader:
+        return DataLoader(self._cifar_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+
+    def predict_dataloader(self) -> DataLoader:
+        return DataLoader(self._cifar_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+    
 # Entry point
 if __name__ == "__main__":
     """
@@ -127,11 +138,15 @@ if __name__ == "__main__":
         std=[0.229, 0.224, 0.225]
     )
     base_transforms = v2.Compose([
-        v2.ToDtype(torch.float32, scale=True),
+        v2.ToDtype(torch.uint8, scale=True),
         ToTensor(),
-        normalize
     ])
-    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1) 
+    settings = dict(
+        train_transforms=base_transforms, 
+        val_transforms=base_transforms, 
+        test_transforms=base_transforms
+    )
+    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1, weighted_ratios=None, **settings) 
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
@@ -139,11 +154,11 @@ if __name__ == "__main__":
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
-        print(f"Inputs of len {len(inputs)} targets of len {len(targets)}")
+        # print(f"Inputs of len {len(inputs)} targets of len {len(targets)}")
         # print(inputs, targets)
         img = convert_img_axes(inputs[0])
-        img = to_pil_image(img)
-        img = base_transforms(img)
+        # img = to_pil_image(img, mode="RGB")
+        # img = base_transforms(img)
         viz_img(img, label=targets[0])
         i += 1
         if i == 10: 
