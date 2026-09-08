@@ -57,7 +57,7 @@ class ClsImbDataModule(CIFARDataModule):
             self._cifar_full = self.ds(self.data_dir, train=True)
             sampler = DeterministicUnderSampler(
                 weighted_ratios=self._set_sample_counts(self._cifar_full), 
-                data = np.asarray(self._cifar_full.data), 
+                data = np.asarray(self._cifar_full.data), # .data gets raw data not <=> with getitem accessor purpose for PIL image usually 
                 targets=np.asarray(self._cifar_full.targets)
             )
             # Returns subset of dataset of under sampler
@@ -69,15 +69,21 @@ class ClsImbDataModule(CIFARDataModule):
             chosen_idxs = train.indices
             train_data = np.asarray(resampled_subset.data[chosen_idxs])
             train_target = np.asarray(resampled_subset.targets[chosen_idxs])
-            train_stats = self.get_ds_data_stats(train_data)
+            no_norm_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
+            # Learn how stats will look like if we apply all transforms except norm or any stat based transforms
+            train_stats = self.get_ds_data_stats(no_norm_train)
             mean = np.ndarray.tolist(train_stats[0])
             std = np.ndarray.tolist(train_stats[1])
+
             normalize = transforms.Normalize(
                 mean=mean, # ImageNet standard norm
                 std=std
             )
             self.train_transforms.transforms.append(normalize)
-            self._cifar_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
+
+            # Apply og transforms then stat based transforms learned on og transformed data
+            norm_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
+            self._cifar_train = norm_train
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
@@ -116,13 +122,14 @@ class ClsImbDataModule(CIFARDataModule):
         # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
-        img_dim = train_data[0].shape
-        img_pix_count = img_dim[0] * img_dim[1]
+        # Access the transformed image via getter method
+        img_dim = train_data[0][0].shape
+        img_pix_count = img_dim[1] * img_dim[2]
         num_img = len(train_data)
         total_pix_count = num_img * img_pix_count
-        for input in train_data:
-            pix_sum = np.sum([pix_sum, np.sum(input, axis=(0,1))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input), axis=(0,1))], axis=0) 
+        for input, _ in train_data:
+            pix_sum = np.sum([pix_sum, np.sum(input, axis=(1,2))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input), axis=(1,2))], axis=0) 
 
         total_mean = pix_sum / total_pix_count
         total_var = (pix_sum_sq / total_pix_count) - (np.square(total_mean))
