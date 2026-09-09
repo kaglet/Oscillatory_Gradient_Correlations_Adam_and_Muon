@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import logging
+import hydra
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer  
@@ -32,6 +33,7 @@ def train_and_val(
     logger_cache: Any,
     chkpt_cache: Any
 ):
+    print(f"Working directory : {os.getcwd()}")
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]

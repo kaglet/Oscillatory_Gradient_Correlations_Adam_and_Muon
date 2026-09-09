@@ -15,7 +15,7 @@ import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
-from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, zen, store
+from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
@@ -76,7 +76,7 @@ dist_mu_aux_adam_pcfg = [pbuilds(MuonWithAuxAdam)]
 # Custom for non-distributed
 dual_optims_pcfg = [pbuilds(Muon), pbuilds(Adam)]
 # Single optimiser training  
-single_optim_pcfg = [pbuilds(Adam)]
+single_adam_pcfg = [pbuilds(Adam)]
 # Single device 
 single_mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
@@ -146,7 +146,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=200,
+    max_epochs=10,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -250,13 +250,13 @@ sbg_rob_datamdl_cfg = mnist_datamdl_cfg(
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
 default_lbl = "default"
-single_lbl = "single"
+mu_aux_ad_lbl = "mu_aux_ad"
 dual_lbl = "dual"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
 lit_module_store = store(group="lit_module")
 lit_module_store(dual_lit_module_cfg, name=dual_lbl)
-lit_module_store(single_lit_module_cfg, name=single_lbl)
+lit_module_store(single_lit_module_cfg, name=mu_aux_ad_lbl)
 
 trainer_store = store(group="trainer")
 trainer_store(trainer_cfg, name=default_lbl)
@@ -279,7 +279,7 @@ model_store(simple_cnn_cfg, name="simple_cnn")
 params_store = store(group="params_cache")
 params_store(dual_optim_params_cfg, name=dual_lbl)
 params_store(adam_optim_params_cfg, name="adam")
-params_store(single_optim_params_cfg, name=single_lbl)
+params_store(single_optim_params_cfg, name=mu_aux_ad_lbl)
 
 schdlr_store = store(group="schdlrs_cache")
 schdlr_store(lr_sch_pcfg, name=default_lbl)
@@ -289,9 +289,9 @@ grad_accum_schedule_store(grad_accum_schedule_cfg, name=default_lbl)
 
 optims_store = store(group="optims_cache")
 optims_store(dual_optims_pcfg, name=dual_lbl)
-optims_store(single_optim_pcfg, name="adam")
+optims_store(single_adam_pcfg, name="adam")
 optims_store(dist_mu_aux_adam_pcfg, name="dist")
-optims_store(single_mu_aux_adam_pcfg, name=single_lbl)
+optims_store(single_mu_aux_adam_pcfg, name=mu_aux_ad_lbl)
 
 @dataclass
 class Experiment_Info:
@@ -301,7 +301,16 @@ class Experiment_Info:
 
     def __post_init__(self):
         self.name += f"/{self.config_postfix}"
-        self.output_path = Path(f"outputs/{self.name}" )
+        global_output_path = Path(f"outputs/{self.name}" )
+        all_outputs = sorted([local_path for local_path in os.listdir(global_output_path)])  
+        if len(all_outputs) == 0:
+            self.output_path = global_output_path / "v_0"
+        else:
+            last = all_outputs[-1]
+            next_i = str(int(last[-1])+1)
+            self.output_path = global_output_path / f"v_{next_i}"
+
+        os.chdir(global_output_path)
         self.log_path = Path(f"{self.output_path}/logs/" )
 
 experims_store = store(group="experiment_info")
@@ -319,11 +328,11 @@ ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
         {'lit_module': dual_lbl},
-        {'params_cache': single_lbl},
+        {'params_cache': mu_aux_ad_lbl},
         {'model_cache': "simple_cnn"},
         {'datamodule': sp_pix_lbl},
         {'trainer': default_lbl},        
-        {'optims_cache': single_lbl},
+        {'optims_cache': mu_aux_ad_lbl},
         {'schdlrs_cache': default_lbl},
         {'grad_accum_schedule': default_lbl},
         {'experiment_info': sp_pix_lbl},
@@ -339,8 +348,8 @@ task_function = zen(train_and_val, pre_call=pre_seed)
 
 if __name__ == "__main__":
     store.add_to_hydra_store()
-    torch.set_float32_matmul_precision(precision="medium")
-
+    torch.set_float32_matmul_precision(precision="high")
+    
     # TODO: Print yaml config at the end for seeing saved structure
     job = launch(
         ExperimentConfig,
@@ -348,20 +357,22 @@ if __name__ == "__main__":
         config_name="adam_muon_benchmarks",
         
         version_base="1.3",
+        multirun=True,
         overrides=[
             f"model_cache=simple_cnn", 
-            f"datamodule={sp_pix_lbl}", 
-            f"params_cache={single_lbl}", 
-            f"optims_cache={single_lbl}", 
-            f"lit_module={dual_lbl}",
-            "++params_cache.lr_muon=0.02",
-            "++params_cache.lr_adam=0.001",
-            "++params_cache.momentum_muon=0.2",
+            f"datamodule={cls_imb_s_lbl}", 
+            f"params_cache={mu_aux_ad_lbl}", 
+            f"optims_cache={mu_aux_ad_lbl}", 
+            f"lit_module={mu_aux_ad_lbl}",
+            "++params_cache.lr_muon=1e-1",
+            "++params_cache.lr_adam=1e-1",
+            "++params_cache.momentum_muon=0.9",
             "++params_cache.beta_1_adam=0.95",
-            "++params_cache.beta_2_adam=0.99",
-            "++params_cache.nesterov=True",
+            "++params_cache.beta_2_adam=0.999",
+            "++params_cache.nesterov=False",
             "++params_cache.use_layer_recs=False",
-            "++params_cache.eps=1e-10",
+            "++params_cache.eps=1e-08",
+            f"+datamodule.downsampler_ratio={multirun([20, 10, 5, 2, 1])}" 
         ]
     )
 
