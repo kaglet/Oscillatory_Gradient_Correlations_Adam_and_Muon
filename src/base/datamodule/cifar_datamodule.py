@@ -11,6 +11,9 @@ from torchvision import transforms
 import torch.nn as nn
 from torchvision.transforms import ToTensor
 
+from src.base.datamodule.components.convert_ax import convert_img_axes
+from src.base.datamodule.components.img_viz import viz_img
+
 __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
@@ -77,18 +80,31 @@ class CIFAR100DataModule(CIFARDataModule):
     def __init__(*args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-
 if __name__ == "__main__":
     """
-    Confirms smooth run of dataloader, native image sizes, with minimal transforms
+    Confirms smooth run of CIFAR10 dataloader, native image sizes, with minimal transforms
     """
-    # dmodule = CIFARDataModule() 
-    # dmodule.prepare_data()
-    # dmodule.setup("fit")
-    # print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+    base_transforms = transforms.Compose([
+        ToTensor(),
+    ])
 
-    # for i, (input, target) in enumerate(dmodule.train_dataloader()):
-    #     print(f"Inputs of len {len(input)} targets of len {len(target)}")
-    #     print(target)
-    #     if i == 10:
-    #         break
+    dmodule = CIFAR10DataModule(
+        num_workers=1, 
+        weighted_ratios=None, 
+        train_transforms=base_transforms, 
+        val_transforms=base_transforms, 
+        test_transforms=base_transforms
+    ) 
+    dmodule.prepare_data()
+    dmodule.setup("fit")
+    print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+
+    i = 0
+    for inputs, targets in dmodule.train_dataloader():
+        img = convert_img_axes(inputs[0])
+        viz_img(img, label=targets[0])
+        i += 1
+        if i == 10: 
+            break
+
+# Todo: Perform this as experiments via config, use of ratio and other settings, move ImageNet norm to other datasets not this one. 
