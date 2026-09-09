@@ -91,8 +91,7 @@ single_lit_module_cfg = pbuilds(SingleOptLitModule)
 
 # Lighning Module variations (for groups mainly for swap in and out, TODO: Defer, ideas below)
 # Top level DualOptLit module cannot be changed, the top can be registered or even try dictionary keys to unpack as keyword arguments
-cls_imb_s_module_cfg = pbuilds(
-    SingleOptLitModule, 
+cls_imb_s_module_cfg = single_lit_module_cfg(
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
@@ -282,6 +281,7 @@ model_store = store(group="model_cache")
 model_store(resnet18_model_cfg, name="resnet18")
 model_store(resnet50_model_cfg, name="resnet50")
 model_store(simple_cnn_cfg, name="simple_cnn")
+model_store(cls_imb_model_s_cfg, name=cls_imb_s_lbl)
 
 params_store = store(group="params_cache")
 params_store(dual_optim_params_cfg, name=dual_lbl)
@@ -366,7 +366,7 @@ if __name__ == "__main__":
         version_base="1.3",
         multirun=True,
         overrides={
-            "model_cache": "simple_cnn", 
+            "model_cache": cls_imb_s_lbl, 
             "datamodule": f"{cls_imb_s_lbl}", 
             "params_cache":f"{mu_aux_ad_lbl}", 
             "optims_cache":f"{mu_aux_ad_lbl}", 

@@ -281,15 +281,25 @@ class DualOptLitModule(pl.LightningModule):
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
         self,
-        *args: Any, 
-        **kwargs: Any
+        model: nn.Module,
+        params: list[list[dict[str, Any]]],
+        optims: list[Optimizer],
+        schdlrs: Optional[list[LRScheduler]] = None,
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
+        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        num_classes: int = 10,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
 
 class DistOptLitModule(DualOptLitModule):
     def __init__(
         self,
-        *args: Any, 
-        **kwargs: Any
+        model: nn.Module,
+        params: list[list[dict[str, Any]]],
+        optims: list[Optimizer],
+        schdlrs: Optional[list[LRScheduler]] = None,
+        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
+        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        num_classes: int = 10,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
