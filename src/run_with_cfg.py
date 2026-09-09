@@ -92,25 +92,25 @@ single_lit_module_cfg = pbuilds(SingleOptLitModule)
 # Lighning Module variations (for groups mainly for swap in and out, TODO: Defer, ideas below)
 # Top level DualOptLit module cannot be changed, the top can be registered or even try dictionary keys to unpack as keyword arguments
 cls_imb_s_module_cfg = pbuilds(
-    DualOptLitModule, 
+    SingleOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
 
 cls_imb_l_module_cfg = pbuilds(
-    DualOptLitModule, 
+    SingleOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes
 )
 
 sp_pix_module_cfg = pbuilds(
-    DualOptLitModule, 
+    SingleOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sp_pix_num_classes
 )
 
 sbg_rob_module_cfg = pbuilds(
-    DualOptLitModule, 
+    SingleOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sbg_rob_num_classes
 )
@@ -210,7 +210,11 @@ cifr10_datamdl_cfg = builds(
     weighted_ratios=None,     
 )
 
-cifr100_datamdl_cfg = builds(ClsImbDataModule)
+cifr100_datamdl_cfg = builds(
+    ClsImbDataModule, 
+    downsampler_ratio=20, 
+    weighted_ratios=None
+)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
 total_local_cores = 0
@@ -265,6 +269,9 @@ sp_pix_lbl = "sp_pix"
 sbg_rob_lbl = "sbg_rob"
 cls_imb_s_lbl = "cls_imb_s"
 cls_imb_l_lbl = "cls_imb_l"
+
+lit_module_store(cls_imb_s_module_cfg, name=cls_imb_s_lbl)
+
 datamodule_store = store(group="datamodule")
 datamodule_store(cls_imb_datamdl_s_cfg, name=cls_imb_s_lbl)
 datamodule_store(cls_imb_datamdl_l_cfg, name=cls_imb_l_lbl)
@@ -355,24 +362,24 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
-        
+        # job_name="job",
         version_base="1.3",
         multirun=True,
-        overrides=[
-            f"model_cache=simple_cnn", 
-            f"datamodule={cls_imb_s_lbl}", 
-            f"params_cache={mu_aux_ad_lbl}", 
-            f"optims_cache={mu_aux_ad_lbl}", 
-            f"lit_module={mu_aux_ad_lbl}",
-            "++params_cache.lr_muon=1e-1",
-            "++params_cache.lr_adam=1e-1",
-            "++params_cache.momentum_muon=0.9",
-            "++params_cache.beta_1_adam=0.95",
-            "++params_cache.beta_2_adam=0.999",
-            "++params_cache.nesterov=False",
-            "++params_cache.use_layer_recs=False",
-            "++params_cache.eps=1e-08",
-            f"+datamodule.downsampler_ratio={multirun([20, 10, 5, 2, 1])}" 
-        ]
+        overrides={
+            "model_cache": "simple_cnn", 
+            "datamodule": f"{cls_imb_s_lbl}", 
+            "params_cache":f"{mu_aux_ad_lbl}", 
+            "optims_cache":f"{mu_aux_ad_lbl}", 
+            "lit_module":f"{cls_imb_s_lbl}",
+            "++params_cache.lr_muon":f"1e-1",
+            "++params_cache.lr_adam":f"1e-1",
+            "++params_cache.momentum_muon":f"0.9",
+            "++params_cache.beta_1_adam":f"0.95",
+            "++params_cache.beta_2_adam":f"0.999",
+            "++params_cache.nesterov":f"False",
+            "++params_cache.use_layer_recs":f"False",
+            "++params_cache.eps":f"1e-08",
+            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+        }
     )
 
