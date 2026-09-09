@@ -19,7 +19,8 @@ from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_con
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
-from src.base.datamodule.cifar_datamodule import CIFAR100DataModule, CIFAR10DataModule
+
+from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -80,7 +81,7 @@ single_optim_pcfg = [pbuilds(Adam)]
 single_mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 16})
 
 # LR Schedulers
 lr_sch_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
@@ -145,7 +146,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=2,
+    max_epochs=200,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -170,9 +171,8 @@ cls_imb_s_transforms = builds(
     torchvision.transforms.Compose,
     [
         horizontal_flip_cfg,
-        crops_cfg(size=20),
+        crops_cfg(size=28),
         to_tensor_cfg,
-        cifar_10_norm_cfg,
     ]
 )
 
@@ -182,7 +182,6 @@ cls_imb_l_transforms = builds(
         horizontal_flip_cfg,
         crops_cfg(size=20),
         to_tensor_cfg,
-        cifar_100_norm_cfg,
     ]
 )
 
@@ -205,8 +204,13 @@ sbg_rob_transforms = builds(
     ]
 )
 
-cifr10_datamdl_cfg = builds(CIFAR10DataModule)
-cifr100_datamdl_cfg = builds(CIFAR100DataModule)
+cifr10_datamdl_cfg = builds(
+    ClsImbDataModule, 
+    downsampler_ratio=20, 
+    weighted_ratios=None,     
+)
+
+cifr100_datamdl_cfg = builds(ClsImbDataModule)
 mnist_datamdl_cfg = builds(MNISTDataModule)
 
 total_local_cores = 0
@@ -216,16 +220,16 @@ cls_imb_datamdl_s_cfg = cifr10_datamdl_cfg(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 64,
-    num_workers = total_local_cores
+    batch_size = 128, # From batch size set grad_accum to get new effective batch size
+    num_workers = 8
 )
 
 cls_imb_datamdl_l_cfg = cifr100_datamdl_cfg(
     train_transforms = cls_imb_l_transforms,
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
-    batch_size = 64,
-    num_workers = total_local_cores
+    batch_size = 128,
+    num_workers = 8
 )
 
 sp_pix_datamdl_cfg = mnist_datamdl_cfg(

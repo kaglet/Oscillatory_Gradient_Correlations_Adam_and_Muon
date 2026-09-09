@@ -85,12 +85,20 @@ class ClsImbDataModule(CIFARDataModule):
             norm_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
             self._cifar_train = norm_train
 
+            chosen_idxs = val.indices
+            val_data = np.asarray(resampled_subset.data[chosen_idxs])
+            val_target = np.asarray(resampled_subset.targets[chosen_idxs])
+
+            # Apply og transforms then stat based transforms learned on og transformed data
+            norm_train = CIFAR10Helper(val_data, val_target, transform=self.train_transforms, target_transform=None)
+            self._cifar_val = norm_train
+
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
-            self._cifar_test = self.ds(self.data_dir, train=False)
+            self._cifar_test = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
 
         if stage == "predict":
-            self._cifar_predict = self.ds(self.data_dir, train=False)
+            self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
 
     def _set_sample_counts(self, ds) -> Dict[int, int]:
         """ 
@@ -138,27 +146,11 @@ class ClsImbDataModule(CIFARDataModule):
 
         return total_mean, total_std
     
-    def train_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
-
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
-
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
-
-    def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
-    
 # Entry point
 if __name__ == "__main__":
     """
-    Confirms smooth run of dataloader, native image sizes, with minimal transforms
+    Confirms smooth run of CIFAR10 dataloader, native image sizes, with minimal transforms
     """
-    # normalize = transforms.Normalize(
-    #     mean=[0.485, 0.456, 0.406], # ImageNet standard norm
-    #     std=[0.229, 0.224, 0.225]
-    # )
     base_transforms = transforms.Compose([
         ToTensor(),
     ])
@@ -175,14 +167,10 @@ if __name__ == "__main__":
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
-        # print(f"Inputs of len {len(inputs)} targets of len {len(targets)}")
-        # print(inputs, targets)
         img = convert_img_axes(inputs[0])
-        # img = to_pil_image(img, mode="RGB")
-        # img = base_transforms(img)
         viz_img(img, label=targets[0])
         i += 1
         if i == 10: 
             break
 
-    
+# Todo: Perform this as experiments via config, use of ratio and other settings, move ImageNet norm to other datasets not this one. 
