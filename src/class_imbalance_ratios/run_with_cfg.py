@@ -150,7 +150,7 @@ total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
 cls_imb_datamdl_s_cfg = builds(
-    CIFARDataModule, 
+    ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,

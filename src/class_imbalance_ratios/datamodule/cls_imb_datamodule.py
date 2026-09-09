@@ -43,7 +43,7 @@ class ClsImbDataModule(CIFARDataModule):
         * - downsampler_ratio: int, accepts a positive number, to apply strict logic of random 50% of classes chosen as dataset for 1 run of training (usage of this datamodule instance)
         * Exclusively one of the above two must be set, if both are set, dict input is discarded by convention. 
         """
-        super().__init__(train_transforms, val_transforms, test_transforms, batch_size=batch_size, num_workers=num_workers)
+        super().__init__(train_transforms=train_transforms, val_transforms=val_transforms, test_transforms=test_transforms, batch_size=batch_size, num_workers=num_workers)
         if downsampler_ratio is not None and weighted_ratios is not None: 
             weighted_ratios = None 
 

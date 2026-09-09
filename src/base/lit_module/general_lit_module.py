@@ -157,7 +157,7 @@ class DualOptLitModule(pl.LightningModule):
         input, targets = batch
         if is_Train:
             logits = self.forward(input)
-            loss = self.criterion(logits, targets)
+            loss = self.criterion(logits, targets.to(dtype=torch.long))
 
             grad_accum = self._get_current_grad_accum()
             scaled_loss = loss / grad_accum
@@ -188,7 +188,7 @@ class DualOptLitModule(pl.LightningModule):
         else: 
             with torch.no_grad():
                 logits = self.forward(input)
-                loss = self.criterion(logits, targets)
+                loss = self.criterion(logits, targets.to(dtype=torch.long))
 
         preds = torch.argmax(logits, dim=1)
 
