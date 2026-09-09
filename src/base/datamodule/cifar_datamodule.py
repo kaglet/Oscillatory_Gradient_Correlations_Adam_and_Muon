@@ -84,13 +84,18 @@ if __name__ == "__main__":
     """
     Confirms smooth run of CIFAR10 dataloader, native image sizes, with minimal transforms
     """
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406], # ImageNet standard norm
+        std=[0.229, 0.224, 0.225]
+    )
+    
     base_transforms = transforms.Compose([
         ToTensor(),
+        normalize
     ])
 
-    dmodule = CIFAR10DataModule(
+    dmodule = CIFARDataModule(
         num_workers=1, 
-        weighted_ratios=None, 
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms

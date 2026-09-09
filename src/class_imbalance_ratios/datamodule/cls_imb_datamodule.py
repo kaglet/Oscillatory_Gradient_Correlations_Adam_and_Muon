@@ -154,9 +154,6 @@ if __name__ == "__main__":
         ToTensor(),
     ])
 
-    settings = dict(
-
-    )
     dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1, weighted_ratios=None,         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms) 
@@ -171,5 +168,3 @@ if __name__ == "__main__":
         i += 1
         if i == 10: 
             break
-
-# Todo: Perform this as experiments via config, use of ratio and other settings, move ImageNet norm to other datasets not this one. 
