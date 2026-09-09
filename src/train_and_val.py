@@ -15,12 +15,6 @@ from hydra_zen.typing import Partial
 from hydra_zen import ZenStore, store
 __all__ = ["train_and_val"]
 
-def get_args(*args):
-    frame = inspect.currentframe()
-    assert frame is not None, "Frame is None"
-    args, _, _, locals_ = inspect.getargvalues(frame)
-    return (locals_[arg] for arg in args)
-
 def train_and_val(
     lit_module: Partial[LightningModule],
     datamodule: LightningDataModule,

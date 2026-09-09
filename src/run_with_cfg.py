@@ -91,7 +91,8 @@ single_lit_module_cfg = pbuilds(SingleOptLitModule)
 
 # Lighning Module variations (for groups mainly for swap in and out, TODO: Defer, ideas below)
 # Top level DualOptLit module cannot be changed, the top can be registered or even try dictionary keys to unpack as keyword arguments
-cls_imb_s_module_cfg = single_lit_module_cfg(
+cls_imb_s_module_cfg = pbuilds(
+    SingleOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
@@ -334,7 +335,7 @@ chkpt_store(max_checkpt_cfg, name=default_lbl)
 ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
-        {'lit_module': dual_lbl},
+        {'lit_module': sp_pix_lbl},
         {'params_cache': mu_aux_ad_lbl},
         {'model_cache': "simple_cnn"},
         {'datamodule': sp_pix_lbl},
