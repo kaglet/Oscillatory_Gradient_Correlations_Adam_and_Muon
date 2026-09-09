@@ -21,6 +21,7 @@ from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 
 from src.base.configs.experiment_data import Experiment_Info
+from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
@@ -149,9 +150,7 @@ total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
 cls_imb_datamdl_s_cfg = builds(
-    ClsImbDataModule, 
-    downsampler_ratio=20, 
-    weighted_ratios=None,
+    CIFARDataModule, 
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
@@ -262,8 +261,8 @@ if __name__ == "__main__":
             "++params_cache.beta_2_adam":f"0.999",
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++params_cache.eps":f"1e-08"
+            # "++datamodule.downsampler_ratio":"20,10,5,2,1" 
         }
     )
 
