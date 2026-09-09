@@ -9,5 +9,5 @@ __all__ = ["viz_img"]
 def viz_img(img: torch.Tensor, label:int = 1):
     plt.title('{}'.format(label))
     plt.axis("off")
-    plt.imshow(img.squeeze().to(dtype=torch.uint8), cmap="gray")
+    plt.imshow(img.squeeze(), cmap="gray")
     plt.show(block=True)

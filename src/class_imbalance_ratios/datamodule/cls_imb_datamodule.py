@@ -32,7 +32,7 @@ class ClsImbDataModule(CIFARDataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
-        train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8,
+        train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 16, num_workers: int = 0,
         weighted_ratios: Dict[int, float] | None = None,
         downsampler_ratio: int = 20,
     ):
@@ -43,7 +43,7 @@ class ClsImbDataModule(CIFARDataModule):
         * - downsampler_ratio: int, accepts a positive number, to apply strict logic of random 50% of classes chosen as dataset for 1 run of training (usage of this datamodule instance)
         * Exclusively one of the above two must be set, if both are set, dict input is discarded by convention. 
         """
-        super().__init__(train_transforms, val_transforms, test_transforms)
+        super().__init__(train_transforms, val_transforms, test_transforms, batch_size=batch_size, num_workers=num_workers)
         if downsampler_ratio is not None and weighted_ratios is not None: 
             weighted_ratios = None 
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         ToTensor(),
     ])
 
-    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=1, weighted_ratios=None,         train_transforms=base_transforms, 
+    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=0, weighted_ratios=None,         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms) 
     dmodule.prepare_data()
