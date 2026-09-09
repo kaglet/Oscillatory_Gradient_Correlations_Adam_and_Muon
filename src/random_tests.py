@@ -10,11 +10,13 @@ from functools import partial
 from hydra_zen import instantiate, just, make_custom_builds_fn
 from hydra_zen.third_party.beartype import validates_with_beartype
 
-builds = make_custom_builds_fn(populate_full_signature=True)
+builds = make_custom_builds_fn(
+    populate_full_signature=True,
+    zen_wrappers=validates_with_beartype
+)
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
     populate_full_signature=True,
-    zen_wrappers=validates_with_beartype
 )
 OptimConf = builds(Optimizer, learning_rate=0.1, zen_partial=True)
 
