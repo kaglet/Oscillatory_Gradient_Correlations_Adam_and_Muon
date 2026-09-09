@@ -33,6 +33,7 @@ pillow = "10.4.0.*"
 pandas = ">=3.0.5,<4"
 imbalanced-learn = ">=0.14.2,<0.15"
 tqdm = ">=4.70.0,<5"
+pydantic = ">=2.13.5,<3"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }

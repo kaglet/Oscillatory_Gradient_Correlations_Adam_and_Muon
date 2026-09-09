@@ -50,16 +50,16 @@ class CIFARDataModule(L.LightningDataModule):
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+        return DataLoader(self._cifar_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+        return DataLoader(self._cifar_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+        return DataLoader(self._cifar_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self._cifar_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=True)
+        return DataLoader(self._cifar_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
     
 class CIFAR10DataModule(CIFARDataModule):
     """ 

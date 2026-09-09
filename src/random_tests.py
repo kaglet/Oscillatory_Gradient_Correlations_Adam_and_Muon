@@ -1,3 +1,7 @@
+from functools import partial
+from hydra_zen import instantiate, just, make_custom_builds_fn
+from hydra_zen.third_party.pydantic import validates_with_pydantic
+
 class Optimizer:
     def __init__(self, model_weights, learning_rate):
         self.weights = model_weights
@@ -6,13 +10,9 @@ class Optimizer:
 def logger(message: str, format_spec: str) -> str:
     return format_spec.format(message)
 
-from functools import partial
-from hydra_zen import instantiate, just, make_custom_builds_fn
-from hydra_zen.third_party.beartype import validates_with_beartype
-
 builds = make_custom_builds_fn(
     populate_full_signature=True,
-    zen_wrappers=validates_with_beartype
+    zen_wrappers=validates_with_pydantic
 )
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 

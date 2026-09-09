@@ -37,7 +37,6 @@ def train_and_val(
 
     for i in range(2):
         path_all = Path(os.path.join(exp_inf_built.log_path, f"run_{i}"))
-        os.makedirs(path_all, exist_ok=True)
         loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
         trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
         trainer_built.fit(model=lit_module_built, datamodule=datamodule)

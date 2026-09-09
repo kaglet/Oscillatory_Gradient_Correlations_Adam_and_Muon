@@ -32,14 +32,13 @@ from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLi
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
-from hydra_zen.third_party.beartype import validates_with_beartype
+from hydra_zen.third_party.pydantic import validates_with_pydantic
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
-    populate_full_signature=True,
-    zen_wrappers=validates_with_beartype
+    populate_full_signature=True
 )
 
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
@@ -156,8 +155,8 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 128, # From batch size set grad_accum to get new effective batch size
-    num_workers = 8
+    batch_size = 16, # From batch size set grad_accum to get new effective batch size
+    num_workers = 0
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -167,8 +166,8 @@ cls_imb_datamdl_l_cfg = builds(
     train_transforms = cls_imb_l_transforms,
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
-    batch_size = 128,
-    num_workers = 8
+    batch_size = 16,
+    num_workers = 0
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
@@ -250,5 +249,21 @@ if __name__ == "__main__":
         # job_name="job",
         version_base="1.3",
         multirun=True,
+        overrides={
+            "model_cache": cif10_lbl, 
+            "datamodule": f"{cif10_lbl}", 
+            "params_cache":f"{mu_aux_ad_lbl}", 
+            "optims_cache":f"{mu_aux_ad_lbl}", 
+            "lit_module":f"{cif10_lbl}",
+            "++params_cache.lr_muon":f"1e-1",
+            "++params_cache.lr_adam":f"1e-1",
+            "++params_cache.momentum_muon":f"0.9",
+            "++params_cache.beta_1_adam":f"0.95",
+            "++params_cache.beta_2_adam":f"0.999",
+            "++params_cache.nesterov":f"False",
+            "++params_cache.use_layer_recs":f"False",
+            "++params_cache.eps":f"1e-08",
+            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+        }
     )
 

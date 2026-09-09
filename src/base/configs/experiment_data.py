@@ -13,6 +13,7 @@ class Experiment_Info:
     def __post_init__(self):
         self.name += f"/{self.config_postfix}"
         global_output_path = Path(f"outputs/{self.name}" )
+        os.makedirs(global_output_path, exist_ok=True)
         all_outputs = sorted([local_path for local_path in os.listdir(global_output_path)])  
         if len(all_outputs) == 0:
             self.output_path = global_output_path / "v_0"
@@ -21,8 +22,8 @@ class Experiment_Info:
             next_i = str(int(last[-1])+1)
             self.output_path = global_output_path / f"v_{next_i}"
 
-        os.chdir(global_output_path)
         self.log_path = Path(f"{self.output_path}/logs/" )
+        os.makedirs(self.log_path, exist_ok=True)
 
 if __name__ == "__main__":
     pass 

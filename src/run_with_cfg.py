@@ -38,7 +38,6 @@ builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
     populate_full_signature=True,
-    zen_wrappers=validates_with_beartype
 )
 
 # ---- LIGHTNING MODULE CONFIGS BEGIN ---- #
