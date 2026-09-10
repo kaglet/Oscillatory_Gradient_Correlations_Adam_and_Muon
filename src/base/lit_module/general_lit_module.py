@@ -156,46 +156,36 @@ class DualOptLitModule(pl.LightningModule):
     ) -> torch.Tensor:
         """Perform a single model step on a batch of data."""
         input, targets = batch
-        if stage == "train":
-            logits = self.forward(input)
-            loss = self.criterion(logits, targets.to(dtype=torch.long))
 
-            grad_accum = self._get_current_grad_accum()
-            scaled_loss = loss / grad_accum
-            self.manual_backward(loss=scaled_loss)
+        logits = self.forward(input)
+        loss = self.criterion(logits, targets.to(dtype=torch.long))
 
-            should_step = (batch_idx + 1) % grad_accum == 0
+        grad_accum = self._get_current_grad_accum()
+        scaled_loss = loss / grad_accum
+        self.manual_backward(loss=scaled_loss)
 
-            if should_step:
-                # print("Storing gradd corr from batch step")
+        should_step = (batch_idx + 1) % grad_accum == 0
+
+        if should_step:
+            preds = torch.argmax(logits, dim=1)
+            metrics = dict(loss=loss, preds=preds, targets=targets)
+            self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
+
+            optims = self.optimizers()
+            optims = optims if isinstance(optims, list) else [optims]
+
+            for i, opt in enumerate(optims):
+                # Call global opt step only at the end to help hooks
+                if i == len(optims) - 1:
+                    opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
+                else:
+                    # Access underlying optimizer directly to avoid double-counting
+                    opt.optimizer.step()
+
                 self._store_grad_corr()
-                
-                preds = torch.argmax(logits, dim=1)
-                metrics = dict(loss=loss, preds=preds, targets=targets)
-                self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
+                opt.zero_grad()
 
-                optims = self.optimizers()
-                optims = optims if isinstance(optims, list) else [optims]
-
-                for i, opt in enumerate(optims):
-                    # Call global opt step only at the end to help hooks
-                    if i == len(optims) - 1:
-                        opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
-                    else:
-                        # Access underlying optimizer directly to avoid double-counting
-                        opt.optimizer.step()
-                        
-                    opt.zero_grad()
-
-                self._optimizer_step_count += 1
-        else: 
-            with torch.no_grad():
-                logits = self.forward(input)
-                loss = self.criterion(logits, targets.to(dtype=torch.long))
-
-                preds = torch.argmax(logits, dim=1)
-                metrics = dict(loss=loss, preds=preds, targets=targets)
-                self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
+            self._optimizer_step_count += 1
 
         return loss
 
@@ -235,13 +225,15 @@ class DualOptLitModule(pl.LightningModule):
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
-        metrics = self._batch_step(batch, batch_idx, stage="val")
+        with torch.no_grad():
+            metrics = self._batch_step(batch, batch_idx, stage="val")
 
         return metrics 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
-        metrics = self._batch_step(batch, batch_idx, stage="test")
+        with torch.no_grad():
+            metrics = self._batch_step(batch, batch_idx, stage="test")
 
         return metrics 
 

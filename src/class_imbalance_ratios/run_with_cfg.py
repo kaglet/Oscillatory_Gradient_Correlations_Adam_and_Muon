@@ -98,7 +98,7 @@ chkpts_cfg_list = [max_checkpt_cfg]
 
 tb_logger_cfg = pbuilds(TensorBoardLogger, name="train")
 csv_logger_cfg = [
-    pbuilds(CSVLogger, name="train", version=""),
+    pbuilds(CSVLogger, name="train", version=""), # Remove version nesting
     pbuilds(CSVLogger, name="val", version=""), 
     pbuilds(CSVLogger, name="test", version=""), 
 ]
