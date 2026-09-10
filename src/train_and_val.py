@@ -30,13 +30,13 @@ def train_and_val(
     logger_cache: Any,
     chkpt_cache: Any
 ):
-    params = params_cache(model=model_cache)
-    optims = [optim(params) for optim, params in zip(optims_cache, params)]
-    # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
-    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
-
-    num_runs = 1
+    num_runs = 10
     for i in tqdm(range(num_runs), desc="Experiment running..."):
+        params = params_cache(model=model_cache)
+        optims = [optim(params) for optim, params in zip(optims_cache, params)]
+        # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
+        lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
+
         path_all = Path(os.getcwd(), f"run_{i}")
         loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
         trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
