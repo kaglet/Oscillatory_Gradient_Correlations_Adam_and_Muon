@@ -25,7 +25,7 @@ def train_and_val(
     model_cache: nn.Module, # as built class instance
     params_cache: Callable, # as getter method instance
     optims_cache: list[Partial[Optimizer]],
-    schdlrs_cache: list[Partial[LRScheduler]],
+    schdlrs_cache: list[Partial[LRScheduler]], 
     experiment_info: Partial[Experiment_Data], # TODO: Remove, not needed
     logger_cache: Any,
     chkpt_cache: Any
