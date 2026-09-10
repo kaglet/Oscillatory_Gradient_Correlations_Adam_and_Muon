@@ -106,7 +106,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=3,
+    max_epochs=50,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -146,8 +146,8 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 0
+    batch_size = 128, # From batch size set grad_accum to get new effective batch size
+    num_workers = 8
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -157,8 +157,8 @@ cls_imb_datamdl_l_cfg = builds(
     train_transforms = cls_imb_l_transforms,
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
-    batch_size = 16,
-    num_workers = 0
+    batch_size = 64,
+    num_workers = 8
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
@@ -253,8 +253,8 @@ if __name__ == "__main__":
             "++params_cache.beta_2_adam":f"0.999",
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08"
-            # "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++params_cache.eps":f"1e-08",
+            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
         }
     )
 
