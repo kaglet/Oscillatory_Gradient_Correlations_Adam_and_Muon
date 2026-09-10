@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
 from hydra_zen import ZenStore, store
+
+from src.base.configs.experiment_data import Experiment_Data
 __all__ = ["train_and_val"]
 
 def train_and_val(
@@ -23,7 +25,7 @@ def train_and_val(
     params_cache: Callable, # as getter method instance
     optims_cache: list[Partial[Optimizer]],
     schdlrs_cache: list[Partial[LRScheduler]],
-    experiment_info: Any,
+    experiment_info: Partial[Experiment_Data],
     logger_cache: Any,
     chkpt_cache: Any
 ):
@@ -33,10 +35,10 @@ def train_and_val(
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
 
-    exp_inf_built = experiment_info(config_postfix="1")
+    exp_inf_built = experiment_info(config_postfix="runs")
 
     for i in range(2):
-        path_all = Path(os.path.join(exp_inf_built.log_path, f"run_{i}"))
+        path_all = Path(os.path.join(exp_inf_built.log_path, f"{i}"))
         loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
         trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
         trainer_built.fit(model=lit_module_built, datamodule=datamodule)

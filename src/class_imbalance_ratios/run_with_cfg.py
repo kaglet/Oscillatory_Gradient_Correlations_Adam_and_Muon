@@ -20,7 +20,7 @@ from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 
-from src.base.configs.experiment_data import Experiment_Info
+from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
@@ -154,7 +154,7 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 16, # From batch size set grad_accum to get new effective batch size
+    batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 0
 )
 
@@ -205,7 +205,7 @@ optims_store = store(group="optims_cache")
 optims_store(mu_aux_adam_pcfg, name=mu_aux_ad_lbl)
 
 experims_store = store(group="experiment_info")
-experims_store(pbuilds(Experiment_Info, "class_imbalance_ratios"), name=task_lbl)
+experims_store(pbuilds(Experiment_Data, "class_imbalance_ratios"), name=task_lbl)
 
 logger_store = store(group="logger_cache")
 logger_store(csv_logger_cfg, name=task_lbl)

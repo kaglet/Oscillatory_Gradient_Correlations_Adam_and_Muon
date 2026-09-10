@@ -175,12 +175,9 @@ class DualOptLitModule(pl.LightningModule):
                     # Call global opt step only at the end to help hooks
                     if i == len(optims) - 1:
                         opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
-                        if self.global_step < 100:
-                            self._print_params_per_opt(opt)
                     else:
                         # Access underlying optimizer directly to avoid double-counting
                         opt.optimizer.step()
-                        # self._print_params_per_opt(opt)
                         
                     opt.zero_grad()
 
@@ -227,10 +224,6 @@ class DualOptLitModule(pl.LightningModule):
         self._log_standard_metrics(self.train_loss, self.train_acc, "train", metrics)
         # return loss or backpropagation will fail
         x, y = batch
-        if self.global_step % 100 == 0:
-            x = x[:10]
-            grid = torchvision.utils.make_grid(x.view(-1, 1, x.size(dim=2), x.size(dim=3)))
-            # self.logger.experiment.add_image("experiment_images", grid, self.global_step) # type: ignore
 
         return loss
     
