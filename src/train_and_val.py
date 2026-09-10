@@ -33,7 +33,7 @@ def train_and_val(
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
-    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
+    lit_module_built = lit_module(model=model_cache, params=params, optims=optims, logger_cache=logger_cache)
 
     exp_inf_built = experiment_info(config_postfix="runs")
 

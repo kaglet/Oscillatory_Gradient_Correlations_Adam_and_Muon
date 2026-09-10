@@ -29,6 +29,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
@@ -59,6 +60,7 @@ class DualOptLitModule(pl.LightningModule):
         self.automatic_optimization = False 
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
+        self.logger_cache = logger_cache
 
         self._init_grad_corr_stores()
 
@@ -80,6 +82,9 @@ class DualOptLitModule(pl.LightningModule):
         self.val_acc.reset()
         self.max_val_acc.reset()
         self._init_grad_corr_stores()
+
+    def on_train_epoch_start(self) -> None:
+        self._init_loggers()
     
     def forward(self, input):
         return self.model(input)
@@ -88,6 +93,15 @@ class DualOptLitModule(pl.LightningModule):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
 
         return self.optims
+
+    def _init_loggers(self) -> None:
+        self.built_loggers = []
+        for i in range(len(self.logger_cache)):
+            logger = self.logger_cache[i]
+            assert self.trainer.log_dir is not None, "Training log dir is None, please set for use by Loggers"
+            save_dir = Path(self.trainer.log_dir) / Path(str(self.current_epoch))
+            logger(save_dir=save_dir)
+            self.built_loggers.append(logger)
 
     def _store_grad_corr(self):
         self.trainable_params = [p for p in self.model.parameters() if p.grad is not None]
@@ -220,11 +234,11 @@ class DualOptLitModule(pl.LightningModule):
 
         # Choose different loggers, configured with different paths 
         if stage == "train":
-            self.loggers[0].log_metrics(metrics_dict)
+            self.built_loggers[0].log_metrics(metrics_dict)
         elif stage == "val":
-            self.loggers[1].log_metrics(metrics_dict)
+            self.built_loggers[1].log_metrics(metrics_dict)
         elif stage == "test":
-            self.loggers[2].log_metrics(metrics_dict)
+            self.built_loggers[2].log_metrics(metrics_dict)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
@@ -278,12 +292,13 @@ class SingleOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, logger_cache, schdlrs, grad_accum_schedule, num_classes)
 
 class DistOptLitModule(DualOptLitModule):
     def __init__(
@@ -291,9 +306,10 @@ class DistOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, logger_cache, schdlrs, grad_accum_schedule, num_classes)
