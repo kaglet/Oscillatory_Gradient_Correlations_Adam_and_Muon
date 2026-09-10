@@ -62,7 +62,7 @@ cls_imb_model_l_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 16})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
 # LR Schedulers
 lr_sch_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
@@ -146,8 +146,8 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 128, # From batch size set grad_accum to get new effective batch size
-    num_workers = 8
+    batch_size = 64, # From batch size set grad_accum to get new effective batch size
+    num_workers = 0
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -158,7 +158,7 @@ cls_imb_datamdl_l_cfg = builds(
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
     batch_size = 64,
-    num_workers = 8
+    num_workers = 0
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
