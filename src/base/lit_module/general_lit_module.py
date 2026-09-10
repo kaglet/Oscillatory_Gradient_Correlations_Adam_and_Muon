@@ -99,11 +99,6 @@ class DualOptLitModule(pl.LightningModule):
         return self.optims
 
     def _store_grad_corr(self):
-        if self.global_step == 0:
-            # names_store = [n for (n,p) in self.trainable_params]
-            # print("Not None grad store", names_store)
-            return
-        
         self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.grad is not None]
         
         curr_param_grads = []
@@ -151,11 +146,11 @@ class DualOptLitModule(pl.LightningModule):
     
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
     def _batch_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, is_Train: bool = True
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, stage: str
+    ) -> torch.Tensor:
         """Perform a single model step on a batch of data."""
         input, targets = batch
-        if is_Train:
+        if stage == "train":
             logits = self.forward(input)
             loss = self.criterion(logits, targets.to(dtype=torch.long))
 
@@ -168,6 +163,11 @@ class DualOptLitModule(pl.LightningModule):
             if should_step:
                 # print("Storing gradd corr from batch step")
                 self._store_grad_corr()
+                
+                preds = torch.argmax(logits, dim=1)
+                metrics = dict(loss=loss, preds=preds, targets=targets)
+                self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
+
                 optims = self.optimizers()
                 optims = optims if isinstance(optims, list) else [optims]
 
@@ -187,9 +187,11 @@ class DualOptLitModule(pl.LightningModule):
                 logits = self.forward(input)
                 loss = self.criterion(logits, targets.to(dtype=torch.long))
 
-        preds = torch.argmax(logits, dim=1)
+                preds = torch.argmax(logits, dim=1)
+                metrics = dict(loss=loss, preds=preds, targets=targets)
+                self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
 
-        return loss, preds, targets
+        return loss
 
     def _print_params_per_opt(self, opt: Any) -> None:
         print(opt.__class__.__name__)
@@ -202,44 +204,40 @@ class DualOptLitModule(pl.LightningModule):
                 len_ad += len(g["params"])
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
-    def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, metric_name: AnyStr, metrics: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
-        loss, preds, targets = metrics
-        loss_store(loss)
-        acc_store(preds, targets)
+    def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
+        loss_store(metrics["loss"])
+        acc_store(metrics["preds"], metrics["targets"])
         
         metrics_dict = {
-            f"{metric_name}/loss": loss,
-            f"{metric_name}/acc": acc_store.compute()
+            f"{stage}/loss": loss_store.compute(),
+            f"{stage}/acc": acc_store.compute()
         }
-        if metric_name == "train":
+
+        # Choose different loggers, configured with different paths 
+        if stage == "train":
             self.loggers[0].log_metrics(metrics_dict)
-        elif metric_name == "val":
+        elif stage == "val":
             self.loggers[1].log_metrics(metrics_dict)
-        # self.log_dict(dictionary=metrics_dict, on_step=True, on_epoch=False, prog_bar=True)
+        elif stage == "test":
+            self.loggers[2].log_metrics(metrics_dict)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        metrics = self._batch_step(batch, batch_idx, is_Train=True)
-        loss, _, _ = metrics
-        self._log_standard_metrics(self.train_loss, self.train_acc, "train", metrics)
-        # return loss or backpropagation will fail
-        x, y = batch
+        metrics = self._batch_step(batch, batch_idx, stage="train")
 
-        return loss
+        return metrics 
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
-        metrics = self._batch_step(batch, batch_idx, is_Train=False)
-        loss, _, _ = metrics
-        self._log_standard_metrics(self.val_loss, self.val_acc, "val", metrics)
-        return loss 
+        metrics = self._batch_step(batch, batch_idx, stage="val")
+
+        return metrics 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
-        metrics = self._batch_step(batch, batch_idx, is_Train=False)
-        loss, _, _ = metrics
-        self._log_standard_metrics(self.test_loss, self.test_acc, "test", metrics)
-        return loss
+        metrics = self._batch_step(batch, batch_idx, stage="test")
+
+        return metrics 
 
     def _log_GCH_store(self) -> None:
         print(f"Saving GCH of train at root")
@@ -256,7 +254,6 @@ class DualOptLitModule(pl.LightningModule):
             writer.writerows(rows)      # Write data rows
         self._init_grad_corr_stores()
         
-
     def on_train_epoch_end(self) -> None:
         self._log_GCH_store()
 
