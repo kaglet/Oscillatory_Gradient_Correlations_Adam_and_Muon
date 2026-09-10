@@ -76,8 +76,9 @@ class DualOptLitModule(pl.LightningModule):
 
     def _init_grad_corr_stores(self) -> bool:
         self.trainable_params = []
-        self.global_grad_corr_store = []
-        self.prev_grads = []
+        self.global_gcs = []
+        self.global_r_gcs = []
+        self.prev_param_grads = []
         self.per_param_names = []
         return True
 
@@ -99,35 +100,40 @@ class DualOptLitModule(pl.LightningModule):
         return self.optims
 
     def _store_grad_corr(self):
-        self.trainable_params = [(n, p) for n,p in self.model.named_parameters() if p.grad is not None]
+        self.trainable_params = [p for p in self.model.parameters() if p.grad is not None]
         
         curr_param_grads = []
-        prev_grads_exist = len(self.prev_grads) != 0
-        curr_grad_corr_store = []
-         
-        for i, (n, p) in enumerate(self.trainable_params):
-            assert p.requires_grad == True, "None gradients detected when trainable params expected"
-            if p.grad is not None:
-                curr_p_grad = p.grad.detach().clone()
-                curr_param_grads.append(curr_p_grad) 
-                
-                if prev_grads_exist:
-                    # print("Prev grad i:", i, " With length: ", len(self.prev_grads), " Training params length: ", len(self.trainable_params))
-                    prev_p_grad = self.prev_grads[i].detach().clone()
-                    dot_prod = float(torch.sum(torch.mul(prev_p_grad, curr_p_grad)))
-                    norm = float(prev_p_grad.data.norm() * curr_p_grad.data.norm())
-                    curr_grad_corr_store.append(dot_prod / norm)
-            else: 
-                # print("p.grad is None detected on i: ", i)
-                pass
-        self.prev_grads = curr_param_grads 
+        prev_grads_exist = len(self.prev_param_grads) != 0
+        curr_gcs = torch.Tensor(size=(len(self.trainable_params),))
+        curr_r_gcs = torch.zeros_like(curr_gcs)
 
-        if len(curr_grad_corr_store) != 0: # Prev grads may exist here but grad corr would not have been created yet, can only started from step for accum
-            self.global_grad_corr_store.append(curr_grad_corr_store)
+        for i, p in enumerate(self.trainable_params):
+            assert p.grad is not None, "None gradients detected, debug optimizer/s invoked on current step"
 
-        if len(self.global_grad_corr_store) >= 2:
-            prev_store_len = len(self.global_grad_corr_store[-1])
-            curr_store_len = len(self.global_grad_corr_store[-1])
+            curr_p_grad = p.grad.detach().clone()
+            curr_param_grads.append(curr_p_grad) 
+
+            # Do not compute dot product if record does not exist
+            if prev_grads_exist:
+                prev_p_grad = self.prev_param_grads[i].detach().clone()
+                dot_prod = torch.sum(torch.mul(prev_p_grad, curr_p_grad))
+                norm = prev_p_grad.data.norm() * curr_p_grad.data.norm()
+                curr_gcs[i] = dot_prod / norm
+                curr_r_gcs[i] = dot_prod
+
+        # Immediate past becomes current grads collected
+        self.prev_param_grads = curr_param_grads 
+
+        # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
+        # Given the above, the global stores can be filled
+        if len(curr_gcs) != 0: 
+            self.global_gcs.append(np.asarray(curr_gcs, dtype=np.float32))
+            self.global_r_gcs.append(np.asarray(curr_r_gcs, dtype=np.float32))
+
+        # Sanity check
+        if len(self.global_gcs) >= 2:
+            prev_store_len = len(self.global_gcs[-1])
+            curr_store_len = len(self.global_gcs[-1])
 
             assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {self.global_step}"
         
@@ -240,33 +246,24 @@ class DualOptLitModule(pl.LightningModule):
         return metrics 
 
     def _log_GCH_store(self) -> None:
-        print(f"Saving GCH of train at root")
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
-        rows = np.array(self.global_grad_corr_store, np.float32)
+        rows = np.array(self.global_gcs, np.float32)
+
+        # Required check to infer for join operation after
         assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
         log_dir = os.path.join(self.trainer.log_dir, 'GCH_Epoch')
+
         os.makedirs(log_dir, exist_ok=True)
 
         with open(log_dir + f'/{self.current_epoch}.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
-            writer.writerows(rows)      # Write data rows
+            writer.writerows(rows)      # Write many data rows
         self._init_grad_corr_stores()
         
     def on_train_epoch_end(self) -> None:
         self._log_GCH_store()
-
-    # TODO: Get best value after a batch is run for validation step NOT for epoch
-    def on_validation_epoch_end(self) -> None:
-        acc = self.val_acc.compute() # get current val acc
-        self.max_val_acc(acc)  # auto update store with best so far val acc
-        
-        # Recall metric is reset by us with lightning after each epoch.
-        # So log value computed at this moment, not a reference to Metric object.
-        self.loggers[2].log_metrics({"val": float(self.max_val_acc.compute())})
-
-        # self.log("val/acc_best", self.max_val_acc.compute(), sync_dist=True, prog_bar=True)
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
