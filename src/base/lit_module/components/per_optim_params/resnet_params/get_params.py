@@ -7,7 +7,6 @@ def get_dist_Muon_Adam_params(model: Any, lr_muon: float, lr_adam: float, w_deca
     """
     For a list [m, a] m sets Muon's and a Adam's parameters, respectively.  
     """
-    print("Model id/reference in memory is:", id(model))
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) != 2 and p.requires_grad]
     high_dim_params = [p for n, p in model.named_parameters() if (len(p.shape) == 2) and (p.requires_grad)]
@@ -26,14 +25,11 @@ def get_nondist_Muon_Adam_params(model: Any, lr_muon: float, lr_adam: float, w_d
     """
     For a list [m, a] m sets Muon's and a Adam's parameters, respectively.  
     """
-    print("Model id/reference in memory is:", id(model))
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) == 1 and p.requires_grad]
     conv_params = [p for n, p in model.named_parameters() if (len(p.shape) == 4) and (p.requires_grad) and ("conv" in n)]
     high_dim_params = [p for n, p in model.named_parameters() if (p not in set(conv_params)) and (p not in set(low_dim_params))] # use set NOT list NOR unchanged tensor - shape error is thrown
 
-    len_high_dim = len(high_dim_params)
-    print(len_high_dim)
     # TODO: Differentiate Keller recs for 2nd block to test performance against it
     param_groups = [
         dict(params=high_dim_params, use_muon=True,
@@ -50,7 +46,6 @@ def get_dual_opt_params(model: Any, lr_muon: float, lr_adam: float, w_decay_muon
     """
     For a list [m, a] m sets Muon's and a Adam's parameters, respectively.  
     """
-    print("Model id/reference in memory is:", id(model))
     # Norm biases are not innately 2D, but a collation of 1D vectors
     low_dim_params = [p for p in model.parameters() if len(p.shape) != 2 and p.requires_grad]
     high_dim_params = [p for p in model.parameters() if (len(p.shape) == 2) and (p.requires_grad)]
@@ -74,7 +69,6 @@ def get_Adam_params(model: Any, lr: float = 0.001, weight_decay: float = 0, beta
     Use to get Adam native parameters   
     """
     # Norm biases are not innately 2D, but a collation of 1D vectors
-    print("Model id/reference in memory is:", id(model))
 
     all_params = [p for p in model.parameters() if p.requires_grad]
     

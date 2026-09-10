@@ -29,18 +29,16 @@ def train_and_val(
     logger_cache: Any,
     chkpt_cache: Any
 ):
-    print(f"Working directory : {os.getcwd()}")
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
-    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
+    lit_module_built = lit_module(model=model_cache, params=params, optims=optims, logger_cache=logger_cache)
 
     exp_inf_built = experiment_info(config_postfix="runs")
 
     for i in range(2):
         path_all = Path(os.path.join(exp_inf_built.log_path, f"{i}"))
-        loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
-        trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
+        trainer_built = trainer(default_root_dir=path_all)
         trainer_built.fit(model=lit_module_built, datamodule=datamodule)
     
     return 1

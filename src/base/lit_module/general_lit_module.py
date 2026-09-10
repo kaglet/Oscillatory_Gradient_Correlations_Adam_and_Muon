@@ -1,6 +1,8 @@
 from logging import log
 import os
+from pathlib import Path
 from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
+import lightning
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 
 import csv
@@ -27,6 +29,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
@@ -50,27 +53,16 @@ class DualOptLitModule(pl.LightningModule):
         self.max_val_acc = MaxMetric()
 
         self.model = model
-        # print("Model id/reference in memory is:", id(model))
         self._grad_accum_schedule = grad_accum_schedule
 
         self.optims = optims
         self.params = params
-        # Crucial dual opt fixes/implementation from @shivvor2
-        self.automatic_optimization = False # optim.step() must be called manually seemingly
+        self.automatic_optimization = False 
+        # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
+        self.logger_cache = logger_cache
 
-        # TODO: DO NOT leave this as default without it being set for specific stages
         self._init_grad_corr_stores()
-    #     self._loggers = [
-    #         CSVLogger(name="train_acc_steps"),
-    #         CSVLogger(name="train_loss_steps"),
-    #         CSVLogger(name="val_acc_steps"), 
-    #         CSVLogger(name="val_loss_steps"),
-
-    #         CSVLogger(name="train_acc_epoch"),
-    # CSVLogger(name="train_loss_epoch"),
-    # CSVLogger(name="val_acc_epoch"), 
-    # CSVLogger(name="val_loss_epoch")]
 
         self.save_hyperparameters(logger=False, ignore=["model"])
 
@@ -91,6 +83,9 @@ class DualOptLitModule(pl.LightningModule):
         self.max_val_acc.reset()
         self._init_grad_corr_stores()
 
+    def on_train_epoch_start(self) -> None:
+        self._init_loggers()
+    
     def forward(self, input):
         return self.model(input)
 
@@ -98,6 +93,15 @@ class DualOptLitModule(pl.LightningModule):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
 
         return self.optims
+
+    def _init_loggers(self) -> None:
+        self.built_loggers = []
+        for i in range(len(self.logger_cache)):
+            logger = self.logger_cache[i]
+            assert self.trainer.log_dir is not None, "Training log dir is None, please set for use by Loggers"
+            save_dir = Path(self.trainer.log_dir) / Path(str(self.current_epoch))
+            logger(save_dir=save_dir)
+            self.built_loggers.append(logger)
 
     def _store_grad_corr(self):
         self.trainable_params = [p for p in self.model.parameters() if p.grad is not None]
@@ -121,7 +125,7 @@ class DualOptLitModule(pl.LightningModule):
                 curr_gcs[i] = dot_prod / norm
                 curr_r_gcs[i] = dot_prod
 
-        # Immediate past becomes current grads collected
+        # Current grad becomes past grads
         self.prev_param_grads = curr_param_grads 
 
         # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
@@ -149,16 +153,35 @@ class DualOptLitModule(pl.LightningModule):
         accum = self._grad_accum_schedule.get_accum(self._optimizer_step_count)
         # assert accum == 32, f"Accum {accum} from epoch 0 is not default 4"
         return accum
-    
+
+    def _batch_step_eval(
+        self, inputs: torch.Tensor, targets: torch.Tensor, batch_idx: int, stage: str
+    ) -> torch.Tensor:
+        """Obtain loss and other metrics for a step in eval mode."""
+        logits = self.forward(inputs)
+        loss = self.criterion(logits, targets)
+
+        grad_accum = self._get_current_grad_accum()
+
+        should_step = (batch_idx + 1) % grad_accum == 0
+
+        if should_step:
+            preds = torch.argmax(logits, dim=1)
+            metrics = dict(loss=loss, preds=preds, targets=targets)
+            if stage == "val":
+                self._log_standard_metrics(self.val_loss, self.val_acc, stage, metrics)
+            elif stage == "test": 
+                self._log_standard_metrics(self.test_loss, self.test_acc, stage, metrics)
+
+        return loss
+
     # TODO: Alter ordered tuple output to be a dictionary or leave it if input to output pipeline can handle it safely
-    def _batch_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int, stage: str
+    def _batch_step_train(
+        self, inputs: torch.Tensor, targets: torch.Tensor, batch_idx: int, stage: str
     ) -> torch.Tensor:
         """Perform a single model step on a batch of data."""
-        input, targets = batch
-
-        logits = self.forward(input)
-        loss = self.criterion(logits, targets.to(dtype=torch.long))
+        logits = self.forward(inputs)
+        loss = self.criterion(logits, targets)
 
         grad_accum = self._get_current_grad_accum()
         scaled_loss = loss / grad_accum
@@ -211,29 +234,34 @@ class DualOptLitModule(pl.LightningModule):
 
         # Choose different loggers, configured with different paths 
         if stage == "train":
-            self.loggers[0].log_metrics(metrics_dict)
+            self.built_loggers[0].log_metrics(metrics_dict)
         elif stage == "val":
-            self.loggers[1].log_metrics(metrics_dict)
+            self.built_loggers[1].log_metrics(metrics_dict)
         elif stage == "test":
-            self.loggers[2].log_metrics(metrics_dict)
+            self.built_loggers[2].log_metrics(metrics_dict)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
-        metrics = self._batch_step(batch, batch_idx, stage="train")
+        inputs, targets = batch
+        metrics = self._batch_step_train(inputs=inputs, targets=targets.to(dtype=torch.long), batch_idx=batch_idx, stage="train")
 
         return metrics 
     
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single validation step on a batch of data from the validation set."""
+        inputs, targets = batch
+
         with torch.no_grad():
-            metrics = self._batch_step(batch, batch_idx, stage="val")
+            metrics = self._batch_step_eval(inputs=inputs, targets=targets.to(dtype=torch.long), batch_idx=batch_idx, stage="val")
 
         return metrics 
     
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single test step on a batch of data from the test set."""
+        inputs, targets = batch
+
         with torch.no_grad():
-            metrics = self._batch_step(batch, batch_idx, stage="test")
+            metrics = self._batch_step_eval(inputs=inputs, targets=targets.to(dtype=torch.long), batch_idx=batch_idx, stage="test")
 
         return metrics 
 
@@ -264,12 +292,13 @@ class SingleOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, logger_cache, schdlrs, grad_accum_schedule, num_classes)
 
 class DistOptLitModule(DualOptLitModule):
     def __init__(
@@ -277,9 +306,10 @@ class DistOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
+        logger_cache: list[Partial[Any]],
         schdlrs: Optional[list[LRScheduler]] = None,
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, logger_cache, schdlrs, grad_accum_schedule, num_classes)
