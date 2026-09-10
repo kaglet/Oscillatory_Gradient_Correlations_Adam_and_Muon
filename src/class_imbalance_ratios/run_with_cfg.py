@@ -19,6 +19,7 @@ from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_con
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
+from hydra.conf import HydraConf, JobConf, SweepDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
@@ -228,6 +229,8 @@ store(ExperimentConfig, name="adam_muon_benchmarks")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
+store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/multirun/${hydra.job.name}", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
+
 if __name__ == "__main__":
     store.add_to_hydra_store()
     torch.set_float32_matmul_precision(precision="high")
@@ -237,7 +240,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
-        # job_name="job",
+        job_name="class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
         overrides={
@@ -258,8 +261,7 @@ if __name__ == "__main__":
         }
     )
 
-    dirs = [j.working_dir for j in jobs]
-    cfgs = [j.cfg for j in jobs]
-    for i, c in enumerate(cfgs): 
-        print(c["experiment_info"]["global_output_path"])
-        print(dirs[i])
+    # dirs = [j.working_dir for j in jobs]
+    # cfgs = [j.cfg for j in jobs]
+    # for i, c in enumerate(cfgs): 
+    #     print(dirs[i])
