@@ -107,7 +107,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=2,
+    max_epochs=1,
     deterministic=True,
     accelerator="gpu",
     benchmark=False,
@@ -230,16 +230,16 @@ pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
 if __name__ == "__main__":
-    store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/adam/multirun/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
+    store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multirun/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
 
-    store.add_to_hydra_store()
+    store.add_to_hydra_store(overwrite_ok=True)
     torch.set_float32_matmul_precision(precision="high")
 
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
-        job_name="class_imbalance_ratios",
+        job_name="adam_class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
         overrides={
@@ -261,15 +261,12 @@ if __name__ == "__main__":
         }
     )
 
-    store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/muon_aux_adam/multirun/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
-
-    store.add_to_hydra_store()
     # TODO: Print yaml config at the end for seeing saved structure
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
-        job_name="class_imbalance_ratios",
+        job_name="muon_class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
         overrides={
