@@ -96,19 +96,11 @@ max_checkpt_cfg = pbuilds(
 
 chkpts_cfg_list = [max_checkpt_cfg]
 
-tb_logger_cfg = pbuilds(TensorBoardLogger, name="per_epoch_metrics")
+tb_logger_cfg = pbuilds(TensorBoardLogger, name="train")
 csv_logger_cfg = [
-    pbuilds(CSVLogger, name="train_steps"),
-    pbuilds(CSVLogger, name="val_steps"), 
-    pbuilds(CSVLogger, name="val_max"), 
-
-    pbuilds(CSVLogger, name="train_loss_steps"),
-    pbuilds(CSVLogger, name="val_loss_steps"),
-
-    pbuilds(CSVLogger, name="train_acc_epoch"),
-    pbuilds(CSVLogger, name="train_loss_epoch"),
-    pbuilds(CSVLogger, name="val_acc_epoch"), 
-    pbuilds(CSVLogger, name="val_loss_epoch"),
+    pbuilds(CSVLogger, name="train", version=""),
+    pbuilds(CSVLogger, name="val", version=""), 
+    pbuilds(CSVLogger, name="test", version=""), 
 ]
 
 # Define base trainer cfg
