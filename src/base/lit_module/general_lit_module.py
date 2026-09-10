@@ -252,11 +252,11 @@ class DualOptLitModule(pl.LightningModule):
             writer = csv.writer(f)
             writer.writerow(fields)     # Write header
             writer.writerows(rows)      # Write many data rows
-        self._init_grad_corr_stores()
         
     def on_train_epoch_end(self) -> None:
         self._log_GCH_store(gc_store=self.global_gcs, type="GCS")
         self._log_GCH_store(gc_store=self.global_r_gcs, type="RGCS")
+        self._init_grad_corr_stores()
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
