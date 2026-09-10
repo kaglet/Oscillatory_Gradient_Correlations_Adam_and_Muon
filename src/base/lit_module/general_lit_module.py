@@ -237,14 +237,14 @@ class DualOptLitModule(pl.LightningModule):
 
         return metrics 
 
-    def _log_GCH_store(self) -> None:
+    def _log_GCH_store(self, gc_store: list[torch.Tensor], type: str = "GCH") -> None:
         self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         fields = self.per_param_names
-        rows = np.array(self.global_gcs, np.float32)
+        rows = np.array(gc_store, np.float32)
 
         # Required check to infer for join operation after
         assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
-        log_dir = os.path.join(self.trainer.log_dir, 'GCH_Epoch')
+        log_dir = os.path.join(self.trainer.log_dir, f'{type}_Epoch')
 
         os.makedirs(log_dir, exist_ok=True)
 
@@ -255,7 +255,8 @@ class DualOptLitModule(pl.LightningModule):
         self._init_grad_corr_stores()
         
     def on_train_epoch_end(self) -> None:
-        self._log_GCH_store()
+        self._log_GCH_store(gc_store=self.global_gcs, type="GCS")
+        self._log_GCH_store(gc_store=self.global_r_gcs, type="RGCS")
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
