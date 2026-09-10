@@ -106,7 +106,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=3,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision(precision="high")
     
     # TODO: Print yaml config at the end for seeing saved structure
-    job = launch(
+    (jobs,) = launch(
         ExperimentConfig,
         task_function,
         config_name="adam_muon_benchmarks",
@@ -258,3 +258,8 @@ if __name__ == "__main__":
         }
     )
 
+    dirs = [j.working_dir for j in jobs]
+    cfgs = [j.cfg for j in jobs]
+    for i, c in enumerate(cfgs): 
+        print(c["experiment_info"]["global_output_path"])
+        print(dirs[i])

@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
 from hydra_zen import ZenStore, store
+from tqdm import tqdm
 
 from src.base.configs.experiment_data import Experiment_Data
 __all__ = ["train_and_val"]
@@ -37,7 +38,8 @@ def train_and_val(
 
     exp_inf_built = experiment_info(config_postfix="runs")
 
-    for i in range(2):
+    num_runs = 2
+    for i in tqdm(range(num_runs)):
         path_all = Path(os.path.join(exp_inf_built.log_path, f"{i}"))
         loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
         trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
