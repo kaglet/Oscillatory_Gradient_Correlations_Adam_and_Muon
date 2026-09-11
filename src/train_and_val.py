@@ -30,7 +30,7 @@ def train_and_val(
     logger_cache: Any,
     chkpt_cache: Any
 ):
-    num_runs = 10
+    num_runs = 2
     for i in tqdm(range(num_runs), desc="Experiment running..."):
         params = params_cache(model=model_cache)
         optims = [optim(params) for optim, params in zip(optims_cache, params)]

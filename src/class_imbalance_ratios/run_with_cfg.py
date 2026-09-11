@@ -235,31 +235,31 @@ if __name__ == "__main__":
     store.add_to_hydra_store(overwrite_ok=True)
     torch.set_float32_matmul_precision(precision="high")
 
-    (jobs,) = launch(
-        ExperimentConfig,
-        task_function,
-        config_name="adam_muon_benchmarks",
-        job_name="adam_class_imbalance_ratios",
-        version_base="1.3",
-        multirun=True,
-        overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.use_muon":f"False",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
-        }
-    )
+    # (jobs,) = launch(
+    #     ExperimentConfig,
+    #     task_function,
+    #     config_name="adam_muon_benchmarks",
+    #     job_name="adam_class_imbalance_ratios",
+    #     version_base="1.3",
+    #     multirun=True,
+    #     overrides={
+    #         "model_cache": cif10_lbl, 
+    #         "datamodule": f"{cif10_lbl}", 
+    #         "params_cache":f"{mu_aux_ad_lbl}", 
+    #         "optims_cache":f"{mu_aux_ad_lbl}", 
+    #         "lit_module":f"{cif10_lbl}",
+    #         "++params_cache.lr_muon":f"1e-1",
+    #         "++params_cache.lr_adam":f"1e-1",
+    #         "++params_cache.use_muon":f"False",
+    #         "++params_cache.momentum_muon":f"0.9",
+    #         "++params_cache.beta_1_adam":f"0.95",
+    #         "++params_cache.beta_2_adam":f"0.999",
+    #         "++params_cache.nesterov":f"False",
+    #         "++params_cache.use_layer_recs":f"False",
+    #         "++params_cache.eps":f"1e-08",
+    #         "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+    #     }
+    # )
 
     # TODO: Print yaml config at the end for seeing saved structure
     (jobs,) = launch(
