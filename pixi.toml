@@ -42,3 +42,4 @@ ipywidgets = ">=8.1.9,<9"
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
 triton-windows = ">=3.8.0.post28, <4"
+jupyter-contrib-nbextensions = ">=0.7.0, <0.8"

@@ -354,7 +354,14 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zlib-ng-2.3.3-h0261ad2_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
       - pypi: git+https://github.com/KellerJordan/Muon#f98f1cacc0263b04290753e32be8d498c1efc806
+      - pypi: https://files.pythonhosted.org/packages/05/fe/cffb14a4fbb43cf276aa3047e42c3f9ecfda851ba3c466295401f6b1e085/jupyter_nbextensions_configurator-0.6.4-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/3a/5b/6ed903e4e6278a020c8a6f0dbbe78030d041840a6b4a64ea441a1e414077/lxml-6.1.3-cp312-cp312-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/50/91/78cc4362611dbde2b0cd068204aaf1b8899d0459c50d8ff9daca8c069791/jupyter_contrib_nbextensions-0.7.0.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/50/94/0d37e5b49ea1c8bf204c46f9b0257c1f3319a4ab88acbd401da2cab25e55/jupyter_contrib_core-0.4.2.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/50/d7/19ab7cfd60bf268d2abbacc52d4295a40f52d74dfc0d938e4761ee5e598b/jupyter_highlight_selected_word-0.2.0-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5c/fd/3e552ff5b24dd305c6e9a10e8645e29c03091c317429f326ae10dbae1ac6/notebook-7.6.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/61/e9/2eab61f500e118d83249b09b10722957f71e551c2b6502135bcfcb32512a/triton_windows-3.8.0.post28-cp312-cp312-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/fa/bc/9bd3b5c2b4774d5f33b2d544f1460be9df7df2fe42f352135381c347c69a/ipython_genutils-0.2.0-py2.py3-none-any.whl
 packages:
 - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
   sha256: 2a7204314663eeda5dec482a956f0e2eaf289bd5b9953eaaaad0e81aa64638f2
@@ -5751,6 +5758,98 @@ packages:
 - pypi: git+https://github.com/KellerJordan/Muon#f98f1cacc0263b04290753e32be8d498c1efc806
   name: muon-optimizer
   version: 0.1.0
+- pypi: https://files.pythonhosted.org/packages/05/fe/cffb14a4fbb43cf276aa3047e42c3f9ecfda851ba3c466295401f6b1e085/jupyter_nbextensions_configurator-0.6.4-py2.py3-none-any.whl
+  name: jupyter-nbextensions-configurator
+  version: 0.6.4
+  sha256: fe7a7b0805b5926449692fb077e0e659bab8b27563bc68cba26854532fdf99c7
+  requires_dist:
+  - jupyter-contrib-core>=0.3.3
+  - jupyter-core
+  - jupyter-server
+  - notebook>=6.0
+  - pyyaml
+  - tornado
+  - traitlets
+  - jupyter-contrib-core[testing-utils] ; extra == 'test'
+  - nose ; extra == 'test'
+  - requests ; extra == 'test'
+  - selenium ; extra == 'test'
+  - mock ; python_full_version == '3.9.*' and extra == 'test'
+- pypi: https://files.pythonhosted.org/packages/3a/5b/6ed903e4e6278a020c8a6f0dbbe78030d041840a6b4a64ea441a1e414077/lxml-6.1.3-cp312-cp312-win_amd64.whl
+  name: lxml
+  version: 6.1.3
+  sha256: 3e9a00d1c2c30936f7add097c41afc5da6556c580909104aafd382cac92a855c
+  requires_dist:
+  - cssselect>=0.7 ; extra == 'cssselect'
+  - html5lib ; extra == 'html5'
+  - beautifulsoup4 ; extra == 'htmlsoup'
+  - lxml-html-clean ; extra == 'html-clean'
+  requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/50/91/78cc4362611dbde2b0cd068204aaf1b8899d0459c50d8ff9daca8c069791/jupyter_contrib_nbextensions-0.7.0.tar.gz
+  name: jupyter-contrib-nbextensions
+  version: 0.7.0
+  sha256: 06e33f005885eb92f89cbe82711e921278201298d08ab0d886d1ba09e8c3e9ca
+  requires_dist:
+  - ipython-genutils
+  - jupyter-contrib-core>=0.3.3
+  - jupyter-core
+  - jupyter-highlight-selected-word>=0.1.1
+  - jupyter-nbextensions-configurator>=0.4.0
+  - nbconvert>=6.0
+  - notebook>=6.0
+  - tornado
+  - traitlets>=4.1
+  - lxml
+  - nbformat ; extra == 'test'
+  - nose ; extra == 'test'
+  - pip ; extra == 'test'
+  - requests ; extra == 'test'
+  - mock ; python_full_version == '3.8.*' and extra == 'test'
+- pypi: https://files.pythonhosted.org/packages/50/94/0d37e5b49ea1c8bf204c46f9b0257c1f3319a4ab88acbd401da2cab25e55/jupyter_contrib_core-0.4.2.tar.gz
+  name: jupyter-contrib-core
+  version: 0.4.2
+  sha256: 1887212f3ca9d4487d624c0705c20dfdf03d5a0b9ea2557d3aaeeb4c38bdcabb
+  requires_dist:
+  - jupyter-core
+  - notebook>=4.0
+  - setuptools
+  - traitlets
+  - tornado
+  - nose ; extra == 'testing-utils'
+  - mock ; python_full_version == '2.7.*' and extra == 'testing-utils'
+- pypi: https://files.pythonhosted.org/packages/50/d7/19ab7cfd60bf268d2abbacc52d4295a40f52d74dfc0d938e4761ee5e598b/jupyter_highlight_selected_word-0.2.0-py2.py3-none-any.whl
+  name: jupyter-highlight-selected-word
+  version: 0.2.0
+  sha256: 9545dfa9cb057eebe3a5795604dcd3a5294ea18637e553f61a0b67c1b5903c58
+- pypi: https://files.pythonhosted.org/packages/5c/fd/3e552ff5b24dd305c6e9a10e8645e29c03091c317429f326ae10dbae1ac6/notebook-7.6.2-py3-none-any.whl
+  name: notebook
+  version: 7.6.2
+  sha256: 5fe9e09c335cb4b7de21627b860f77210e70e54b1fb1276ad942a4a7e1d858d3
+  requires_dist:
+  - jupyter-builder>=1.0.2,<2
+  - jupyter-server>=2.19.0,<3
+  - jupyterlab-server>=2.28.0,<3
+  - jupyterlab>=4.6.3,<4.7
+  - notebook-shim>=0.2,<0.3
+  - tornado>=6.2.0
+  - hatch ; extra == 'dev'
+  - pre-commit ; extra == 'dev'
+  - myst-parser ; extra == 'docs'
+  - nbsphinx ; extra == 'docs'
+  - pydata-sphinx-theme ; extra == 'docs'
+  - sphinx>=1.3.6 ; extra == 'docs'
+  - sphinxcontrib-github-alt ; extra == 'docs'
+  - sphinxcontrib-spelling ; extra == 'docs'
+  - ipykernel ; extra == 'test'
+  - jupyter-server[test]>=2.19.0,<3 ; extra == 'test'
+  - jupyterlab-server[test]>=2.28.0,<3 ; extra == 'test'
+  - nbval ; extra == 'test'
+  - pytest-console-scripts ; extra == 'test'
+  - pytest-timeout ; extra == 'test'
+  - pytest-tornasync ; extra == 'test'
+  - pytest>=7.0 ; extra == 'test'
+  - requests ; extra == 'test'
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/61/e9/2eab61f500e118d83249b09b10722957f71e551c2b6502135bcfcb32512a/triton_windows-3.8.0.post28-cp312-cp312-win_amd64.whl
   name: triton-windows
   version: 3.8.0.post28
@@ -5758,3 +5857,7 @@ packages:
   requires_dist:
   - importlib-metadata ; python_full_version < '3.10'
   requires_python: '>=3.10,<3.15'
+- pypi: https://files.pythonhosted.org/packages/fa/bc/9bd3b5c2b4774d5f33b2d544f1460be9df7df2fe42f352135381c347c69a/ipython_genutils-0.2.0-py2.py3-none-any.whl
+  name: ipython-genutils
+  version: 0.2.0
+  sha256: 72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8
