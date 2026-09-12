@@ -111,10 +111,13 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/narwhals-2.25.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/nbclient-0.11.0-pyhcf101f3_1.conda
+      - conda: https://prefix.dev/conda-forge/noarch/nbconvert-7.17.1-hb502eef_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/nbconvert-core-7.17.1-pyhcf101f3_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/nbconvert-pandoc-7.17.1-h08b4883_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/nbformat-5.11.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/nest-asyncio2-1.7.2-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/networkx-3.6.1-pyhcf101f3_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/notebook-7.6.2-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/notebook-shim-0.2.4-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/oauthlib-3.3.1-pyh5ded981_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/omegaconf-2.3.1-pyhd8ed1ab_0.conda
@@ -302,6 +305,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/openssl-3.6.4-hf411b9b_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/optree-0.20.0-py312hf90b1b7_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pandas-3.0.5-py312h95189c4_1.conda
+      - conda: https://prefix.dev/conda-forge/win-64/pandoc-3.11-h57928b3_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.47-h8466c1e_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/pillow-10.4.0-py312h381445a_1.conda
       - conda: https://prefix.dev/conda-forge/win-64/pixman-0.46.4-h5112557_3.conda
@@ -359,7 +363,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/50/91/78cc4362611dbde2b0cd068204aaf1b8899d0459c50d8ff9daca8c069791/jupyter_contrib_nbextensions-0.7.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/50/94/0d37e5b49ea1c8bf204c46f9b0257c1f3319a4ab88acbd401da2cab25e55/jupyter_contrib_core-0.4.2.tar.gz
       - pypi: https://files.pythonhosted.org/packages/50/d7/19ab7cfd60bf268d2abbacc52d4295a40f52d74dfc0d938e4761ee5e598b/jupyter_highlight_selected_word-0.2.0-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/5c/fd/3e552ff5b24dd305c6e9a10e8645e29c03091c317429f326ae10dbae1ac6/notebook-7.6.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/61/e9/2eab61f500e118d83249b09b10722957f71e551c2b6502135bcfcb32512a/triton_windows-3.8.0.post28-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/fa/bc/9bd3b5c2b4774d5f33b2d544f1460be9df7df2fe42f352135381c347c69a/ipython_genutils-0.2.0-py2.py3-none-any.whl
 packages:
@@ -1771,6 +1774,18 @@ packages:
   run_exports: {}
   size: 29971
   timestamp: 1788212974885
+- conda: https://prefix.dev/conda-forge/noarch/nbconvert-7.17.1-hb502eef_0.conda
+  sha256: 6b6d96cca8e9dd34e0735b59534831e1f8206b7366c79c71e08da6ee55c50683
+  md5: 02669c36935d23e5258c5dd1a5e601ab
+  depends:
+  - nbconvert-core ==7.17.1 pyhcf101f3_0
+  - nbconvert-pandoc ==7.17.1 h08b4883_0
+  license: BSD-3-Clause
+  license_family: BSD
+  purls: []
+  run_exports: {}
+  size: 5364
+  timestamp: 1775615493260
 - conda: https://prefix.dev/conda-forge/noarch/nbconvert-core-7.17.1-pyhcf101f3_0.conda
   sha256: ab2ac79c5892c5434d50b3542d96645bdaa06d025b6e03734be29200de248ac2
   md5: 2bce0d047658a91b99441390b9b27045
@@ -1801,6 +1816,18 @@ packages:
   - pkg:pypi/nbconvert?source=hash-mapping
   run_exports: {}
   size: 202229
+  timestamp: 1775615493260
+- conda: https://prefix.dev/conda-forge/noarch/nbconvert-pandoc-7.17.1-h08b4883_0.conda
+  sha256: b576268b5b3da13b703a15d28d218fd1b552511726253575025930091e6206ae
+  md5: f635af333701d2ed89d70ba9adb8e2ee
+  depends:
+  - nbconvert-core ==7.17.1 pyhcf101f3_0
+  - pandoc
+  license: BSD-3-Clause
+  license_family: BSD
+  purls: []
+  run_exports: {}
+  size: 5840
   timestamp: 1775615493260
 - conda: https://prefix.dev/conda-forge/noarch/nbformat-5.11.1-pyhcf101f3_0.conda
   sha256: d85d76827ff732e1639f50f45e4d7d3387a27abd857b194dcbb5bb4166c2a7c2
@@ -1850,6 +1877,25 @@ packages:
   run_exports: {}
   size: 1587439
   timestamp: 1765215107045
+- conda: https://prefix.dev/conda-forge/noarch/notebook-7.6.2-pyhcf101f3_0.conda
+  sha256: fb2fed7ff3ac2a94225f444984b6316cd2bf9419db0f45057334c57df3c20d0f
+  md5: ca3a76b7ae886c30f2ef6e0ca851b2ab
+  depends:
+  - jupyter_server >=2.19.0,<3
+  - jupyter-builder >=1.0.2,<2
+  - jupyterlab >=4.6.3,<4.7
+  - jupyterlab_server >=2.28.0,<3
+  - notebook-shim >=0.2,<0.3
+  - python >=3.10
+  - tornado >=6.2.0
+  - python
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/notebook?source=compressed-mapping
+  run_exports: {}
+  size: 4631065
+  timestamp: 1786455253264
 - conda: https://prefix.dev/conda-forge/noarch/notebook-shim-0.2.4-pyhd8ed1ab_1.conda
   sha256: 7b920e46b9f7a2d2aa6434222e5c8d739021dbc5cc75f32d124a8191d86f9056
   md5: e7f89ea5f7ea9401642758ff50a2d9c1
@@ -4837,6 +4883,15 @@ packages:
   run_exports: {}
   size: 13686325
   timestamp: 1785276278443
+- conda: https://prefix.dev/conda-forge/win-64/pandoc-3.11-h57928b3_0.conda
+  sha256: 03b03e1c841f25e738bafe60e20cae65a98951683f14e72aae6a8ac359e0501c
+  md5: 4587e6544ff96ef0ee50b042f9d3719d
+  license: GPL-2.0-or-later
+  license_family: GPL
+  purls: []
+  run_exports: {}
+  size: 26983655
+  timestamp: 1788174492517
 - conda: https://prefix.dev/conda-forge/win-64/pcre2-10.47-h8466c1e_1.conda
   sha256: d8e9ea26b52a09d880d1e5371830c8dd5b4c099a6db64dbdf8236440744b7499
   md5: 009af999dbe2d1db36a37187a4ca4eb4
@@ -5821,35 +5876,6 @@ packages:
   name: jupyter-highlight-selected-word
   version: 0.2.0
   sha256: 9545dfa9cb057eebe3a5795604dcd3a5294ea18637e553f61a0b67c1b5903c58
-- pypi: https://files.pythonhosted.org/packages/5c/fd/3e552ff5b24dd305c6e9a10e8645e29c03091c317429f326ae10dbae1ac6/notebook-7.6.2-py3-none-any.whl
-  name: notebook
-  version: 7.6.2
-  sha256: 5fe9e09c335cb4b7de21627b860f77210e70e54b1fb1276ad942a4a7e1d858d3
-  requires_dist:
-  - jupyter-builder>=1.0.2,<2
-  - jupyter-server>=2.19.0,<3
-  - jupyterlab-server>=2.28.0,<3
-  - jupyterlab>=4.6.3,<4.7
-  - notebook-shim>=0.2,<0.3
-  - tornado>=6.2.0
-  - hatch ; extra == 'dev'
-  - pre-commit ; extra == 'dev'
-  - myst-parser ; extra == 'docs'
-  - nbsphinx ; extra == 'docs'
-  - pydata-sphinx-theme ; extra == 'docs'
-  - sphinx>=1.3.6 ; extra == 'docs'
-  - sphinxcontrib-github-alt ; extra == 'docs'
-  - sphinxcontrib-spelling ; extra == 'docs'
-  - ipykernel ; extra == 'test'
-  - jupyter-server[test]>=2.19.0,<3 ; extra == 'test'
-  - jupyterlab-server[test]>=2.28.0,<3 ; extra == 'test'
-  - nbval ; extra == 'test'
-  - pytest-console-scripts ; extra == 'test'
-  - pytest-timeout ; extra == 'test'
-  - pytest-tornasync ; extra == 'test'
-  - pytest>=7.0 ; extra == 'test'
-  - requests ; extra == 'test'
-  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/61/e9/2eab61f500e118d83249b09b10722957f71e551c2b6502135bcfcb32512a/triton_windows-3.8.0.post28-cp312-cp312-win_amd64.whl
   name: triton-windows
   version: 3.8.0.post28
