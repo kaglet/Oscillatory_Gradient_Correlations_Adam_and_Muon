@@ -19,7 +19,7 @@ class DeterministicUnderSampler():
         self.data = data
         self.targets = targets
 
-    def fit_resample(self) -> CIFAR10Helper:
+    def fit_resample(self) -> tuple[np.ndarray, np.ndarray]:
         """ 
         Stitches together subsets of data selected for a particular label and ratio combination.
         Returns a subset of the dataset based off the sampling ratios. 
@@ -46,7 +46,7 @@ class DeterministicUnderSampler():
         subset_targets = np.concatenate(subset_targets, axis=0)
         subset_data = np.concatenate(subset_data, axis=0)
 
-        return CIFAR10Helper(data=subset_data, targets=subset_targets)
+        return subset_data, subset_targets
     
 if __name__ == "__main__":
     pass
