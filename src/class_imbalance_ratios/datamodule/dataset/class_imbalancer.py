@@ -2,7 +2,7 @@
 # A randomizer helps because the dataset core is not touched as on demand core except as a map, and randomness can use the seed
 import math
 from pathlib import Path
-from typing import Any, Callable, Dict, Type
+from typing import Any, Callable, Dict, Tuple, Type
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import random_split, TensorDataset
@@ -13,21 +13,21 @@ from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler im
 class TrainClassImbalancer():
     def __init__(self, dataset: Type[CIFAR10] | Type[CIFAR100], extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
         self.ds = dataset(root, train, transform, target_transform, download)
-        self.data, self.targets = self.ds.data, self.ds.targets
+        self.data, self.targets = self.ds.data, np.asarray(self.ds.targets, dtype=np.longlong)
         self.experiment_ratio = extra_settings["experiment_ratio"] 
         # TODO: Do split right here, before resampling, have full data to extract and construct sufficient val set already
         data_range = len(self.data)
         new_idxs = np.random.permutation(data_range)
 
-        self.targets = np.asarray(self.targets[new_idxs], dtype=np.longlong)
+        self.targets = self.targets[new_idxs]
 
         sampler = DeterministicUnderSampler(
             weighted_ratios=self._set_sample_counts(self.targets), 
             targets=self.targets
         )
-        subset_idxs, unchosen_idxs = sampler.fit_resample()
-        self.subset_data, self.subset_targets = (self.data[subset_idxs], 
-                                self.targets[subset_idxs])
+
+        self.subset_idxs, self.unchosen_idxs = sampler.fit_resample()
+
 
         # TODO: Append these stats to EXISTING transforms similar to how I had done it but reference parent class, this way it is innate 
         self._mean, self._std = self.get_train_data_stats(self.subset_data)
@@ -62,8 +62,18 @@ class TrainClassImbalancer():
         return mapped 
 
     @property
-    def train_subset(self) -> :
-        return self.subset_data, self.subset_targets
+    def chosen_subset(self) -> Tuple[np.ndarray, np.ndarray]:
+        subset_data, subset_targets = (self.data[self.subset_idxs], 
+                                self.targets[self.subset_idxs])
+
+        return subset_data, subset_targets
+
+    @property
+    def unchosen_set(self) -> Tuple[np.ndarray, np.ndarray]:
+        rest_data, rest_targets = (self.data[self.unchosen_idxs], 
+                                self.targets[self.unchosen_idxs])
+
+        return rest_data, rest_targets
     
     def get_train_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
