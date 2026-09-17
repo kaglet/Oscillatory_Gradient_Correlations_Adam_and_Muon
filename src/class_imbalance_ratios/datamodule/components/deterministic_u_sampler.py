@@ -15,7 +15,7 @@ class DeterministicUnderSampler():
         self.weighted_ratios = weighted_ratios
         self.targets = targets
 
-    def fit_resample(self) -> np.ndarray:
+    def fit_resample(self) -> Tuple[np.ndarray, np.ndarray]:
         """ 
         - Randomly samples top R of each class where R is the preset ratio of the label.
         - Outputs all_idxs from self.targets to use to form new subset distribution.
@@ -34,7 +34,8 @@ class DeterministicUnderSampler():
             all_idxs.append(subset_idxs)
 
         all_idxs = np.concatenate(all_idxs, axis=0)
-        return all_idxs
+        unchosen_idxs = np.setdiff1d(np.arange(len(targets)), all_idxs)
+        return all_idxs, unchosen_idxs
     
 if __name__ == "__main__":
     pass

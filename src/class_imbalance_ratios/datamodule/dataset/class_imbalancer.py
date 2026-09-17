@@ -2,7 +2,7 @@
 # A randomizer helps because the dataset core is not touched as on demand core except as a map, and randomness can use the seed
 import math
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Type
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import random_split, TensorDataset
@@ -10,33 +10,32 @@ import torchvision.transforms as transforms
 
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
-class ClassImbalancer(CIFAR100):
-    def __init__(self, extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        super().__init__(root, train, transform, target_transform, download)
+class TrainClassImbalancer():
+    def __init__(self, dataset: Type[CIFAR10] | Type[CIFAR100], extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
+        self.ds = dataset(root, train, transform, target_transform, download)
+        self.data, self.targets = self.ds.data, self.ds.targets
         self.experiment_ratio = extra_settings["experiment_ratio"] 
         # TODO: Do split right here, before resampling, have full data to extract and construct sufficient val set already
-        percent_train = 0.8
-        train_range = np.arange(0, math.ceil(len(self.data)*percent_train))
-        val_range = np.arange(math.ceil(len(self.data)*percent_train), len(self.data))
+        data_range = len(self.data)
+        new_idxs = np.random.permutation(data_range)
 
-        train_idx = np.random.permutation(train_range)
+        self.targets = np.asarray(self.targets[new_idxs], dtype=np.longlong)
 
-        self.targets = self.targets[train_idx]
         sampler = DeterministicUnderSampler(
-            weighted_ratios=self._set_sample_counts(np.asarray(self.targets, dtype=np.int16)), 
-            targets=np.asarray(self.targets)
+            weighted_ratios=self._set_sample_counts(self.targets), 
+            targets=self.targets
         )
-        subset_idxs = sampler.fit_resample()
-        self.data, self.targets = (self.data[subset_idxs], 
+        subset_idxs, unchosen_idxs = sampler.fit_resample()
+        self.subset_data, self.subset_targets = (self.data[subset_idxs], 
                                 self.targets[subset_idxs])
 
         # TODO: Append these stats to EXISTING transforms similar to how I had done it but reference parent class, this way it is innate 
-        self._mean, self._std = self.get_train_data_stats(self.data)
+        self._mean, self._std = self.get_train_data_stats(self.subset_data)
         normalize = transforms.Normalize(
             mean=self._mean, # ImageNet standard norm
             std=self._std
         )
-        self.transforms = transforms.Compose([self.transforms, normalize])
+        self.ds.transforms = transforms.Compose([self.ds.transforms, normalize])
         # When used with subset idxs defines 
 
     def _set_sample_counts(self, targets) -> Dict[int, int]:
@@ -61,14 +60,11 @@ class ClassImbalancer(CIFAR100):
         mapped = {int(key):int(val) for (key,val) in zip(labels,final_sample_counts)}
 
         return mapped 
-    @property 
-    def mean(self) -> np.ndarray:
-        return self._mean 
 
-    @property 
-    def std(self) -> np.ndarray:
-        return self._std 
-
+    @property
+    def train_subset(self) -> :
+        return self.subset_data, self.subset_targets
+    
     def get_train_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
@@ -88,6 +84,6 @@ class ClassImbalancer(CIFAR100):
 
         return global_mean, global_std
 
-class ClassImbalancerSmall(ClassImbalancer):
-    def __init__(self, extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        super().__init__(extra_settings, root, train, transform, target_transform, download)
+class TrainClassImbalancerSmall(TrainClassImbalancer):
+    def __init__(self, dataset:  Type[CIFAR10] | Type[CIFAR100], extra_settings: Dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
+        super().__init__(dataset, extra_settings, root, train, transform, target_transform, download)
