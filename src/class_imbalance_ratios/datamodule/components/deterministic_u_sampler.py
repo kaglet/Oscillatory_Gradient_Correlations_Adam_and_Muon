@@ -19,33 +19,29 @@ class DeterministicUnderSampler():
         self.data = data
         self.targets = targets
 
-    def fit_resample(self) -> tuple[np.ndarray, np.ndarray]:
+    def fit_resample(self) -> Tuple[np.ndarray, np.ndarray]:
         """ 
         Stitches together subsets of data selected for a particular label and ratio combination.
         Returns a subset of the dataset based off the sampling ratios. 
         """
         assert(len(self.data) == len(self.targets)), "Length mismatch, data and targets"
         choices = np.random.choice(np.array(range(len(self.data))), size=len(self.data), replace=False)
-        data = self.data[choices]
         targets = self.targets[choices]
-        subset_data = []
-        subset_targets = []
-        labels_data = np.unique(self.targets, return_counts=True)
+        if targets.ndim == 1:
+            targets = targets.reshape((-1,1))
+
+        all_idxs = []
 
         for (lbl, R) in self.weighted_ratios.items():
             lbl_matcher = (targets == lbl)
+            idxs_matched = np.nonzero(lbl_matcher)
+            subset_idxs = np.random.choice(idxs_matched, R)
             # select only top R for targets and data
-            target_matches = targets[lbl_matcher]
-            top_r = target_matches[:R]
-            subset_targets.append(top_r)
+            all_idxs.append(subset_idxs)
 
-            data_matches = data[lbl_matcher]
-            top_r = data_matches[:R, :]
-            subset_data.append(top_r)
-
-        subset_targets = np.concatenate(subset_targets, axis=0)
-        subset_data = np.concatenate(subset_data, axis=0)
-
+        all_idxs = np.concatenate(all_idxs, axis=0)
+        subset_data = self.data[all_idxs]
+        subset_targets = self.targets[all_idxs]
         return subset_data, subset_targets
     
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import random_split, TensorDataset
+import torchvision.transforms as transforms
 
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 class ClassImbalancerSmall(CIFAR10):
@@ -33,7 +34,12 @@ class ClassImbalancerLarge(CIFAR100):
         self.data, self.targets = sampler.fit_resample()
 
         # TODO: Append these stats to EXISTING transforms similar to how I had done it but reference parent class, this way it is innate 
-        self._mean, self._std = self.get_train_data_stats()
+        self._mean, self._std = self.get_train_data_stats(self.data)
+        normalize = transforms.Normalize(
+            mean=self._mean, # ImageNet standard norm
+            std=self._std
+        )
+        self.transforms = transforms.Compose([self.transforms, normalize])
 
     def _set_sample_counts(self, targets) -> Dict[int, int]:
         """ 
@@ -73,18 +79,18 @@ class ClassImbalancerLarge(CIFAR100):
     def std(self) -> np.ndarray:
         return self._std 
 
-    def get_train_data_stats(self)-> tuple[np.ndarray, np.ndarray]:
+    def get_train_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the transformed image via getter method
-        img_dim = self.data[0][0].shape
-        img_pix_count = img_dim[1] * img_dim[2]
-        num_img = len(self.data)
+        img_dim = data[0][0].shape
+        img_pix_count = img_dim[0] * img_dim[1]
+        num_img = len(data)
         total_pix_count = num_img * img_pix_count
-        for input in self.data:
+        for input in data:
             input_np = np.asarray(input)
-            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
+            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(0,1))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(0,1))], axis=0) 
 
         global_mean = pix_sum / total_pix_count
         global_var = (pix_sum_sq / total_pix_count) - (np.square(global_mean))
