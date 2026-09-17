@@ -36,7 +36,7 @@ class DeterministicUnderSampler():
             lbl_matcher = (targets == lbl)
             assert type(lbl_matcher) is np.ndarray, "lbl_matcher should be type np.ndarray"
             lbl_matcher[(lbl_matcher.cumsum()>R).argmax():] = 0
-            np.sum((chosen_mask, lbl_matcher), out=chosen_mask, axis=-1)
+            np.sum((chosen_mask, lbl_matcher), out=chosen_mask, axis=0)
 
         unchosen_mask = ~chosen_mask
         return chosen_mask, unchosen_mask

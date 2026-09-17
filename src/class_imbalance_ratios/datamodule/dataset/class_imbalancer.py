@@ -26,12 +26,13 @@ class TrainClassImbalancer():
             targets=self._targets
         )
 
-        self._subset_idxs, self._unchosen_idxs = sampler.fit_resample()
+        self._chosen_mask, self._unchosen_mask = sampler.fit_resample()
         self._og_transforms = self._dset.transforms
-        self._chosen_data_stats = self.get_data_stats(self.chosen_subset)
+        self._chosen_data = self._dset.data[self._chosen_mask]
+        stats = self._get_data_stats(self._chosen_data)
+        self._chosen_data_stats = stats
 
-    @property
-    def chosen_subset(self, apply_dset_norm:bool= True) -> Subset:
+    def get_chosen_subset(self, apply_dset_norm:bool= True) -> Subset:
         if apply_dset_norm:
             normalize = transforms.Normalize(
                 mean=self._chosen_data_stats[0], # ImageNet standard norm
@@ -41,11 +42,12 @@ class TrainClassImbalancer():
         else:
             self._dset.transforms = self._og_transforms
 
-        return Subset(self._dset, list(self._unchosen_idxs))
+        idxs = list(np.flatnonzero(self._chosen_mask))
+        return Subset(self._dset, idxs)
 
-    @property
-    def unchosen_subset(self) -> Subset:
-        return Subset(self._dset, list(self._unchosen_idxs))
+    def get_unchosen_subset(self) -> Subset:
+        idxs = list(np.flatnonzero(self._unchosen_mask))
+        return Subset(self._dset, idxs)
     
     def _set_sample_counts(self, targets) -> Dict[int, int]:
         """ 
@@ -70,7 +72,7 @@ class TrainClassImbalancer():
 
         return mapped 
 
-    def get_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
+    def _get_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the *transformed* image via getter method
@@ -96,5 +98,7 @@ if __name__ == "__main__":
     og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
     settings = dict(experiment_ratio=20)
     imbalancer = TrainClassImbalancer(dataset=og_ds, extra_settings=settings)
-    print(imbalancer.chosen_subset[3])
-    print(imbalancer.unchosen_subset[1])
+    chosen_subset = imbalancer.get_chosen_subset()
+    unchosen_subset = imbalancer.get_unchosen_subset()
+    print(chosen_subset[3])
+    print(unchosen_subset[1])
