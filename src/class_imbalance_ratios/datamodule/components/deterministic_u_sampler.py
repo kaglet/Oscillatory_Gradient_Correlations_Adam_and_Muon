@@ -12,30 +12,34 @@ from src.base.datamodule.components.img_viz import viz_img
 
 class DeterministicUnderSampler():
     def __init__(self, weighted_ratios: Dict[int, int], targets: np.ndarray):
+        """ 
+        With an input of targets array, two output masks can be retrieved:
+        (1) -> chosen_mask: Matches to labels based off ratios
+        (2) -> unchosen_mask: Unmatched labels. 
+        This class does NOT shuffle. Targets must be shuffled beforehand. 
+        The first R of a class are picked, where R is the ratio assigned.
+        """
         self.weighted_ratios = weighted_ratios
         self.targets = targets
 
     def fit_resample(self) -> Tuple[np.ndarray, np.ndarray]:
         """ 
-        - Randomly samples top R of each class where R is the preset ratio of the label.
-        - Outputs all_idxs from self.targets to use to form new subset distribution.
+        - 
         """
         targets = self.targets
         if targets.ndim == 1:
             targets = targets.reshape((-1,1))
 
-        all_idxs = []
+        chosen_mask = np.zeros_like(targets)
 
         for (lbl, R) in self.weighted_ratios.items():
             lbl_matcher = (targets == lbl)
-            idxs_matched = np.nonzero(lbl_matcher)
-            subset_idxs = np.random.choice(idxs_matched, R)
-            # select only top R for targets and data
-            all_idxs.append(subset_idxs)
+            assert type(lbl_matcher) is np.ndarray, "lbl_matcher should be type np.ndarray"
+            lbl_matcher[(lbl_matcher.cumsum()>R).argmax():] = 0
+            np.sum((chosen_mask, lbl_matcher), out=chosen_mask, axis=-1)
 
-        all_idxs = np.concatenate(all_idxs, axis=0)
-        unchosen_idxs = np.setdiff1d(np.arange(len(targets)), all_idxs)
-        return all_idxs, unchosen_idxs
+        unchosen_mask = ~chosen_mask
+        return chosen_mask, unchosen_mask
     
 if __name__ == "__main__":
     pass

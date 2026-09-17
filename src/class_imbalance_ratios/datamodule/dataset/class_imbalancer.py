@@ -11,8 +11,8 @@ import torchvision.transforms as transforms
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
 class TrainClassImbalancer():
-    def __init__(self, dataset: Type[CIFAR10] | Type[CIFAR100], extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        self._dset = dataset(root, train, transform, target_transform, download)
+    def __init__(self, dataset: CIFAR10 | CIFAR100, extra_settings: dict) -> None:
+        self._dset = dataset
         self._data, self._targets = self._dset.data, np.asarray(self._dset.targets, dtype=np.longlong)
         self._experiment_ratio = extra_settings["experiment_ratio"] 
         # TODO: Do split right here, before resampling, have full data to extract and construct sufficient val set already
@@ -73,7 +73,7 @@ class TrainClassImbalancer():
     def get_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
-        # Access the transformed image via getter method
+        # Access the *transformed* image via getter method
         img_dim = data[0][0].shape
         img_pix_count = img_dim[0] * img_dim[1]
         num_img = len(data)
@@ -89,3 +89,12 @@ class TrainClassImbalancer():
 
         return global_mean, global_std
 
+if __name__ == "__main__":
+    my_transforms = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
+    settings = dict(experiment_ratio=20)
+    imbalancer = TrainClassImbalancer(dataset=og_ds, extra_settings=settings)
+    print(imbalancer.chosen_subset[3])
+    print(imbalancer.unchosen_subset[1])
