@@ -12,7 +12,7 @@ from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler im
 
 class TrainClassImbalancer():
     def __init__(self, dataset: CIFAR10 | CIFAR100, extra_settings: dict) -> None:
-        self._dset = dataset
+        self._dset = dataset # TODO: Remove assumption of .data, .targets from data input which may be Subset
         self._data, self._targets = self._dset.data, np.asarray(self._dset.targets, dtype=np.longlong)
         self._experiment_ratio = extra_settings["experiment_ratio"] 
         # TODO: Do split right here, before resampling, have full data to extract and construct sufficient val set already

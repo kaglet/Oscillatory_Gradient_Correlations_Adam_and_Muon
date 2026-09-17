@@ -26,6 +26,8 @@ from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler im
 
 from PIL import Image
 
+from src.class_imbalance_ratios.datamodule.dataset.class_imbalancer import TrainClassImbalancer
+
 __all__ = ["ClsImbDataModule"]
 
 class ClsImbDataModule(CIFARDataModule):
@@ -53,97 +55,20 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            self._cifar_full = self.ds(self.data_dir, train=True)
-            sampler = DeterministicUnderSampler(
-                weighted_ratios=self._set_sample_counts(self._cifar_full), 
-                data = np.asarray(self._cifar_full.data), # .data gets raw data not <=> with getitem accessor purpose for PIL image usually 
-                targets=np.asarray(self._cifar_full.targets)
-            )
-            # Returns subset of dataset of under sampler
-            resampled_subset = sampler.fit_resample()
-            train, val = random_split(
-                resampled_subset, [0.8, 0.2]
-            )
-            # TODO: Do same process for train data
-            chosen_idxs = train.indices
-            train_data = np.asarray(resampled_subset.data[chosen_idxs])
-            train_target = np.asarray(resampled_subset.targets[chosen_idxs])
-            no_norm_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
-            # Learn how stats will look like if we apply all transforms except norm or any stat based transforms
-            train_stats = self.get_ds_data_stats(no_norm_train)
-            mean = np.ndarray.tolist(train_stats[0])
-            std = np.ndarray.tolist(train_stats[1])
-
-            normalize = transforms.Normalize(
-                mean=mean, # ImageNet standard norm
-                std=std
-            )
-            self.train_transforms.transforms.append(normalize)
-
-            # Apply og transforms then stat based transforms learned on og transformed data
-            norm_train = CIFAR10Helper(train_data, train_target, transform=self.train_transforms, target_transform=None)
-            self._cifar_train = norm_train
-
-            chosen_idxs = val.indices
-            val_data = np.asarray(resampled_subset.data[chosen_idxs])
-            val_target = np.asarray(resampled_subset.targets[chosen_idxs])
-
-            # Apply og transforms then stat based transforms learned on og transformed data
-            norm_train = CIFAR10Helper(val_data, val_target, transform=self.train_transforms, target_transform=None)
-            self._cifar_val = norm_train
-
+            dset = self.ds("/data", train=True,transform=self.train_transforms, target_transform=None, download=True)
+            settings = dict(experiment_ratio=20)
+            imbalancer = TrainClassImbalancer(dataset=dset, extra_settings=settings)
+            chosen_subset = imbalancer.get_chosen_subset()
+            unchosen_subset = imbalancer.get_unchosen_subset()
+            self._train = chosen_subset
+            self._val = unchosen_subset
+            
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
-            self._cifar_test = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
+            self._test = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
 
         if stage == "predict":
-            self._cifar_predict = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
-
-    def _set_sample_counts(self, ds) -> Dict[int, int]:
-        """ 
-        Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
-        If not assignable outputs with appropriate assertion errors violating assumptions. 
-        """
-        targets = np.asarray(ds.targets, dtype=np.int16)
-        labels = np.unique(targets)
-        labels_data = np.unique(targets, return_counts=True)
-        np.random.shuffle(labels)
-        map_to_num = np.vectorize(lambda lbl: (targets == lbl).sum())
-        totals = map_to_num(labels) 
-
-        top_n = math.ceil(len(labels) / 2)
-        chosen_idxs = np.random.choice(labels, size=top_n, replace=False)
-        final_factors = np.ones_like(labels, dtype=np.float32)
-        final_factors[chosen_idxs] = np.divide(1, self.experiment_ratio)
-
-        final_sample_counts = np.floor(np.multiply(totals, final_factors))
-
-        labels.sort(axis=0)
-        mapped = {int(key):int(val) for (key,val) in zip(labels,final_sample_counts)}
-        labels_data = np.unique(targets, return_counts=True)
-
-        return mapped 
-
-    # TODO: Set .train_transforms post init during setup call the get_stats for each current train, val, test splits
-    def get_ds_data_stats(self, train_data):
-        # We stick to a single type: Numpy. To switch to pytorch style vectors or array switch ALL code for ease of interpretability and discourage mixing. 
-        pix_sum = np.zeros(shape=(3,), dtype=np.float32)
-        pix_sum_sq = np.zeros_like(pix_sum)
-        # Access the transformed image via getter method
-        img_dim = train_data[0][0].shape
-        img_pix_count = img_dim[1] * img_dim[2]
-        num_img = len(train_data)
-        total_pix_count = num_img * img_pix_count
-        for input, _ in train_data:
-            input_np = np.asarray(input)
-            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
-
-        total_mean = pix_sum / total_pix_count
-        total_var = (pix_sum_sq / total_pix_count) - (np.square(total_mean))
-        total_std = np.sqrt(total_var)
-
-        return total_mean, total_std
+            self._predict = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
     
 # Entry point
 if __name__ == "__main__":
