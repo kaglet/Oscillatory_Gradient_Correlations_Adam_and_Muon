@@ -148,7 +148,7 @@ cls_imb_datamdl_s_cfg = builds(
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 0
+    num_workers = 2
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -159,7 +159,7 @@ cls_imb_datamdl_l_cfg = builds(
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
     batch_size = 64,
-    num_workers = 0
+    num_workers = 2
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
