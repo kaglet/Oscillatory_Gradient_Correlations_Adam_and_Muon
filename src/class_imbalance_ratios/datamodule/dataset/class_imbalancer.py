@@ -5,39 +5,48 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Tuple, Type
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
-from torch.utils.data import random_split, TensorDataset
+from torch.utils.data import Subset, random_split, TensorDataset
 import torchvision.transforms as transforms
 
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
 class TrainClassImbalancer():
     def __init__(self, dataset: Type[CIFAR10] | Type[CIFAR100], extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        self.ds = dataset(root, train, transform, target_transform, download)
-        self.data, self.targets = self.ds.data, np.asarray(self.ds.targets, dtype=np.longlong)
-        self.experiment_ratio = extra_settings["experiment_ratio"] 
+        self._dset = dataset(root, train, transform, target_transform, download)
+        self._data, self._targets = self._dset.data, np.asarray(self._dset.targets, dtype=np.longlong)
+        self._experiment_ratio = extra_settings["experiment_ratio"] 
         # TODO: Do split right here, before resampling, have full data to extract and construct sufficient val set already
-        data_range = len(self.data)
-        new_idxs = np.random.permutation(data_range)
+        len_data = len(self._data)
+        new_idxs = np.random.permutation(len_data)
 
-        self.targets = self.targets[new_idxs]
+        self._targets = self._targets[new_idxs]
 
         sampler = DeterministicUnderSampler(
-            weighted_ratios=self._set_sample_counts(self.targets), 
-            targets=self.targets
+            weighted_ratios=self._set_sample_counts(self._targets), 
+            targets=self._targets
         )
 
-        self.subset_idxs, self.unchosen_idxs = sampler.fit_resample()
+        self._subset_idxs, self._unchosen_idxs = sampler.fit_resample()
+        self._og_transforms = self._dset.transforms
+        self._chosen_data_stats = self.get_data_stats(self.chosen_subset)
 
+    @property
+    def chosen_subset(self, apply_dset_norm:bool= True) -> Subset:
+        if apply_dset_norm:
+            normalize = transforms.Normalize(
+                mean=self._chosen_data_stats[0], # ImageNet standard norm
+                std=self._chosen_data_stats[1]
+            )
+            self._dset.transforms = transforms.Compose((self._og_transforms, normalize))
+        else:
+            self._dset.transforms = self._og_transforms
 
-        # TODO: Append these stats to EXISTING transforms similar to how I had done it but reference parent class, this way it is innate 
-        self._mean, self._std = self.get_train_data_stats(self.subset_data)
-        normalize = transforms.Normalize(
-            mean=self._mean, # ImageNet standard norm
-            std=self._std
-        )
-        self.ds.transforms = transforms.Compose([self.ds.transforms, normalize])
-        # When used with subset idxs defines 
+        return Subset(self._dset, list(self._unchosen_idxs))
 
+    @property
+    def unchosen_subset(self) -> Subset:
+        return Subset(self._dset, list(self._unchosen_idxs))
+    
     def _set_sample_counts(self, targets) -> Dict[int, int]:
         """ 
         Outputs normalised weights dictionary from single down sampling ratio xor weight dict.
@@ -52,7 +61,7 @@ class TrainClassImbalancer():
         top_n = math.ceil(len(labels) / 2) # Half get applied the imbalance by default
         chosen_idxs = np.random.choice(labels, size=top_n, replace=False)
         final_factors = np.ones_like(labels, dtype=np.float32)
-        final_factors[chosen_idxs] = np.divide(1, self.experiment_ratio)
+        final_factors[chosen_idxs] = np.divide(1, self._experiment_ratio)
 
         final_sample_counts = np.floor(np.multiply(totals, final_factors))
 
@@ -61,21 +70,7 @@ class TrainClassImbalancer():
 
         return mapped 
 
-    @property
-    def chosen_subset(self) -> Tuple[np.ndarray, np.ndarray]:
-        subset_data, subset_targets = (self.data[self.subset_idxs], 
-                                self.targets[self.subset_idxs])
-
-        return subset_data, subset_targets
-
-    @property
-    def unchosen_set(self) -> Tuple[np.ndarray, np.ndarray]:
-        rest_data, rest_targets = (self.data[self.unchosen_idxs], 
-                                self.targets[self.unchosen_idxs])
-
-        return rest_data, rest_targets
-    
-    def get_train_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
+    def get_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the transformed image via getter method
@@ -94,6 +89,3 @@ class TrainClassImbalancer():
 
         return global_mean, global_std
 
-class TrainClassImbalancerSmall(TrainClassImbalancer):
-    def __init__(self, dataset:  Type[CIFAR10] | Type[CIFAR100], extra_settings: Dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        super().__init__(dataset, extra_settings, root, train, transform, target_transform, download)
