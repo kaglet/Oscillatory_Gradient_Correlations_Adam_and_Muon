@@ -28,11 +28,11 @@ class TrainClassImbalancer():
 
         self._chosen_mask, self._unchosen_mask = sampler.fit_resample()
         self._og_transforms = self._dset.transforms
-        self._chosen_data = self._dset.data[self._chosen_mask]
+        self._chosen_data = self.get_chosen_subset(apply_dset_norm=False)
         stats = self._get_data_stats(self._chosen_data)
         self._chosen_data_stats = stats
 
-    def get_chosen_subset(self, apply_dset_norm:bool= True) -> Subset:
+    def get_chosen_subset(self, apply_dset_norm:bool=False) -> Subset:
         if apply_dset_norm:
             normalize = transforms.Normalize(
                 mean=self._chosen_data_stats[0], # ImageNet standard norm
@@ -77,13 +77,13 @@ class TrainClassImbalancer():
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the *transformed* image via getter method
         img_dim = data[0][0].shape
-        img_pix_count = img_dim[0] * img_dim[1]
+        img_pix_count = img_dim[1] * img_dim[2]
         num_img = len(data)
         total_pix_count = num_img * img_pix_count
-        for input in data:
+        for input, target in data:
             input_np = np.asarray(input)
-            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(0,1))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(0,1))], axis=0) 
+            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
 
         global_mean = pix_sum / total_pix_count
         global_var = (pix_sum_sq / total_pix_count) - (np.square(global_mean))
@@ -96,9 +96,12 @@ if __name__ == "__main__":
         transforms.ToTensor()
     ])
     og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
+    print(len(og_ds))
     settings = dict(experiment_ratio=20)
     imbalancer = TrainClassImbalancer(dataset=og_ds, extra_settings=settings)
     chosen_subset = imbalancer.get_chosen_subset()
     unchosen_subset = imbalancer.get_unchosen_subset()
     print(chosen_subset[3])
     print(unchosen_subset[1])
+    print(len(chosen_subset))
+    print(len(unchosen_subset))

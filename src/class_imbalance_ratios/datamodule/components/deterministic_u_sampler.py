@@ -30,13 +30,16 @@ class DeterministicUnderSampler():
         if targets.ndim == 1:
             targets = targets.reshape((-1,1))
 
-        chosen_mask = np.zeros_like(targets)
+        chosen_mask = np.full(shape=targets.shape, fill_value=False)
 
         for (lbl, R) in self.weighted_ratios.items():
             lbl_matcher = (targets == lbl)
             assert type(lbl_matcher) is np.ndarray, "lbl_matcher should be type np.ndarray"
-            lbl_matcher[(lbl_matcher.cumsum()>R).argmax():] = 0
-            np.sum((chosen_mask, lbl_matcher), out=chosen_mask, axis=0)
+            # Negatives do not contribute to cumsum and are detected by first lbl_matcher using AND - &
+            is_in_scope = (lbl_matcher.cumsum()<=R).reshape((-1,1)) # Fix shape is n, not n,1
+            lbl_matcher = lbl_matcher & is_in_scope
+
+            chosen_mask = chosen_mask | lbl_matcher
 
         unchosen_mask = ~chosen_mask
         return chosen_mask, unchosen_mask
