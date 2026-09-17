@@ -9,11 +9,8 @@ from torch.utils.data import random_split, TensorDataset
 import torchvision.transforms as transforms
 
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
-class ClassImbalancerSmall(CIFAR10):
-    def __init__(self, extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
-        super().__init__(root, train, transform, target_transform, download)
 
-class ClassImbalancerLarge(CIFAR100):
+class ClassImbalancer(CIFAR100):
     def __init__(self, extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
         super().__init__(root, train, transform, target_transform, download)
         self.experiment_ratio = extra_settings["experiment_ratio"] 
@@ -28,7 +25,6 @@ class ClassImbalancerLarge(CIFAR100):
         self.targets = self.targets[train_idx]
         sampler = DeterministicUnderSampler(
             weighted_ratios=self._set_sample_counts(np.asarray(self.targets, dtype=np.int16)), 
-            data = np.asarray(self.data), # .data gets raw data not <=> with getitem accessor purpose for PIL image usually 
             targets=np.asarray(self.targets)
         )
         self.data, self.targets = sampler.fit_resample()
@@ -97,3 +93,7 @@ class ClassImbalancerLarge(CIFAR100):
         global_std = np.sqrt(global_var)
 
         return global_mean, global_std
+
+class ClassImbalancerSmall(ClassImbalancer):
+    def __init__(self, extra_settings: dict, root: str | Path, train: bool = True, transform: Callable[..., Any] | None = None, target_transform: Callable[..., Any] | None = None, download: bool = False) -> None:
+        super().__init__(extra_settings, root, train, transform, target_transform, download)

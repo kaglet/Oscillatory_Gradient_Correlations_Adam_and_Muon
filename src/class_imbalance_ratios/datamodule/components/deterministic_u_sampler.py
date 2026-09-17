@@ -11,22 +11,16 @@ from src.base.datamodule.components.cifar_10_helper import CIFAR10Helper
 from src.base.datamodule.components.img_viz import viz_img
 
 class DeterministicUnderSampler():
-    def __init__(self, weighted_ratios: Dict[int, int], data: Any, targets: Any):
-        """
-        Expects dtype set on inputs, preferrably float32 for ML training.
-        """
+    def __init__(self, weighted_ratios: Dict[int, int], targets: np.ndarray):
         self.weighted_ratios = weighted_ratios
-        self.data = data
         self.targets = targets
 
-    def fit_resample(self) -> Tuple[np.ndarray, np.ndarray]:
+    def fit_resample(self) -> np.ndarray:
         """ 
-        Stitches together subsets of data selected for a particular label and ratio combination.
-        Returns a subset of the dataset based off the sampling ratios. 
+        - Randomly samples top R of each class where R is the preset ratio of the label.
+        - Outputs all_idxs from self.targets to use to form new subset distribution.
         """
-        assert(len(self.data) == len(self.targets)), "Length mismatch, data and targets"
-        choices = np.random.choice(np.array(range(len(self.data))), size=len(self.data), replace=False)
-        targets = self.targets[choices]
+        targets = self.targets
         if targets.ndim == 1:
             targets = targets.reshape((-1,1))
 
@@ -40,9 +34,7 @@ class DeterministicUnderSampler():
             all_idxs.append(subset_idxs)
 
         all_idxs = np.concatenate(all_idxs, axis=0)
-        subset_data = self.data[all_idxs]
-        subset_targets = self.targets[all_idxs]
-        return subset_data, subset_targets
+        return all_idxs
     
 if __name__ == "__main__":
     pass
