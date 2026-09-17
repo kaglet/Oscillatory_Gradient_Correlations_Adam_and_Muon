@@ -20,14 +20,15 @@ class ClassImbalancer(CIFAR100):
         val_range = np.arange(math.ceil(len(self.data)*percent_train), len(self.data))
 
         train_idx = np.random.permutation(train_range)
-        self._val_idx = np.random.permutation(val_range)
 
         self.targets = self.targets[train_idx]
         sampler = DeterministicUnderSampler(
             weighted_ratios=self._set_sample_counts(np.asarray(self.targets, dtype=np.int16)), 
             targets=np.asarray(self.targets)
         )
-        self.data, self.targets = sampler.fit_resample()
+        subset_idxs = sampler.fit_resample()
+        self.data, self.targets = (self.data[subset_idxs], 
+                                self.targets[subset_idxs])
 
         # TODO: Append these stats to EXISTING transforms similar to how I had done it but reference parent class, this way it is innate 
         self._mean, self._std = self.get_train_data_stats(self.data)
@@ -36,6 +37,7 @@ class ClassImbalancer(CIFAR100):
             std=self._std
         )
         self.transforms = transforms.Compose([self.transforms, normalize])
+        # When used with subset idxs defines 
 
     def _set_sample_counts(self, targets) -> Dict[int, int]:
         """ 
@@ -59,14 +61,6 @@ class ClassImbalancer(CIFAR100):
         mapped = {int(key):int(val) for (key,val) in zip(labels,final_sample_counts)}
 
         return mapped 
-
-    @property 
-    def val_data(self) -> np.ndarray:
-        """ 
-        Return validation data as TODO Tensor Datase, different from the main train .data as default.
-        """
-        return self.data[self._val_idx]
-    
     @property 
     def mean(self) -> np.ndarray:
         return self._mean 
