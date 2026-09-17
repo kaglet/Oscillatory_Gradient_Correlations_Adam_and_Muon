@@ -79,7 +79,7 @@ if __name__ == "__main__":
         ToTensor(),
     ])
 
-    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=0, weighted_ratios=None,         train_transforms=base_transforms, 
+    dmodule = ClsImbDataModule(downsampler_ratio=20, num_workers=8, weighted_ratios=None,         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms) 
     dmodule.prepare_data()
