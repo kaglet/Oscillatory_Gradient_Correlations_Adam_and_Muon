@@ -30,6 +30,7 @@ def train_and_val(
     logger_cache: Any,
     chkpt_cache: Any
 ):
+    # TODO: Change num_runs to be configurable
     num_runs = 2
     for i in tqdm(range(num_runs), desc="Experiment running..."):
         params = params_cache(model=model_cache)
