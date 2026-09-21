@@ -107,13 +107,13 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=30,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
-    # precision = "bf16-mixed"
+    precision = "bf16-mixed"
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
 
     store.add_to_hydra_store(overwrite_ok=True)
-    torch.set_float32_matmul_precision(precision="high")
+    torch.set_float32_matmul_precision(precision="low")
 
     (jobs,) = launch(
         ExperimentConfig,
@@ -257,7 +257,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++datamodule.downsampler_ratio":"20,1" 
         }
     )
 
@@ -283,7 +283,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++datamodule.downsampler_ratio":"20,1" 
         }
     )
 
