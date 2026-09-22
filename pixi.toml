@@ -7,11 +7,7 @@ version = "0.1.0"
 
 [tasks]
 random_tests = "python src/random_tests.py +db=postgresql"
-jobs = "python -m src.run_w_cfgs"
-nerd = "python nerd.py"
-nerdy = "python nerdy.py"
-mnist_test = "python src/.pixi/envs/default/Lib/site-packages/pl_bolts/models/mnist_module.py"
-tb = "tensorboard --logdir src/logs/ --bind_all"
+cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
 test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
