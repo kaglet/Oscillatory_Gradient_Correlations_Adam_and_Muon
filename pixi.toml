@@ -2,8 +2,11 @@
 authors = ["Kago <kmotlhabane769@gmail.com>"]
 channels = ["https://prefix.dev/conda-forge"]
 name = "COS700"
-platforms = [{ platform = "win-64", cuda = "13.1" }]
 version = "0.1.0"
+platforms = [
+    { platform = "win-64", cuda = "13.1" },
+    { platform = "linux-64", cuda = "12.0" },
+]
 
 [tasks]
 random_tests = "python src/random_tests.py +db=postgresql"
@@ -37,7 +40,9 @@ ipywidgets = ">=8.1.9,<9"
 notebook = ">=7.6.2,<8"
 nbconvert = ">=7.17.1,<8"
 
+[target.win-64.pypi-dependencies]
+triton-windows = ">=3.8.0.post28, <4"
+
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
-triton-windows = ">=3.8.0.post28, <4"
 jupyter-contrib-nbextensions = ">=0.7.0, <0.8"
