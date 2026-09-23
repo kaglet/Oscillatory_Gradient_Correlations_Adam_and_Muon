@@ -344,7 +344,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/parso-0.8.7-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pexpect-4.9.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/pip-26.2.1-pyh8b19718_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.11-pyh5ded981_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.12-pyh5ded981_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/prometheus_client-0.26.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/prompt-toolkit-3.0.53-pyha770c72_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ptyprocess-0.7.0-pyhd8ed1ab_1.conda
@@ -529,7 +529,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pandocfilters-1.5.0-pyhd8ed1ab_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/parso-0.8.7-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pip-26.2.1-pyh145f28c_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.11-pyh5ded981_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.12-pyh5ded981_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/prometheus_client-0.26.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/prompt-toolkit-3.0.53-pyha770c72_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pure_eval-0.2.4-pyhd8ed1ab_0.conda
@@ -6087,19 +6087,18 @@ packages:
   run_exports: {}
   size: 1199593
   timestamp: 1785914492234
-- conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.11-pyh5ded981_0.conda
-  sha256: ba9e3a7ba041b569fb1c369ad5d16e47d79a0768b7a3a9bf469a5730c1c90cd8
-  md5: 8fbbcac647ae8d387f011d2f0fe9041c
+- conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.11.12-pyh5ded981_0.conda
+  sha256: 5d440bd9ccb80abc1c6d40022a4a54d007a133b2dd73a62762e7c18c470895cd
+  md5: 99714207349966378c112c2b8db785f5
   depends:
   - python >=3.11
   - python
   license: MIT
-  license_family: MIT
   purls:
   - pkg:pypi/platformdirs?source=compressed-mapping
   run_exports: {}
-  size: 28536
-  timestamp: 1789914745574
+  size: 28569
+  timestamp: 1790166501687
 - conda: https://prefix.dev/conda-forge/noarch/prometheus_client-0.26.0-pyhd8ed1ab_0.conda
   sha256: 794eec057361b41db1b06a9677eb8632adc0de81f7dcfe113bca8f0b04a23553
   md5: 3aa7e2d85645e61627c98082747dfdfe
