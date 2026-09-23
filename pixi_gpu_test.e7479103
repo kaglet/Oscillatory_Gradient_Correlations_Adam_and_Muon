@@ -1,0 +1,30 @@
+✨ Pixi task (test): python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule
+/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import DistributionNotFound, get_distribution
+Matplotlib is building the font cache; this may take a moment.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/datamodule/cls_imb_datamodule.py", line 90, in <module>
+    dmodule.prepare_data()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/base/datamodule/cifar_datamodule.py", line 36, in prepare_data
+    self.ds(self.data_dir, train=True, download=True)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/cifar.py", line 66, in __init__
+    self.download()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/cifar.py", line 140, in download
+    download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.tgz_md5)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/utils.py", line 395, in download_and_extract_archive
+    download_url(url, download_root, filename, md5)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/utils.py", line 111, in download_url
+    os.makedirs(root, exist_ok=True)
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: '/data'
+✨ Pixi task (cls_imb): python -m src.class_imbalance_ratios.run_with_cfg
+/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import DistributionNotFound, get_distribution
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/run_with_cfg.py", line 20, in <module>
+    from torch.optim import Muon, Adam
+ImportError: cannot import name 'Muon' from 'torch.optim' (/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torch/optim/__init__.py)

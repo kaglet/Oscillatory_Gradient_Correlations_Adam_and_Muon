@@ -1,0 +1,80 @@
+✨ Pixi task (test): python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/datamodule/cls_imb_datamodule.py", line 10, in <module>
+    import lightning as L
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/__init__.py", line 20, in <module>
+    from lightning.pytorch.callbacks import Callback  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/__init__.py", line 27, in <module>
+    from lightning.pytorch.callbacks import Callback  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/__init__.py", line 14, in <module>
+    from lightning.pytorch.callbacks.batch_size_finder import BatchSizeFinder
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/batch_size_finder.py", line 26, in <module>
+    from lightning.pytorch.callbacks.callback import Callback
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/callback.py", line 22, in <module>
+    from lightning.pytorch.utilities.types import STEP_OUTPUT
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/utilities/types.py", line 36, in <module>
+    from torchmetrics import Metric
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/__init__.py", line 14, in <module>
+    from torchmetrics import functional  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/__init__.py", line 14, in <module>
+    from torchmetrics.functional.audio.pit import permutation_invariant_training, pit_permutate
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/audio/__init__.py", line 14, in <module>
+    from torchmetrics.functional.audio.pit import permutation_invariant_training, pit_permutate  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/audio/pit.py", line 22, in <module>
+    from torchmetrics.utilities.imports import _SCIPY_AVAILABLE
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/__init__.py", line 1, in <module>
+    from torchmetrics.utilities.checks import check_forward_full_state_property  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/checks.py", line 25, in <module>
+    from torchmetrics.utilities.data import select_topk, to_onehot
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/data.py", line 19, in <module>
+    from torchmetrics.utilities.imports import _TORCH_GREATER_EQUAL_1_12, _XLA_AVAILABLE
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py", line 22, in <module>
+    from pkg_resources import DistributionNotFound, get_distribution
+ModuleNotFoundError: No module named 'pkg_resources'
+✨ Pixi task (cls_imb): python -m src.class_imbalance_ratios.run_with_cfg
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/run_with_cfg.py", line 16, in <module>
+    import lightning.pytorch as pl
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/__init__.py", line 20, in <module>
+    from lightning.pytorch.callbacks import Callback  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/__init__.py", line 27, in <module>
+    from lightning.pytorch.callbacks import Callback  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/__init__.py", line 14, in <module>
+    from lightning.pytorch.callbacks.batch_size_finder import BatchSizeFinder
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/batch_size_finder.py", line 26, in <module>
+    from lightning.pytorch.callbacks.callback import Callback
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/callbacks/callback.py", line 22, in <module>
+    from lightning.pytorch.utilities.types import STEP_OUTPUT
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/utilities/types.py", line 36, in <module>
+    from torchmetrics import Metric
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/__init__.py", line 14, in <module>
+    from torchmetrics import functional  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/__init__.py", line 14, in <module>
+    from torchmetrics.functional.audio.pit import permutation_invariant_training, pit_permutate
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/audio/__init__.py", line 14, in <module>
+    from torchmetrics.functional.audio.pit import permutation_invariant_training, pit_permutate  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/functional/audio/pit.py", line 22, in <module>
+    from torchmetrics.utilities.imports import _SCIPY_AVAILABLE
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/__init__.py", line 1, in <module>
+    from torchmetrics.utilities.checks import check_forward_full_state_property  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/checks.py", line 25, in <module>
+    from torchmetrics.utilities.data import select_topk, to_onehot
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/data.py", line 19, in <module>
+    from torchmetrics.utilities.imports import _TORCH_GREATER_EQUAL_1_12, _XLA_AVAILABLE
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py", line 22, in <module>
+    from pkg_resources import DistributionNotFound, get_distribution
+ModuleNotFoundError: No module named 'pkg_resources'

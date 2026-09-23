@@ -2,35 +2,35 @@
 authors = ["Kago <kmotlhabane769@gmail.com>"]
 channels = ["https://prefix.dev/conda-forge"]
 name = "COS700"
-platforms = [{ platform = "win-64", cuda = "13.1" }]
 version = "0.1.0"
+platforms = [
+    { platform = "win-64", cuda = "13.1" },
+    { platform = "linux-64", cuda = "12.0", glibc = "2.17" },
+]
 
 [tasks]
 random_tests = "python src/random_tests.py +db=postgresql"
-jobs = "python -m src.run_w_cfgs"
-nerd = "python nerd.py"
-nerdy = "python nerdy.py"
-mnist_test = "python src/.pixi/envs/default/Lib/site-packages/pl_bolts/models/mnist_module.py"
-tb = "tensorboard --logdir src/logs/ --bind_all"
+cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
 test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
+setuptools = "<81"
 pytorch-gpu = "*"
-lightning = ">=2.6.5,<3"
+lightning = "*"
 hydra-zen = ">=0.16.0,<0.17"
-torchvision = ">=0.28.0,<0.29"
+torchvision = "*"
 transformers = ">=5.15.0,<6"
-lightning-bolts = ">=0.7.0,<0.8"
+lightning-bolts = "*"
 beartype = ">=0.22.9,<0.23"
-numpy = "1.26.4.*"
+numpy = "*"
 tensorboard = ">=2.13.0,<3"
-matplotlib = ">=3.11.1,<4"
-scikit-learn = ">=1.9.0,<2"
+matplotlib = "*"
+scikit-learn = "*"
 gdown = ">=6.1.0,<7"
 pysocks = ">=1.7.1,<2"
-scikit-image = ">=0.26.0,<0.27"
+scikit-image = "*"
 pillow = "10.4.0.*"
-pandas = ">=3.0.5,<4"
+pandas = "*"
 imbalanced-learn = ">=0.14.2,<0.15"
 tqdm = ">=4.70.0,<5"
 pydantic = ">=2.13.5,<3"
@@ -41,7 +41,10 @@ ipywidgets = ">=8.1.9,<9"
 notebook = ">=7.6.2,<8"
 nbconvert = ">=7.17.1,<8"
 
+[target.win-64.pypi-dependencies]
+triton-windows = ">=3.8.0.post28, <4"
+
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
-triton-windows = ">=3.8.0.post28, <4"
 jupyter-contrib-nbextensions = ">=0.7.0, <0.8"
+
