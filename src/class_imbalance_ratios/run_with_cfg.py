@@ -17,25 +17,22 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
-from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 from hydra.conf import HydraConf, JobConf, SweepDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
-from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
-from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
+from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
 from src.base.lit_module.components.simple_net import SimpleCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.pydantic import validates_with_pydantic
-from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
@@ -107,13 +104,13 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=30,
+    max_epochs=2,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
-    # precision = "bf16-mixed"
+    precision = "bf16-mixed"
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -233,7 +230,7 @@ if __name__ == "__main__":
     store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
 
     store.add_to_hydra_store(overwrite_ok=True)
-    torch.set_float32_matmul_precision(precision="high")
+    torch.set_float32_matmul_precision(precision="low")
 
     (jobs,) = launch(
         ExperimentConfig,
@@ -257,7 +254,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++datamodule.downsampler_ratio":"20,1" 
         }
     )
 
@@ -283,7 +280,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,10,5,2,1" 
+            "++datamodule.downsampler_ratio":"20,1" 
         }
     )
 

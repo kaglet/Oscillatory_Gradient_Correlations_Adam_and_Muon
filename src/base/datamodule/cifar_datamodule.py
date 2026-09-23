@@ -18,7 +18,7 @@ __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
-    def __init__(self, train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 8) -> None:
+    def __init__(self, train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 8) -> None:
         super().__init__()
         self.data_dir = data_dir
         # TODO: Resize images smaller and train on subset for efficiency and MVP.

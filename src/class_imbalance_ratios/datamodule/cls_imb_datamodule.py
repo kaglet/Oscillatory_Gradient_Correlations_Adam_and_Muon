@@ -34,7 +34,7 @@ class ClsImbDataModule(CIFARDataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
-        train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
+        train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
         weighted_ratios: Dict[int, float] | None = None,
         downsampler_ratio: int = 20,
     ):
@@ -55,7 +55,7 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            dset = self.ds("/data", train=True,transform=self.train_transforms, target_transform=None, download=True)
+            dset = self.ds("./data", train=True,transform=self.train_transforms, target_transform=None, download=True)
             settings = dict(experiment_ratio=20)
             imbalancer = TrainClassImbalancer(dataset=dset, extra_settings=settings)
             chosen_subset = imbalancer.get_chosen_subset(apply_dset_norm=True)

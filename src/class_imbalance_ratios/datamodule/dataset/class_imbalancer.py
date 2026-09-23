@@ -42,11 +42,11 @@ class TrainClassImbalancer():
         else:
             self._dset.transforms = self._og_transforms
 
-        idxs = list(np.flatnonzero(self._chosen_mask))
+        idxs = list(np.ndarray.astype(np.flatnonzero(self._chosen_mask), dtype=np.int32))
         return Subset(self._dset, idxs)
 
     def get_unchosen_subset(self) -> Subset:
-        idxs = list(np.flatnonzero(self._unchosen_mask))
+        idxs = list(np.ndarray.astype(np.flatnonzero(self._unchosen_mask), dtype=np.int32))
         return Subset(self._dset, idxs)
     
     def _set_sample_counts(self, targets) -> Dict[int, int]:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     my_transforms = transforms.Compose([
         transforms.ToTensor()
     ])
-    og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
+    og_ds = CIFAR10("./data", train=True,transform=my_transforms, target_transform=None, download=True)
     print(len(og_ds))
     settings = dict(experiment_ratio=20)
     imbalancer = TrainClassImbalancer(dataset=og_ds, extra_settings=settings)
