@@ -95,7 +95,7 @@ if __name__ == "__main__":
     my_transforms = transforms.Compose([
         transforms.ToTensor()
     ])
-    og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
+    og_ds = CIFAR10("./data", train=True,transform=my_transforms, target_transform=None, download=True)
     print(len(og_ds))
     settings = dict(experiment_ratio=20)
     imbalancer = TrainClassImbalancer(dataset=og_ds, extra_settings=settings)

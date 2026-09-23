@@ -14,6 +14,7 @@ cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
 test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
+setuptools = "<81"
 pytorch-gpu = "*"
 lightning = "*"
 hydra-zen = ">=0.16.0,<0.17"
