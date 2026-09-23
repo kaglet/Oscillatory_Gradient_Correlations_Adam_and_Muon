@@ -42,11 +42,11 @@ class TrainClassImbalancer():
         else:
             self._dset.transforms = self._og_transforms
 
-        idxs = list(np.flatnonzero(self._chosen_mask))
+        idxs = list(np.ndarray.astype(np.flatnonzero(self._chosen_mask), dtype=np.int32))
         return Subset(self._dset, idxs)
 
     def get_unchosen_subset(self) -> Subset:
-        idxs = list(np.flatnonzero(self._unchosen_mask))
+        idxs = list(np.ndarray.astype(np.flatnonzero(self._unchosen_mask), dtype=np.int32))
         return Subset(self._dset, idxs)
     
     def _set_sample_counts(self, targets) -> Dict[int, int]:
