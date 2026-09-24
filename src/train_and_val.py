@@ -28,10 +28,10 @@ def train_and_val(
     schdlrs_cache: list[Partial[LRScheduler]], 
     experiment_info: Partial[Experiment_Data], # TODO: Remove, not needed
     logger_cache: Any,
-    chkpt_cache: Any
+    chkpt_cache: Any,
+    num_runs: int = 2
 ):
     # TODO: Change num_runs to be configurable
-    num_runs = 2
     for i in tqdm(range(num_runs), desc="Experiment running..."):
         params = params_cache(model=model_cache)
         optims = [optim(params) for optim, params in zip(optims_cache, params)]
