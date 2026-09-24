@@ -79,7 +79,7 @@ if __name__ == "__main__":
     base_transforms = transforms.Compose([
         ToTensor(),
     ])
-    root_dir = Path(__file__).parent.parent
+    root_dir = Path(__file__).parent.parent.parent
     data_dir = Path(root_dir / "data")
     print("data_dir set to: ", data_dir)
     dmodule = ClsImbDataModule(
