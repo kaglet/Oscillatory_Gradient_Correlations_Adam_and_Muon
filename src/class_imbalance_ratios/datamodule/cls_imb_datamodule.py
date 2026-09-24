@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from pathlib import Path
 import random
 import numpy as np
 from typing import Any, Callable, Dict, Literal, Optional, Type
@@ -78,14 +79,17 @@ if __name__ == "__main__":
     base_transforms = transforms.Compose([
         ToTensor(),
     ])
-
+    root_dir = Path(__file__).parent.parent
+    data_dir = Path(root_dir / "data")
+    print("data_dir set to: ", data_dir)
     dmodule = ClsImbDataModule(
         downsampler_ratio=20, 
         num_workers=8, 
         weighted_ratios=None,         
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
-        test_transforms=base_transforms
+        test_transforms=base_transforms,
+        data_dir=str(data_dir.resolve())
     ) 
     dmodule.prepare_data()
     print("Class imb dmodule data should be downloaded")

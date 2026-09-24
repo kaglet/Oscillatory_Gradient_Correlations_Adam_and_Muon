@@ -143,7 +143,7 @@ data_dir = Path(root_dir / "data")
 print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
-    data_dir = data_dir.resolve(),
+    data_dir = str(data_dir.resolve()),
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
@@ -153,7 +153,7 @@ cls_imb_datamdl_s_cfg = builds(
 
 cls_imb_datamdl_l_cfg = builds(
     ClsImbDataModule, 
-    data_dir = data_dir.resolve(),
+    data_dir = str(data_dir.resolve()),
     downsampler_ratio=20, 
     weighted_ratios=None,
     train_transforms = cls_imb_l_transforms,
