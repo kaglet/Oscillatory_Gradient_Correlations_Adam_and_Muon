@@ -138,8 +138,12 @@ cls_imb_l_transforms = builds(
 total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
+root_dir = Path(__file__).parent.parent
+data_dir = Path(root_dir / "data" / "CIFAR" / "10")
+print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
+    data_dir = data_dir.resolve(),
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
@@ -149,6 +153,7 @@ cls_imb_datamdl_s_cfg = builds(
 
 cls_imb_datamdl_l_cfg = builds(
     ClsImbDataModule, 
+    data_dir = data_dir.resolve(),
     downsampler_ratio=20, 
     weighted_ratios=None,
     train_transforms = cls_imb_l_transforms,
