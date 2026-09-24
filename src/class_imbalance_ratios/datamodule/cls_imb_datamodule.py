@@ -88,13 +88,14 @@ if __name__ == "__main__":
         test_transforms=base_transforms
     ) 
     dmodule.prepare_data()
-    dmodule.setup("fit")
-    print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+    print("Class imb dmodule data should be downloaded")
+    # dmodule.setup("fit")
+    # print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
 
-    i = 0
-    for inputs, targets in dmodule.train_dataloader():
-        img = convert_img_axes(inputs[0])
-        viz_img(img, label=targets[0])
-        i += 1
-        if i == 10: 
-            break
+    # i = 0
+    # for inputs, targets in dmodule.train_dataloader():
+    #     img = convert_img_axes(inputs[0])
+    #     viz_img(img, label=targets[0])
+    #     i += 1
+    #     if i == 10: 
+    #         break
