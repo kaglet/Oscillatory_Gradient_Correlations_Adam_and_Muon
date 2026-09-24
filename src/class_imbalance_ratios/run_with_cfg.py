@@ -139,7 +139,7 @@ total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
 root_dir = Path(__file__).parent.parent
-data_dir = Path(root_dir / "data" / "CIFAR" / "10")
+data_dir = Path(root_dir / "data")
 print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
