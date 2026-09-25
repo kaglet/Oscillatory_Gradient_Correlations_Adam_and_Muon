@@ -1,0 +1,183 @@
+
+Fri Sep 25 13:09:17 SAST 2026: executing CUDA job on host gpu2002
+Available GPU devices: 2
+
+Starting Pixi Test...
+data_dir set to:  /mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/data
+Starting Pixi Run...
+data_dir set to:  /mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/data
+[2026-09-25 13:12:07,749][HYDRA] Launching 2 jobs locally
+[2026-09-25 13:12:07,749][HYDRA] 	#0 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.use_muon=False ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=20 ++num_runs=2
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.70it/s 
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.70it/s 
+[2026-09-25 13:28:47,315][HYDRA] 	#1 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.use_muon=False ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=1 ++num_runs=2
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.70it/s 
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.70it/s 
+[2026-09-25 13:45:25,417][HYDRA] Launching 2 jobs locally
+[2026-09-25 13:45:25,417][HYDRA] 	#0 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=20 ++num_runs=2
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.70it/s 
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.69it/s 
+[2026-09-25 14:02:01,774][HYDRA] 	#1 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=1 ++num_runs=2
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name        ┃ Type               ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion   │ CrossEntropyLoss   │      0 │ train │     0 │
+│ 1 │ train_acc   │ MulticlassAccuracy │      0 │ train │     0 │
+│ 2 │ val_acc     │ MulticlassAccuracy │      0 │ train │     0 │
+│ 3 │ test_acc    │ MulticlassAccuracy │      0 │ train │     0 │
+│ 4 │ train_loss  │ MeanMetric         │      0 │ train │     0 │
+│ 5 │ val_loss    │ MeanMetric         │      0 │ train │     0 │
+│ 6 │ test_loss   │ MeanMetric         │      0 │ train │     0 │
+│ 7 │ max_val_acc │ MaxMetric          │      0 │ train │     0 │
+│ 8 │ model       │ ResNet             │ 11.2 M │ train │     0 │
+└───┴─────────────┴────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.696                                  
+Modules in train mode: 77                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 1/1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411/411 0:02:33 • 0:00:00 2.69it/s 
+Validation ━━━━━━━━━━━━━━━━━━━━━━╸          266/372 0:01:04 • 0:00:26 4.10it/s 
