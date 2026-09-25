@@ -1,12 +1,12 @@
 #!/bin/bash
 #PBS -N pixi_gpu_test
-#PBS -q gpu_3
-#PBS -l select=1:host=gpu2005:ncpus=17:ngpus=3
+#PBS -q gpu_2
+#PBS -l select=1:host=gpu2005:ncpus=18:ngpus=2
 #PBS -P CSCI1166
 #PBS -l walltime=01:00:00
 #PBS -m abe -M u25735056@tuks.co.za
 
-# Navigate to the folder where you submitted the job (your project folder)
+# Navigate to the folder where job is submitted (project folder)
 cd $PBS_O_WORKDIR
 
 echo
@@ -14,15 +14,15 @@ echo "`date`: executing CUDA job on host ${HOSTNAME}"
 echo "Available GPU devices: $CUDA_VISIBLE_DEVICES"
 echo
 
-# 1. Load the specific CUDA module required by the cluster's physical NVIDIA drivers
+# 1. Load the specific CUDA module required by cluster's physical NVIDIA drivers
 module load chpc/cuda/12.0/12.0
 
 echo "Starting Pixi Test..."
 
-# 2. Execute the test using the absolute path to Pixi
+# 2. Execute test using the absolute path to Pixi
 ~/.pixi/bin/pixi run test
 
 echo "Starting Pixi Run..."
 
-# 2. Execute the experiment run using the absolute path to Pixi
+# 2. Execute experiment run using the absolute path to Pixi
 ~/.pixi/bin/pixi run cls_imb
