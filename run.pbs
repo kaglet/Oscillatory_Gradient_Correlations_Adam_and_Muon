@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N pixi_gpu_test
-#PBS -q gpu_1
-#PBS -l select=1:ncpus=9:ngpus=1
+#PBS -q gpu_3
+#PBS -l select=1:host=gpu2005:ncpus=17:ngpus=3
 #PBS -P CSCI1166
 #PBS -l walltime=01:00:00
 #PBS -m abe -M u25735056@tuks.co.za
