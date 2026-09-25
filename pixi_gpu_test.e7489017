@@ -1,0 +1,187 @@
+✨ Pixi task (test): python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule
+/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import DistributionNotFound, get_distribution
+Traceback (most recent call last):
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1386, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1432, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1381, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1141, in _send_output
+    self.send(msg)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1085, in send
+    self.connect()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1520, in connect
+    super().connect()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1051, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/socket.py", line 850, in create_connection
+    sock.connect(sa)
+TimeoutError: [Errno 110] Connection timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/datamodule/cls_imb_datamodule.py", line 90, in <module>
+    dmodule.prepare_data()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/base/datamodule/cifar_datamodule.py", line 36, in prepare_data
+    self.ds(self.data_dir, train=True, download=True)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/cifar.py", line 66, in __init__
+    self.download()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/cifar.py", line 140, in download
+    download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.tgz_md5)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/utils.py", line 395, in download_and_extract_archive
+    download_url(url, download_root, filename, md5)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/utils.py", line 122, in download_url
+    url = _get_redirect_url(url, max_hops=max_redirect_hops)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/datasets/utils.py", line 66, in _get_redirect_url
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers)) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 110] Connection timed out>
+✨ Pixi task (cls_imb): python -m src.class_imbalance_ratios.run_with_cfg
+/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import DistributionNotFound, get_distribution
+/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torch/__init__.py:1486: UserWarning: low is not one of 'highest', 'high', or 'medium'; the currentsetFloat32MatmulPrecision call has no effect. (Triggered internally at /home/conda/feedstock_root/build_artifacts/libtorch_1737846239921/work/aten/src/ATen/Context.cpp:266.)
+  _C._set_float32_matmul_precision(precision)
+Seed set to 1
+Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to /home/kmotlhabane/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth
+Seed set to 1
+Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to /home/kmotlhabane/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth
+Error executing job with overrides: ['model_cache=cif10', 'datamodule=cif10', 'params_cache=mu_aux_ad', 'optims_cache=mu_aux_ad', 'lit_module=cif10', '++params_cache.lr_muon=0.1', '++params_cache.lr_adam=0.1', '++params_cache.use_muon=False', '++params_cache.momentum_muon=0.9', '++params_cache.beta_1_adam=0.95', '++params_cache.beta_2_adam=0.999', '++params_cache.nesterov=False', '++params_cache.use_layer_recs=False', '++params_cache.eps=1e-08', '++datamodule.downsampler_ratio=20', '++trainer.fast_dev_run=1', '++num_runs=1']
+Traceback (most recent call last):
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1386, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1432, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1381, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1141, in _send_output
+    self.send(msg)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1085, in send
+    self.connect()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1520, in connect
+    super().connect()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/http/client.py", line 1051, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/socket.py", line 850, in create_connection
+    sock.connect(sa)
+OSError: [Errno 101] Network is unreachable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 124, in _call_target
+    result = _target_(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/base/lit_module/components/custom_resnet.py", line 17, in create_resnet_model
+    model = net(weights=weights)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/models/_utils.py", line 142, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/models/_utils.py", line 228, in inner_wrapper
+    return builder(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/models/resnet.py", line 705, in resnet18
+    return _resnet(BasicBlock, [2, 2, 2, 2], weights, progress, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/models/resnet.py", line 301, in _resnet
+    model.load_state_dict(weights.get_state_dict(progress=progress, check_hash=True))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torchvision/models/_api.py", line 90, in get_state_dict
+    return load_state_dict_from_url(self.url, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torch/hub.py", line 867, in load_state_dict_from_url
+    download_url_to_file(url, cached_file, hash_prefix, progress=progress)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/torch/hub.py", line 708, in download_url_to_file
+    u = urlopen(req)
+        ^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 101] Network is unreachable>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/run_with_cfg.py", line 234, in <module>
+    (jobs,) = launch(
+              ^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra_zen/_launch.py", line 474, in launch
+    job = sweeper.sweep(arguments=task_overrides)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/_internal/core_plugins/basic_sweeper.py", line 181, in sweep
+    _ = r.return_value
+        ^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/core/utils.py", line 263, in return_value
+    raise self._return_value
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/core/utils.py", line 189, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra_zen/wrapper/_implementations.py", line 443, in __call__
+    name: self.instantiate(val) if is_instantiable(val) else val
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra_zen/wrapper/_implementations.py", line 367, in instantiate
+    __c = instantiate(__c, _target_wrapper_=self._instantiation_wrapper)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra_zen/_hydra_overloads.py", line 321, in instantiate
+    return hydra_instantiate(config, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 286, in instantiate
+    return instantiate_node(
+           ^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 407, in instantiate_node
+    return _call_target(_target_, partial, args, kwargs, full_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 133, in _call_target
+    raise InstantiationException(_with_full_key(msg, full_key)) from e
+hydra.errors.InstantiationException: Error in call to target 'src.base.lit_module.components.custom_resnet.create_resnet_model':
+URLError(OSError(101, 'Network is unreachable'))
+full_key: model_cache
