@@ -262,8 +262,8 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.fast_dev_run": "1",
-            "++num_runs": "1"
+            # "++trainer.fast_dev_run": "1",
+            "++num_runs": "2"
         }
     )
 
@@ -290,8 +290,8 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.fast_dev_run": "1",
-            "++num_runs": "1"
+            # "++trainer.fast_dev_run": "1",
+            "++num_runs": "2"
         }
     )
 
