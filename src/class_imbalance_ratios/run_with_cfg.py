@@ -82,6 +82,9 @@ cls_imb_l_module_cfg = pbuilds(
 )
 
 # ---- TRAINER CONFIGS START ---- #
+root_dir = Path(__file__).parent.parent.parent
+trainer_dir = Path(root_dir)
+
 # TODO: Change val accuracy to be the best on on a subgroup not overall
 max_checkpt_cfg = pbuilds(
     ModelCheckpoint,    
@@ -109,7 +112,8 @@ trainer_cfg = pbuilds(
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
-    precision = "bf16-mixed"
+    precision = "bf16-mixed",
+    default_root_dir = root_dir
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -138,7 +142,6 @@ cls_imb_l_transforms = builds(
 total_local_cores = 0
 total_local_cores = total_local_cores if type(total_local_cores) == int else 1
 
-root_dir = Path(__file__).parent.parent.parent
 data_dir = Path(root_dir / "data")
 print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
@@ -259,7 +262,7 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.fast_dev_run": "1",
+            # "++trainer.fast_dev_run": "1",
             "++num_runs": "1"
         }
     )
@@ -287,7 +290,7 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.fast_dev_run": "1",
+            # "++trainer.fast_dev_run": "1",
             "++num_runs": "1"
         }
     )

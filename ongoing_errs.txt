@@ -1,0 +1,26 @@
+[kmotlhabane@login1 data]$ screen -S cls_imb_run
+trainer.py", line 584, in fit
+    call._call_and_handle_interrupt(
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/trainer/call.py", line 49, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/trainer/trainer.py", line 630, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path, weights_only=weights_only)
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/trainer/trainer.py", line 1079, in _run
+    results = self._run_stage()
+              ^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/trainer/trainer.py", line 1123, in _run_stage
+    self.fit_loop.run()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/loops/fit_loop.py", line 218, in run
+    self.on_advance_end()
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/loops/fit_loop.py", line 483, in on_advance_end
+    call._call_lightning_module_hook(trainer, "on_train_epoch_end")
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.12/site-packages/lightning/pytorch/trainer/call.py", line 177, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/base/lit_module/general_lit_module.py", line 271, in on_train_epoch_end
+    self._log_GCH_store(gc_store=self.global_gcs, type="GCS")
+  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/base/lit_module/general_lit_module.py", line 260, in _log_GCH_store
+    assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Trainer log directory not set, cannot log GCH

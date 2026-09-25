@@ -257,8 +257,8 @@ class DualOptLitModule(pl.LightningModule):
         rows = np.array(gc_store, np.float32)
 
         # Required check to infer for join operation after
-        assert self.trainer.log_dir is not None, "Trainer log directory not set, cannot log GCH"
-        log_dir = os.path.join(self.trainer.log_dir, f'{type}_Epoch')
+        assert self.trainer.default_root_dir is not None, "Trainer log directory not set, cannot log GCH"
+        log_dir = os.path.join(self.trainer.default_root_dir, f'{type}_Epoch')
 
         os.makedirs(log_dir, exist_ok=True)
 
