@@ -5,7 +5,7 @@ name = "COS700"
 version = "0.1.0"
 platforms = [
     { platform = "win-64", cuda = "13.1" },
-    { platform = "linux-64", cuda = "12.0" },
+    # { platform = "linux-64", cuda = "12.0" },
 ]
 
 [tasks]
@@ -14,31 +14,32 @@ cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
 test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
-pytorch-gpu = "*"
-lightning = ">=2.6.5,<3"
+pytorch-gpu = ">=2.13.0,<3"
+lightning = ">=2.6.6,<3"
 hydra-zen = ">=0.16.0,<0.17"
 torchvision = ">=0.28.0,<0.29"
-transformers = ">=5.15.0,<6"
-lightning-bolts = ">=0.7.0,<0.8"
+transformers = ">=5.17.0,<6"
+lightning-bolts = ">=0.6.0.post1,<0.7"
 beartype = ">=0.22.9,<0.23"
-numpy = "1.26.4.*"
-tensorboard = ">=2.13.0,<3"
-matplotlib = ">=3.11.1,<4"
-scikit-learn = ">=1.9.0,<2"
-gdown = ">=6.1.0,<7"
+numpy = ">=2.5.3,<3"
+tensorboard = ">=2.20.0,<3"
+matplotlib = ">=3.11.2,<4"
+scikit-learn = ">=1.9.1,<2"
+gdown = ">=6.4.0,<7"
 pysocks = ">=1.7.1,<2"
 scikit-image = ">=0.26.0,<0.27"
-pillow = "10.4.0.*"
-pandas = ">=3.0.5,<4"
+pillow = ">=12.3.0,<13"
+pandas = ">=3.0.6,<4"
 imbalanced-learn = ">=0.14.2,<0.15"
-tqdm = ">=4.70.0,<5"
+tqdm = ">=4.70.1,<5"
 pydantic = ">=2.13.5,<3"
-jupyterlab = ">=4.6.3,<5"
+jupyterlab = ">=4.6.4,<5"
 ipykernel = ">=7.3.0,<8"
 pip = ">=26.2.1,<27"
 ipywidgets = ">=8.1.9,<9"
-notebook = ">=7.6.2,<8"
+notebook = ">=7.6.3,<8"
 nbconvert = ">=7.17.1,<8"
+scienceplots = ">=2.2.2,<3"
 
 [target.win-64.pypi-dependencies]
 triton-windows = ">=3.8.0.post28, <4"
