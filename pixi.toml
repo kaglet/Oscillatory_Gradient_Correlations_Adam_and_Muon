@@ -40,6 +40,7 @@ pip = ">=26.2.1,<27"
 ipywidgets = ">=8.1.9,<9"
 notebook = ">=7.6.2,<8"
 nbconvert = ">=7.17.1,<8"
+scienceplots = ">=2.2.2,<3"
 
 [target.win-64.pypi-dependencies]
 triton-windows = ">=3.8.0.post28, <4"
@@ -47,4 +48,5 @@ triton-windows = ">=3.8.0.post28, <4"
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
 jupyter-contrib-nbextensions = ">=0.7.0, <0.8"
+torchmetrics = { version = "*", extras = ["visual"] }
 
