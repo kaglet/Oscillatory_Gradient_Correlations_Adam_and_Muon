@@ -51,9 +51,9 @@ class DualOptLitModule(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="train")
-        self.val_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="val")
-        self.test_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="test")
+        self.train_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="train", labels=labels)
+        self.val_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="val", labels=labels)
+        self.test_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="test", labels=labels)
 
         # for averaging loss across batches
         self.train_loss = CatMetric(prefix="train")
