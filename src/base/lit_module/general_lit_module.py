@@ -15,7 +15,8 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 from hydra_zen import instantiate
-from torchmetrics import MaxMetric, MeanMetric, Metric
+from torchmetrics.wrappers import ClasswiseWrapper
+from torchmetrics import MaxMetric, CatMetric, Metric, CatMetric
 from torchmetrics.classification.accuracy import Accuracy
 import torchvision
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -33,20 +34,33 @@ class DualOptLitModule(pl.LightningModule):
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
+        labels: list[str] = 
+        ["airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"] #cifar10 labels
     ):
         super().__init__()
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
-        
+
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.train_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="train")
+        self.val_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="val")
+        self.test_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="test")
 
         # for averaging loss across batches
-        self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
+        self.train_loss = CatMetric(prefix="train")
+        self.val_loss = CatMetric(prefix="train")
+        self.test_loss = CatMetric(prefix="train")
+
+        self.gch_metric = GCH_Metric()
 
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
@@ -209,22 +223,10 @@ class DualOptLitModule(pl.LightningModule):
                 len_ad += len(g["params"])
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
-    def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
-        loss_store(metrics["loss"])
-        acc_store(metrics["preds"], metrics["targets"])
-        
-        metrics_dict = {
-            f"{stage}/loss": loss_store.compute(),
-            f"{stage}/acc": acc_store.compute()
-        }
+    def _log_standard_metrics(self, loss_store: CatMetric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
+        _ = loss_store(metrics["loss"])
+        step_acc = acc_store(metrics["preds"], metrics["targets"])
 
-        # Choose different loggers, configured with different paths 
-        if stage == "train":
-            self.loggers[0].log_metrics(metrics_dict)
-        elif stage == "val":
-            self.loggers[1].log_metrics(metrics_dict)
-        elif stage == "test":
-            self.loggers[2].log_metrics(metrics_dict)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
