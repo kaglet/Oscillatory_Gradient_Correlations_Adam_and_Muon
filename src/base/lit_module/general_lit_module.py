@@ -62,12 +62,6 @@ class DualOptLitModule(pl.LightningModule):
         self.metric_train_loss = CatMetric()
         self.metric_val_loss = CatMetric()
         self.metric_test_loss = CatMetric()
-
-        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
-        
-        self.metric_rgch = RGCH_Metric(header=self._per_param_names, name="RGCH")
-        self.metric_gch = GCH_Metric(header=self._per_param_names, name="GCH")
-
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
 
@@ -80,7 +74,10 @@ class DualOptLitModule(pl.LightningModule):
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
 
-        self._reset_gch_stores()
+        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
+        
+        self.metric_rgch = RGCH_Metric(header=self._per_param_names, name="RGCH")
+        self.metric_gch = GCH_Metric(header=self._per_param_names, name="GCH")
 
         self.save_hyperparameters(logger=False, ignore=["model"])
 

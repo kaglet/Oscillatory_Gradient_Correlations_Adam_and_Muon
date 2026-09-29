@@ -56,7 +56,7 @@ class GCH_Metric(RGCH_Metric):
     """
     Normalised gradient correlation history store.
     """
+    plot_lower_bound = -1
+    plot_upper_bound = 1
     def __init__(self, header: list[str], **kwargs):
         super().__init__(header, **kwargs)
-        self.plot_lower_bound = -1 # Bounds are applicable here
-        self.plot_upper_bound = 1

@@ -150,7 +150,7 @@ cls_imb_datamdl_s_cfg = builds(
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 4
+    num_workers = 1
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -237,6 +237,7 @@ if __name__ == "__main__":
     store.add_to_hydra_store(overwrite_ok=True)
     torch.set_float32_matmul_precision(precision="medium")
 
+    # TODO: Unpack shared dict args in both vs unshared
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
@@ -259,7 +260,10 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1" 
+            "++datamodule.downsampler_ratio":"20,1",
+            "++trainer.limit_train_batches":"100", #TODO: Make this 5000, then make val to 100
+            "++trainer.limit_val_batches":"100",
+            "++trainer.limit_test_batches": "100" 
         }
     )
 
@@ -285,7 +289,10 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1" 
+            "++datamodule.downsampler_ratio":"20,1",
+            "++trainer.limit_train_batches":"100",
+            "++trainer.limit_val_batches":"100",
+            "++trainer.limit_test_batches": "100"
         }
     )
 
