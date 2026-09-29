@@ -106,6 +106,7 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
+    num_sanity_val_steps = 0,
     max_epochs=2,
     deterministic=False,
     accelerator="gpu",
@@ -113,6 +114,7 @@ trainer_cfg = pbuilds(
     detect_anomaly=False,
     devices=1, 
     precision = "bf16-mixed",
+    barebones=True,
     callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
 )  
 
@@ -258,10 +260,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.limit_train_batches":"2000", #TODO: Make this 5000, then make val to 100
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100" 
+            "++datamodule.downsampler_ratio":"20,1"
         }
     )
 
