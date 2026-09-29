@@ -73,7 +73,7 @@ print(outputs_dir.exists())
 all_metrics = sorted(outputs_dir.rglob("v_*/*.pt"))
 for path in all_metrics:
     metric = torch.load(path)
-    if "gc" in str(path):
+    if not "gc" in str(path).lower():
         continue
 
     assert type(metric) is dict or OrderedDict, f"Stored metric of {type(metric)} is not of type dict" 
