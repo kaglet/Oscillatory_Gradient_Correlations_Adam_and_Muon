@@ -1,3 +1,6 @@
+from collections import OrderedDict
+from pathlib import Path
+
 import torchmetrics
 from torchmetrics import Metric
 import torch 
@@ -59,8 +62,28 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
     fig.suptitle(title) 
     fig.savefig(path) 
 
-binary_plot(3)
-multi_cls_plot(3)
-non_scalar_a(3)
-multi_step()
-metric_collection()
+# binary_plot(3)
+# multi_cls_plot(3)
+# non_scalar_a(3)
+# multi_step()
+# metric_collection()
+
+outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
+print(outputs_dir.exists())
+all_metrics = sorted(outputs_dir.rglob("v_*/*.pt"))
+for path in all_metrics:
+    metric = torch.load(path)
+    if "gc" in str(path):
+        continue
+
+    assert type(metric) is dict or OrderedDict, f"Stored metric of {type(metric)} is not of type dict" 
+    for k, v in metric.items():
+        if type(v) is list:
+            print(k, "is list")
+            print("First 10 items", v[:10])
+            print("Last 10 items", v[-10:])
+        elif type(v) is torch.Tensor:
+            print(k, "is Tensor")
+            print(v)
+        else: 
+            raise ValueError(f"{v} of {type(v)} is not expected type list or torch.Tensor")

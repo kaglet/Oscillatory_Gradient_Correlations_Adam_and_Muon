@@ -54,16 +54,21 @@ class DualOptLitModule(pl.LightningModule):
 
         # metric objects for calculating and averaging accuracy across batches
         base_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None), labels=labels)
+        base_acc.persistent(mode=True)
         self.metric_train_acc = base_acc.clone()
         self.metric_val_acc = base_acc.clone()
         self.metric_test_acc = base_acc.clone()
 
         # for averaging loss across batches
-        self.metric_train_loss = CatMetric()
-        self.metric_val_loss = CatMetric()
-        self.metric_test_loss = CatMetric()
+        base_loss = CatMetric()
+        base_loss.persistent(mode=True)
+        self.metric_train_loss = base_loss.clone()
+        self.metric_val_loss = base_loss.clone()
+        self.metric_test_loss = base_loss.clone()
+
         # for tracking best so far validation accuracy
         self.max_val_acc = MaxMetric()
+        self.max_val_acc.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
@@ -196,7 +201,7 @@ class DualOptLitModule(pl.LightningModule):
                 len_ad += len(g["params"])
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
-    def _update_standard_metrics(self, loss_store: CatMetric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
+    def _update_standard_metrics(self, loss_store: Metric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
         _ = loss_store(metrics["loss"])
         _ = acc_store(metrics["preds"], metrics["targets"])
 
