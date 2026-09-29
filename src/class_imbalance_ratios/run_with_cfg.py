@@ -235,7 +235,7 @@ if __name__ == "__main__":
     store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
 
     store.add_to_hydra_store(overwrite_ok=True)
-    torch.set_float32_matmul_precision(precision="low")
+    torch.set_float32_matmul_precision(precision="medium")
 
     (jobs,) = launch(
         ExperimentConfig,
