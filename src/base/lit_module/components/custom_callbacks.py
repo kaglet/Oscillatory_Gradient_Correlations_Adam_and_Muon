@@ -2,6 +2,8 @@ from lightning.pytorch.callbacks import Callback
 import torch 
 import numpy as np
 
+from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+
 class StoreAllGCH(Callback):
     def __init__(self, what="CH", verbose=True):
         self.what = what
@@ -22,8 +24,8 @@ class StoreAllGCH(Callback):
         
         curr_param_grads = []
         prev_grads_exist = len(self.state["prev_param_grads"]) != 0
-        curr_gcs = torch.Tensor(size=(len(self.trainable_params),))
-        curr_r_gcs = torch.zeros_like(curr_gcs)
+        curr_gcv = torch.Tensor(size=(len(self.trainable_params),))
+        curr_r_gcv = torch.zeros_like(curr_gcv)
 
         for i, p in enumerate(self.trainable_params):
             assert p.grad is not None, "None gradients detected, debug optimizer/s invoked on current step"
@@ -36,8 +38,8 @@ class StoreAllGCH(Callback):
                 prev_p_grad = self.state["prev_param_grads"][i].detach().clone()
                 dot_prod = torch.sum(torch.mul(prev_p_grad, curr_p_grad))
                 norm = prev_p_grad.data.norm() * curr_p_grad.data.norm()
-                curr_gcs[i] = dot_prod / norm
-                curr_r_gcs[i] = dot_prod
+                curr_gcv[i] = dot_prod / norm
+                curr_r_gcv[i] = dot_prod
 
         # Current grad becomes past grads
         self.state["prev_param_grads"] = curr_param_grads 
@@ -45,8 +47,11 @@ class StoreAllGCH(Callback):
         # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
         # Given the above, the global stores can be filled
         if trainer.global_step != 0: 
-            pl_module.state_dict()["metric_gch"](curr_gcs, trainer.global_step, trainer.current_epoch)
-            pl_module.state_dict()["metric_rgch"](curr_r_gcs, trainer.global_step, trainer.current_epoch)
+            assert type(pl_module.metric_gch) is GCH_Metric
+            pl_module.metric_gch(curr_gcv, trainer.global_step, trainer.current_epoch)
+            
+            assert type(pl_module.metric_rgch) is RGCH_Metric
+            pl_module.metric_rgch(curr_r_gcv, trainer.global_step, trainer.current_epoch)
 
     def load_state_dict(self, state_dict):
         self.state.update(state_dict)
