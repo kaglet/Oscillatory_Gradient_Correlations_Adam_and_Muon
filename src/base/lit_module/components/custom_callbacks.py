@@ -14,7 +14,7 @@ class StoreAllGCH(Callback):
         # @lightning.ai :: note: we do not include `verbose` here on purpose
         return f"Counter[what={self.what}]"
 
-    def on_train_start(self, trainer, pl_module):
+    def on_before_optimizer_step(self, trainer, pl_module, optimizer):
         if not trainer.training:
             return 
         
