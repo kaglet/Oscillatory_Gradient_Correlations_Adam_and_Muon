@@ -44,7 +44,7 @@ class StoreAllGCH(Callback):
 
         # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
         # Given the above, the global stores can be filled
-        if len(curr_gcs) != 0: 
+        if trainer.global_step != 0: 
             pl_module.state_dict()["metric_gch"](curr_gcs, trainer.global_step, trainer.current_epoch)
             pl_module.state_dict()["metric_rgch"](curr_r_gcs, trainer.global_step, trainer.current_epoch)
 
