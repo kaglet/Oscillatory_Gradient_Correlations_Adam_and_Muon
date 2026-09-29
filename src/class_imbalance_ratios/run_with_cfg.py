@@ -36,7 +36,7 @@ from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.pydantic import validates_with_pydantic
-from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
+# from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(

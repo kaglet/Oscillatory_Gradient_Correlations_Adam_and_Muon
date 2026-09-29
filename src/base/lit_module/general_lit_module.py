@@ -16,7 +16,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 from hydra_zen import instantiate
 from torchmetrics.wrappers import ClasswiseWrapper
-from torchmetrics import MaxMetric, CatMetric, Metric, CatMetric
+from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
 from torchmetrics.classification.accuracy import Accuracy
 import torchvision
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -53,9 +53,10 @@ class DualOptLitModule(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
-        self.metric_train_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="train", labels=labels)
-        self.metric_val_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="val", labels=labels)
-        self.metric_test_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None, higher_is_better=True), prefix="test", labels=labels)
+        acc_collection = MetricCollection(ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None), labels=labels))
+        self.metric_train_acc = base_acc.clone(prefix="train")
+        self.metric_val_acc = base_acc.clone(prefix="train")
+        self.metric_test_acc = base_acc.clone(prefix="train")
 
         # for averaging loss across batches
         self.metric_train_loss = CatMetric(prefix="train")
