@@ -48,10 +48,10 @@ class StoreAllGCH(Callback):
         # Given the above, the global stores can be filled
         if trainer.global_step != 0: 
             assert type(pl_module.metric_gch) is GCH_Metric
-            pl_module.metric_gch(curr_gcv, trainer.global_step, trainer.current_epoch)
+            pl_module.metric_gch.update(curr_gcv, trainer.global_step, trainer.current_epoch)
             
             assert type(pl_module.metric_rgch) is RGCH_Metric
-            pl_module.metric_rgch(curr_r_gcv, trainer.global_step, trainer.current_epoch)
+            pl_module.metric_rgch.update(curr_r_gcv, trainer.global_step, trainer.current_epoch)
 
     def load_state_dict(self, state_dict):
         self.state.update(state_dict)
