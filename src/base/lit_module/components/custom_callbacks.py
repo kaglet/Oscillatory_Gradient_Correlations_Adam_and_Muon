@@ -4,6 +4,8 @@ import numpy as np
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 
+__all__ = ["StoreAllGCH"]
+
 class StoreAllGCH(Callback):
     def __init__(self, what="CH", verbose=True):
         self.what = what

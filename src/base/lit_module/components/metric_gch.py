@@ -1,6 +1,8 @@
 from torchmetrics import Metric
 import torch 
 
+__all__ = ["RGCH_Metric", "GCH_Metric"]
+
 class RGCH_Metric(Metric):
     """ 
     Unnormalised "raw" gradient correlation history store.
@@ -38,17 +40,17 @@ class RGCH_Metric(Metric):
             curr_list.append(val)
             setattr(self, name, curr_list)
 
-        assert type(self.steps) is list
+        assert type(self.steps) is list, "Steps must be list of GC metric"
         self.steps.append(torch.tensor(step, dtype=torch.int8))
         
-        assert type(self.epochs) is list
+        assert type(self.epochs) is list, "Epochs must be list of GC metric"
         self.epochs.append(torch.tensor(epoch, dtype=torch.int8))
 
     def compute(self) -> dict[str, list[torch.Tensor]]:
         """ 
         Returns a dict of each header name and its paired list of tensor scalar values
         """
-        layer_dict = {h: self.state_dict()[h] for h in self._header}
+        layer_dict = {h: getattr(self, h) for h in self._header}
 
         return layer_dict
     
@@ -60,3 +62,6 @@ class GCH_Metric(RGCH_Metric):
     plot_upper_bound = 1
     def __init__(self, header: list[str], **kwargs):
         super().__init__(header, **kwargs)
+
+if __name__ == "__main__":
+    pass

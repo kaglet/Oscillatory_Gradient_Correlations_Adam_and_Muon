@@ -23,6 +23,7 @@ from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 import matplotlib.pyplot as plt
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]
 
@@ -52,23 +53,19 @@ class DualOptLitModule(pl.LightningModule):
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
 
-        # metric objects for calculating and averaging accuracy across batches
-        base_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None), labels=labels)
-        base_acc.persistent(mode=True)
-        self.metric_train_acc = base_acc.clone()
-        self.metric_val_acc = base_acc.clone()
-        self.metric_test_acc = base_acc.clone()
+        self.metric_train_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_train_acc.persistent(mode=True)
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_val_acc.persistent(mode=True)
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_test_acc.persistent(mode=True)
 
-        # for averaging loss across batches
-        base_loss = CatMetric()
-        base_loss.persistent(mode=True)
-        self.metric_train_loss = base_loss.clone()
-        self.metric_val_loss = base_loss.clone()
-        self.metric_test_loss = base_loss.clone()
-
-        # for tracking best so far validation accuracy
-        self.max_val_acc = MaxMetric()
-        self.max_val_acc.persistent(mode=True)
+        self.metric_train_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
+        self.metric_val_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
+        self.metric_test_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
@@ -100,8 +97,6 @@ class DualOptLitModule(pl.LightningModule):
 
         self.metric_val_acc.reset()
         self.metric_val_loss.reset()
-
-        self.max_val_acc.reset()
 
         self._reset_gch_stores()
 
@@ -201,9 +196,9 @@ class DualOptLitModule(pl.LightningModule):
                 len_ad += len(g["params"])
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
-    def _update_standard_metrics(self, loss_store: Metric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
-        loss_store.update(metrics["loss"])
-        acc_store.update(metrics["preds"], metrics["targets"])
+    def _update_standard_metrics(self, loss_store: MyLoss, acc_store: MyMultiClassAccuracy, stage: str, metrics: Dict[str,torch.Tensor]):
+        loss_store.update(metrics["loss"], self.trainer.global_step, self.trainer.current_epoch)
+        acc_store.update(metrics["preds"], metrics["targets"], self.trainer.global_step, self.trainer.current_epoch)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
