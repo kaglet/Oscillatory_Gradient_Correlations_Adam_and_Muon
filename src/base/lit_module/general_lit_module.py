@@ -53,15 +53,15 @@ class DualOptLitModule(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
-        acc_collection = MetricCollection(ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None), labels=labels))
-        self.metric_train_acc = base_acc.clone(prefix="train")
-        self.metric_val_acc = base_acc.clone(prefix="train")
-        self.metric_test_acc = base_acc.clone(prefix="train")
+        base_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=num_classes, average=None), labels=labels)
+        self.metric_train_acc = base_acc.clone()
+        self.metric_val_acc = base_acc.clone()
+        self.metric_test_acc = base_acc.clone()
 
         # for averaging loss across batches
-        self.metric_train_loss = CatMetric(prefix="train")
-        self.metric_val_loss = CatMetric(prefix="val")
-        self.metric_test_loss = CatMetric(prefix="test")
+        self.metric_train_loss = CatMetric()
+        self.metric_val_loss = CatMetric()
+        self.metric_test_loss = CatMetric()
 
         self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         
@@ -240,7 +240,7 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_train_acc,
             root_dir=root_dir, 
             main_name="loss", 
-            prefix=self.metric_train_loss.state_dict()["prefix"]
+            prefix="train"
         )
 
         # Save train acc metric
@@ -248,7 +248,7 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_train_acc,
             root_dir=root_dir, 
             main_name="acc", 
-            prefix=self.metric_train_acc.state_dict()["prefix"]
+            prefix="train"
         )
 
         # Save rgch metric
@@ -256,7 +256,7 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_rgch,
             root_dir=root_dir, 
             main_name=self.metric_rgch.name, 
-            prefix=self.metric_rgch.state_dict()["prefix"]
+            prefix="train"
         )
 
         # Save gch metric
@@ -264,7 +264,7 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_gch,
             root_dir=root_dir, 
             main_name=self.metric_gch.name, 
-            prefix=self.metric_gch.state_dict()["prefix"]
+            prefix="train"
         )
 
     def _save_val_metrics(self) -> None: 
@@ -275,14 +275,14 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_val_loss,
             root_dir=root_dir, 
             main_name="loss", 
-            prefix=self.metric_val_loss.state_dict()["prefix"]
+            prefix="val"
         )
 
         self._save_metric(
             metric=self.metric_val_acc,
             root_dir=root_dir, 
             main_name="acc", 
-            prefix=self.metric_val_acc.state_dict()["prefix"]
+            prefix="val"
         )
 
     def _save_test_metrics(self) -> None: 
@@ -291,14 +291,14 @@ class DualOptLitModule(pl.LightningModule):
             metric=self.metric_test_loss,
             root_dir=root_dir, 
             main_name="loss", 
-            prefix=self.metric_test_loss.state_dict()["prefix"]
+            prefix="test"
         )
 
         self._save_metric(
             metric=self.metric_test_acc,
             root_dir=root_dir, 
             main_name="acc", 
-            prefix=self.metric_test_acc.state_dict()["prefix"]
+            prefix="test"
         )
 
     def on_fit_end(self) -> None:   
