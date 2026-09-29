@@ -32,17 +32,17 @@ class RGCH_Metric(Metric):
         """
         for i, val in enumerate(ordered_gc_vec):
             name = self._header[i]
-            layer_values = self.state_dict()[name]
-            assert type(layer_values) is list, "Layer values must be a list for CH store"
-            layer_values.append(val)
+            curr_list = getattr(self, name)
+            assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-        steps = self.state_dict()["steps"]
-        assert type(steps) is list, "Steps store must be a list for CH store"
-        steps.append(torch.tensor(step, dtype=torch.int8))
+            curr_list.append(val)
+            setattr(self, name, curr_list)
+
+        assert type(self.steps) is list
+        self.steps.append(torch.tensor(step, dtype=torch.int8))
         
-        epochs = self.state_dict()["epochs"]
-        assert type(epochs) is list, "Epochs store must be a list for CH store"
-        epochs.append(torch.tensor(epoch, dtype=torch.int8))
+        assert type(self.epochs) is list
+        self.epochs.append(torch.tensor(epoch, dtype=torch.int8))
 
     def compute(self) -> dict[str, list[torch.Tensor]]:
         """ 
