@@ -260,7 +260,10 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1"
+            "++datamodule.downsampler_ratio":"20,1",
+            "++trainer.limit_train_batches":"2000",
+            "++trainer.limit_val_batches":"100",
+            "++trainer.limit_test_batches": "100"
         }
     )
 
