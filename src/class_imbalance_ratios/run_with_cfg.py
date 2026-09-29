@@ -23,6 +23,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
+from src.base.lit_module.components.custom_callbacks import StoreAllGCH
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
@@ -113,7 +114,8 @@ trainer_cfg = pbuilds(
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
-    precision = "bf16-mixed"
+    precision = "bf16-mixed",
+    callbacks=[builds(StoreAllGCH)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
