@@ -2,9 +2,14 @@ from collections import OrderedDict
 from pathlib import Path
 
 import torchmetrics
-from torchmetrics import Metric
+from torchmetrics import Accuracy, Metric
 import torch 
 import matplotlib.pyplot as plt
+
+from torchmetrics.wrappers import ClasswiseWrapper
+from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
+
+from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 
 def binary_plot(num_updates=3, title="This is a nice plot", path="tests/my_binary_plot.png"):
     metric = torchmetrics.Accuracy(task="binary")
@@ -74,16 +79,20 @@ all_metrics = sorted(outputs_dir.rglob("v_*/*.pt"))
 for path in all_metrics:
     metric = torch.load(path)
     if not "gc" in str(path).lower():
-        continue
-
-    assert type(metric) is dict or OrderedDict, f"Stored metric of {type(metric)} is not of type dict" 
-    for k, v in metric.items():
-        if type(v) is list:
-            print(k, "is list")
-            print("First 10 items", v[:10])
-            print("Last 10 items", v[-10:])
-        elif type(v) is torch.Tensor:
-            print(k, "is Tensor")
-            print(v)
+        if "acc" in str(path).lower():
+            base_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=10, average=None), labels=[""])
+            base_acc.load_state_dict(metric)
+            result = base_acc.compute()
+        elif "loss" in str(path).lower():
+            base_loss = CatMetric()
+            base_loss.load_state_dict(metric)
+            result = base_loss.compute()
+    else: 
+        if not "rgc" in str(path).lower():
+            metric_gch = GCH_Metric(header=[], name="")
+            metric_gch.load_state_dict(metric)
+            result = metric_gch.compute()
         else: 
-            raise ValueError(f"{v} of {type(v)} is not expected type list or torch.Tensor")
+            metric_gch = RGCH_Metric(header=[], name="")
+            metric_gch.load_state_dict(metric)
+            result = metric_gch.compute()         
