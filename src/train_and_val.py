@@ -39,8 +39,7 @@ def train_and_val(
         lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
 
         path_all = Path(os.getcwd(), f"run_{i}")
-        loggers_built = [lg(save_dir=path_all) for lg in logger_cache]
-        trainer_built = trainer(default_root_dir=path_all, logger=loggers_built)
+        trainer_built = trainer(default_root_dir=path_all)
         trainer_built.fit(model=lit_module_built, datamodule=datamodule)
     
     return 1

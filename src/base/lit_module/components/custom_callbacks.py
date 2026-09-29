@@ -53,3 +53,7 @@ class StoreAllGCH(Callback):
 
     def state_dict(self):
         return self.state.copy()
+
+class DebugCallback(Callback):
+    def on_train_start(self, trainer, pl_module):
+        print("\n=== CALLBACK IS ACTIVE ===\n")

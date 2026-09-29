@@ -23,7 +23,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
-from src.base.lit_module.components.custom_callbacks import StoreAllGCH
+from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
@@ -96,8 +96,6 @@ max_checkpt_cfg = pbuilds(
     save_last=True,
 )
 
-chkpts_cfg_list = [max_checkpt_cfg]
-
 tb_logger_cfg = pbuilds(TensorBoardLogger, name="train")
 csv_logger_cfg = [
     pbuilds(CSVLogger, name="train", version=""), # Remove version nesting
@@ -115,7 +113,7 @@ trainer_cfg = pbuilds(
     detect_anomaly=False,
     devices=1, 
     precision = "bf16-mixed",
-    callbacks=[builds(StoreAllGCH)]
+    callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -261,7 +259,7 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.limit_train_batches":"100", #TODO: Make this 5000, then make val to 100
+            "++trainer.limit_train_batches":"2000", #TODO: Make this 5000, then make val to 100
             "++trainer.limit_val_batches":"100",
             "++trainer.limit_test_batches": "100" 
         }
@@ -290,7 +288,7 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.limit_train_batches":"100",
+            "++trainer.limit_train_batches":"2000",
             "++trainer.limit_val_batches":"100",
             "++trainer.limit_test_batches": "100"
         }
