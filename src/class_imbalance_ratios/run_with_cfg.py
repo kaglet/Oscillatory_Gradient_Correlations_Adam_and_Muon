@@ -107,14 +107,13 @@ csv_logger_cfg = [
 trainer_cfg = pbuilds(
     pl.Trainer, 
     num_sanity_val_steps = 0,
-    max_epochs=200,
+    max_epochs=20,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
     # precision = "bf16-mixed",
-    barebones=True,
     callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
 )  
 
@@ -150,7 +149,7 @@ cls_imb_datamdl_s_cfg = builds(
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 8
+    num_workers = 0
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -161,7 +160,7 @@ cls_imb_datamdl_l_cfg = builds(
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
     batch_size = 64,
-    num_workers = 4
+    num_workers = 0
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
