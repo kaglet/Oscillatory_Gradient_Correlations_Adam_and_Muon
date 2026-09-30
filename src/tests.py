@@ -10,6 +10,7 @@ from torchmetrics.wrappers import ClasswiseWrapper
 from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
 
 def binary_plot(num_updates=3, title="This is a nice plot", path="tests/my_binary_plot.png"):
     metric = torchmetrics.Accuracy(task="binary")
@@ -80,11 +81,11 @@ for path in all_metrics:
     metric = torch.load(path)
     if not "gc" in str(path).lower():
         if "acc" in str(path).lower():
-            base_acc = ClasswiseWrapper(Accuracy(task="multiclass", num_classes=10, average=None), labels=[""])
+            base_acc = MyMultiClassAccuracy(labels=[""])
             base_acc.load_state_dict(metric)
             result = base_acc.compute()
         elif "loss" in str(path).lower():
-            base_loss = CatMetric()
+            base_loss = MyLoss()
             base_loss.load_state_dict(metric)
             result = base_loss.compute()
     else: 
