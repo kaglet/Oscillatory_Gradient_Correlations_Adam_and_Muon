@@ -77,11 +77,21 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
 print(outputs_dir.exists())
 all_metrics = sorted(outputs_dir.rglob("v_*/*.pt"))
+cif10_labels = ["airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"]
 for path in all_metrics:
     metric = torch.load(path)
     if not "gc" in str(path).lower():
         if "acc" in str(path).lower():
-            base_acc = MyMultiClassAccuracy(labels=[""])
+            base_acc = MyMultiClassAccuracy(cif10_labels)
             base_acc.load_state_dict(metric)
             result = base_acc.compute()
         elif "loss" in str(path).lower():
