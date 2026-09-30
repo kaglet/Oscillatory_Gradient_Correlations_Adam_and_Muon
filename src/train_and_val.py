@@ -31,8 +31,11 @@ def train_and_val(
     chkpt_cache: Any,
     num_runs = 5
 ):
+    torch.set_float32_matmul_precision(precision="high")
+
     # TODO: Change num_runs to be configurable
     for i in tqdm(range(num_runs), desc="Experiment running..."):
+        print(f"Executing run {i}")
         params = params_cache(model=model_cache)
         optims = [optim(params) for optim, params in zip(optims_cache, params)]
         # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
