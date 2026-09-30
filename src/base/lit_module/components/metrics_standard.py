@@ -36,11 +36,10 @@ class MyMultiClassAccuracy(Metric):
         """ 
         TODO: Update for this metric from GCH inspired. 
         """
-        unique_labels = targets.unique()
-        all_labels = torch.as_tensor(range(0, len(self._labels)))
-        missing_labels = all_labels[~torch.isin(unique_labels, all_labels)]
+        unique_labels = list(targets.unique())
+        all_labels = list(torch.as_tensor(range(0, len(self._labels))))
         for i in all_labels:
-            if torch.isin(torch.as_tensor(i), unique_labels):
+            if i in unique_labels:
                 total = (targets == i).sum()
                 correct = (preds[targets == i] == i).sum()
                 avg = correct / total
@@ -49,11 +48,11 @@ class MyMultiClassAccuracy(Metric):
 
                 curr_list.append(avg)
                 setattr(self, self._labels[i], curr_list)
-            elif torch.isin(torch.as_tensor(i), missing_labels):
+            else:
                 curr_list = getattr(self, self._labels[i])
                 assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-                curr_list.append(-100)
+                curr_list.append(torch.as_tensor(100))
                 setattr(self, self._labels[i], curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"

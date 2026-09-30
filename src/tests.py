@@ -89,6 +89,7 @@ cif10_labels = ["airplane",
         "truck"]
 for path in all_metrics:
     metric = torch.load(path)
+    result = None
     if not "gc" in str(path).lower():
         if "acc" in str(path).lower():
             base_acc = MyMultiClassAccuracy(cif10_labels)
@@ -107,3 +108,5 @@ for path in all_metrics:
             metric_gch = RGCH_Metric(header=[], name="")
             metric_gch.load_state_dict(metric)
             result = metric_gch.compute()         
+
+    print(result)

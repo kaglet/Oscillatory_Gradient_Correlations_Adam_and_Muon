@@ -107,13 +107,13 @@ csv_logger_cfg = [
 trainer_cfg = pbuilds(
     pl.Trainer, 
     num_sanity_val_steps = 0,
-    max_epochs=2,
+    max_epochs=200,
     deterministic=False,
     accelerator="gpu",
     benchmark=False,
     detect_anomaly=False,
     devices=1, 
-    precision = "bf16-mixed",
+    # precision = "bf16-mixed",
     barebones=True,
     callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
 )  
@@ -150,7 +150,7 @@ cls_imb_datamdl_s_cfg = builds(
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 1
+    num_workers = 0
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -161,7 +161,7 @@ cls_imb_datamdl_l_cfg = builds(
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
     batch_size = 64,
-    num_workers = 4
+    num_workers = 0
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
 
     store.add_to_hydra_store(overwrite_ok=True)
-    torch.set_float32_matmul_precision(precision="medium")
+    torch.set_float32_matmul_precision(precision="high")
 
     # TODO: Unpack shared dict args in both vs unshared
     (jobs,) = launch(
@@ -251,6 +251,7 @@ if __name__ == "__main__":
             "params_cache":f"{mu_aux_ad_lbl}", 
             "optims_cache":f"{mu_aux_ad_lbl}", 
             "lit_module":f"{cif10_lbl}",
+            "++num_runs": "2,5,5,5",
             "++params_cache.lr_muon":f"1e-1",
             "++params_cache.lr_adam":f"1e-1",
             "++params_cache.use_muon":f"False",
@@ -260,10 +261,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.limit_train_batches":"2000",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            "++datamodule.downsampler_ratio":"20, 10, 5, 1"
         }
     )
 
@@ -281,6 +279,7 @@ if __name__ == "__main__":
             "params_cache":f"{mu_aux_ad_lbl}", 
             "optims_cache":f"{mu_aux_ad_lbl}", 
             "lit_module":f"{cif10_lbl}",
+            "++num_runs": "4,5,5,5",
             "++params_cache.lr_muon":f"1e-1",
             "++params_cache.lr_adam":f"1e-1",
             "++params_cache.momentum_muon":f"0.9",
@@ -289,10 +288,7 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1",
-            "++trainer.limit_train_batches":"2000",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
         }
     )
 
