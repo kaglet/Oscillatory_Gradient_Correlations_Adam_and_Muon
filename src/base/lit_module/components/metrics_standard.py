@@ -56,10 +56,10 @@ class MyMultiClassAccuracy(Metric):
                 setattr(self, self._labels[i], curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"
-        self.steps.append(torch.tensor(step, dtype=torch.int8))
+        self.steps.append(torch.tensor(step, dtype=torch.int32))
         
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
-        self.epochs.append(torch.tensor(epoch, dtype=torch.int8))
+        self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
     def compute(self, mode: str = "all") -> dict[str, list[torch.Tensor]] | dict[str, torch.Tensor] | dict[str, tuple[torch.Tensor, torch.Tensor]]:
         """ 
@@ -106,10 +106,10 @@ class MyLoss(Metric):
         setattr(self, "loss", curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"
-        self.steps.append(torch.tensor(step, dtype=torch.int8))
+        self.steps.append(torch.tensor(step, dtype=torch.int32))
         
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
-        self.epochs.append(torch.tensor(epoch, dtype=torch.int8))
+        self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
     def compute(self, mode: str = "all") -> list[torch.Tensor] | torch.Tensor:
         """ 
