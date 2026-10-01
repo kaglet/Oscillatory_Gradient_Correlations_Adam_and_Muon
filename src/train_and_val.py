@@ -38,7 +38,7 @@ def train_and_val(
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
 
-    path_all = Path(os.getcwd(), f"run_{run_idx}") # The cwd is correct, the output dir just repeats the full path, resolving correct, instead of literally outputting to it
+    path_all = Path(os.getcwd(), f"run_{run_idx}") # 
     trainer_built = trainer(default_root_dir=path_all)
     trainer_built.fit(model=lit_module_built, datamodule=datamodule)
     

@@ -335,9 +335,9 @@ class UnifiedJobsStore():
 if __name__ == "__main__":
     jobs_store = UnifiedJobsStore()
     run_idxs = [0,1,2,3]
-    muon_counter = 0
-    adam_counter = 0
     for r in run_idxs:
+        muon_counter = 0
+        adam_counter = 0
         for i in range(jobs_store.job_num_each * 2):
             if i % 2 == 0:
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
