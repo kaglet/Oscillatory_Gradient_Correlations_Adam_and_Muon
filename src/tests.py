@@ -93,7 +93,7 @@ for path in all_metrics:
     metric = torch.load(path)
     model = resnet18()
     params = list(model.named_parameters())
-    param_names = [n for n, p in params if p.requires_grad]
+    param_names = [n for n, p in params if not p.grad is None]
     result = None
     path = str(path.stem).lower()
     if not "gc" in path:
