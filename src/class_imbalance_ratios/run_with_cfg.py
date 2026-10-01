@@ -236,7 +236,7 @@ store(
     HydraConf(
         job=JobConf(chdir=True), 
         run=RunDir("outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"),
-        output_subdir="hydra_output", 
+        output_subdir="${hydra.run.dir}/run_${run_idx}/hydra_output", 
     ),
     group="hydra",
     name="config"
@@ -250,6 +250,8 @@ cfg_2_yaml = to_yaml(store["hydra", "config"])
 class UnifiedJobsStore():
     """ 
     Unified serial job run store for Muon and Adam. Can later be separated as potential TODO. 
+    This stores values for a series of experiments. It does not control running experiments multiple times at a meta level. 
+    The `get_run_vals` function augments this functional need however. 
     """
     def __init__(self, downsampler_ratios: list[int] = [20, 10, 5, 1]) -> None:
         self._downsampler_ratios = downsampler_ratios
@@ -264,14 +266,14 @@ class UnifiedJobsStore():
         string = string
         return string   
 
-    def _set_adam_overrides(self): 
+    def _set_muon_overrides(self): 
         adam_overrides = {
             "model_cache": self._repeat_join_str(cif10_lbl), 
             "datamodule": self._repeat_join_str(cif10_lbl), 
             "params_cache": self._repeat_join_str(mu_aux_ad_lbl), 
             "optims_cache": self._repeat_join_str(mu_aux_ad_lbl), 
             "lit_module": self._repeat_join_str(cif10_lbl),
-            "++num_runs": self._repeat_join_str(2),
+            "++run_idx": self._repeat_join_str(2),
             "++params_cache.lr_muon": self._repeat_join_str(1e-1),
             "++params_cache.lr_adam": self._repeat_join_str(1e-1),
             "++params_cache.momentum_muon": self._repeat_join_str(0.9),
@@ -283,19 +285,19 @@ class UnifiedJobsStore():
             "++datamodule.downsampler_ratio":self.downsampler_ratios,
             "++trainer.limit_train_batches": self._repeat_join_str(200),
             "++trainer.limit_val_batches": self._repeat_join_str(100),
-            "++trainer.limit_test_batches": self._repeat_join_str(100)
+            "++trainer.limit_test_batches": self._repeat_join_str(100),
         }
 
         return adam_overrides
 
-    def _set_muon_overrides(self): 
+    def _set_adam_overrides(self): # TODO: Find way to merge into each dict intelligently shared definite params to not repeat. Could do merge dict after defining shared properties.
         muon_overrides = {
         "model_cache":self._repeat_join_str(cif10_lbl), 
         "datamodule":self._repeat_join_str(cif10_lbl), 
         "params_cache":self._repeat_join_str(mu_aux_ad_lbl), 
         "optims_cache":self._repeat_join_str(mu_aux_ad_lbl), 
         "lit_module":self._repeat_join_str(cif10_lbl),
-        "++num_runs": self._repeat_join_str(2),
+        "++run_idx": self._repeat_join_str(2),
         "++params_cache.lr_muon":self._repeat_join_str(1e-1),
         "++params_cache.lr_adam":self._repeat_join_str(1e-1),
         "++params_cache.use_muon":self._repeat_join_str("False"),
@@ -308,16 +310,19 @@ class UnifiedJobsStore():
         "++datamodule.downsampler_ratio":self.downsampler_ratios,
         "++trainer.limit_train_batches":self._repeat_join_str(200),
         "++trainer.limit_val_batches":self._repeat_join_str(100),
-        "++trainer.limit_test_batches": self._repeat_join_str(100)
+        "++trainer.limit_test_batches": self._repeat_join_str(100),
         }
 
         return muon_overrides
     
-    def get_run_vals(self, idx: int = 0, which: Literal['muon', "adam"] = 'muon') -> dict[str, str]:
+    def get_run_vals(self, outer_run: int, inner_experim_idx: int = 0, which: Literal['muon', "adam"] = 'muon') -> dict[str, str]:
+        """ 
+        
+        """
         overrides = self._muon_overrides if which == "muon" else self._adam_overrides
-        valid_slice = {k:v[idx] for k,v in overrides.items()}
-
-        return valid_slice
+        valid_slice = {k:v[inner_experim_idx] for k,v in overrides.items()}
+        run_slice = {**valid_slice, "++run_idx":f"{str(outer_run)}"}
+        return run_slice
 
     @property
     def job_num_each(self):
@@ -329,25 +334,31 @@ class UnifiedJobsStore():
 
 if __name__ == "__main__":
     jobs_store = UnifiedJobsStore()
-    for i in range(jobs_store.job_num_each * 2):
-        if i % 2 == 0:
-            curr_job = jobs_store.get_run_vals(idx=i, which='muon')
-            job = launch(
-                ExperimentConfig,
-                task_function,
-                config_name="adam_muon_benchmarks",
-                job_name="muon_class_imbalance_ratios",
-                version_base="1.3",
-                overrides=curr_job
-            )
-        else:
-            curr_job = jobs_store.get_run_vals(idx=i-1, which='adam')
-            job = launch(
-                ExperimentConfig,
-                task_function,
-                config_name="adam_muon_benchmarks",
-                job_name="muon_class_imbalance_ratios",
-                version_base="1.3",
-                overrides=curr_job
-            )
+    run_idxs = [0,1,2,3]
+    muon_counter = 0
+    adam_counter = 0
+    for r in run_idxs:
+        for i in range(jobs_store.job_num_each * 2):
+            if i % 2 == 0:
+                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
+                job = launch(
+                    ExperimentConfig,
+                    task_function,
+                    config_name="adam_muon_benchmarks",
+                    job_name="muon_class_imbalance_ratios",
+                    version_base="1.3",
+                    overrides=curr_job
+                )
+                muon_counter += 1
+            else:
+                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=adam_counter, which='adam')
+                job = launch(
+                    ExperimentConfig,
+                    task_function,
+                    config_name="adam_muon_benchmarks",
+                    job_name="adam_class_imbalance_ratios",
+                    version_base="1.3",
+                    overrides=curr_job
+                )
+                adam_counter += 1
 
