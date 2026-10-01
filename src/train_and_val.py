@@ -32,14 +32,13 @@ def train_and_val(
     run_idx: int
 ):
     torch.set_float32_matmul_precision(precision="high")
-
-    print(f"Executing run {run_idx}")
+    print(f"Executing run {run_idx}") 
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
     # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
 
-    path_all = Path(os.getcwd(), f"run_{run_idx}")
+    path_all = Path(os.getcwd(), f"run_{run_idx}") # The cwd is correct, the output dir just repeats the full path, resolving correct, instead of literally outputting to it
     trainer_built = trainer(default_root_dir=path_all)
     trainer_built.fit(model=lit_module_built, datamodule=datamodule)
     

@@ -236,7 +236,7 @@ store(
     HydraConf(
         job=JobConf(chdir=True), 
         run=RunDir("outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"),
-        output_subdir="${hydra.run.dir}/run_${run_idx}/hydra_output", 
+        output_subdir="hydra_run_${run_idx}", 
     ),
     group="hydra",
     name="config"
