@@ -19,7 +19,7 @@ from hydra_zen import instantiate, to_yaml, just, launch, make_custom_builds_fn,
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
-from hydra.conf import HydraConf, JobConf, SweepDir
+from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
@@ -235,10 +235,8 @@ store.add_to_hydra_store(overwrite_ok=True)
 store(
     HydraConf(
         job=JobConf(chdir=True), 
-        sweep=SweepDir(
-            dir="outputs/${hydra.job.name}/multijob/", 
-            subdir="R_${datamodule.downsampler_ratio}" # key access chain
-        )
+        run=RunDir("outputs/${hydra.job.name}/multijob/"),
+        output_subdir="R_${datamodule.downsampler_ratio}", 
     ),
     group="hydra",
     name="config"
@@ -248,6 +246,7 @@ store.add_to_hydra_store(overwrite_ok=True)
 
 cfg_2_yaml = to_yaml(store["hydra", "config"])
 
+# TODO: Move this, depends on cif10 labels and so on, which should be in a separate file
 class UnifiedJobsStore():
     """ 
     Unified serial job run store for Muon and Adam. Can later be separated as potential TODO. 
