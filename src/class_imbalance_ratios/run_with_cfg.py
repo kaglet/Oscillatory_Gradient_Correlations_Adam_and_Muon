@@ -15,7 +15,7 @@ import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
-from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
+from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store, to_yaml
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
@@ -171,66 +171,79 @@ cif10_lbl = f"cif10"
 cif100_lbl = f"cif100"
 
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
-lit_module_store = store(group="lit_module")
+lit_module_store = store(group="experiments/lit_module")
 lit_module_store(cls_imb_s_module_cfg, name=cif10_lbl)
 lit_module_store(cls_imb_l_module_cfg, name=cif100_lbl)
 
-trainer_store = store(group="trainer")
+trainer_store = store(group="experiments/trainer")
 trainer_store(trainer_cfg, name=task_lbl)
 
-datamodule_store = store(group="datamodule")
+datamodule_store = store(group="experiments/datamodule")
 datamodule_store(cls_imb_datamdl_s_cfg, name=cif10_lbl)
 datamodule_store(cls_imb_datamdl_l_cfg, name=cif100_lbl)
 
-model_store = store(group="model_cache")
+model_store = store(group="experiments/model_cache")
 model_store(cls_imb_model_s_cfg, name=cif10_lbl)
 model_store(cls_imb_model_l_cfg, name=cif100_lbl)
 
-params_store = store(group="params_cache")
+params_store = store(group="experiments/params_cache")
 params_store(mu_aux_adam_params_cfg, name=mu_aux_ad_lbl)
 
-schdlr_store = store(group="schdlrs_cache")
+schdlr_store = store(group="experiments/schdlrs_cache")
 schdlr_store(lr_sch_pcfg, name=task_lbl)
 
-grad_accum_schedule_store = store(group="grad_accum_schedule")
+grad_accum_schedule_store = store(group="experiments/grad_accum_schedule")
 grad_accum_schedule_store(grad_accum_schedule_cfg, name=task_lbl)
 
-optims_store = store(group="optims_cache")
+optims_store = store(group="experiments/optims_cache")
 optims_store(mu_aux_adam_pcfg, name=mu_aux_ad_lbl)
 
-experims_store = store(group="experiment_info")
+experims_store = store(group="experiments/experiment_info")
 experims_store(pbuilds(Experiment_Data, "class_imbalance_ratios"), name=task_lbl)
 
-logger_store = store(group="logger_cache")
+logger_store = store(group="experiments/logger_cache")
 logger_store(csv_logger_cfg, name=task_lbl)
 
-chkpt_store = store(group="chkpt_cache")
+chkpt_store = store(group="experiments/chkpt_cache")
 chkpt_store(max_checkpt_cfg, name=task_lbl)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1,
     hydra_defaults=[
+        {"experiments": "adam_muon_benchmarks"},
         {'lit_module': cif10_lbl},
-        {'params_cache': mu_aux_ad_lbl},
-        {'model_cache': cif10_lbl},
-        {'datamodule': cif10_lbl},
-        {'trainer': task_lbl},        
-        {'optims_cache': mu_aux_ad_lbl},
-        {'schdlrs_cache': task_lbl},
-        {'grad_accum_schedule': task_lbl},
-        {'experiment_info': task_lbl},
+        {'experiments.params_cache': mu_aux_ad_lbl},
+        {'experiments.model_cache': cif10_lbl},
+        {'experiments.datamodule': cif10_lbl},
+        {'experiments.trainer': task_lbl},        
+        {'experiments.optims_cache': mu_aux_ad_lbl},
+        {'experiments.schdlrs_cache': task_lbl},
+        {'experiments.grad_accum_schedule': task_lbl},
+        {'experiments.experiment_info': task_lbl},
         {'logger_cache': task_lbl},
-        {'chkpt_cache': task_lbl},
+        # {'experiments.chkpt_cache': task_lbl},
         '_self_'
     ]
 )
 
-store(ExperimentConfig, name="adam_muon_benchmarks")
+
+store(ExperimentConfig, name="adam_muon_benchmarks", group="experiments", package="_global_")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
-store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="{hydra.job.num}")))  # store `hydra.job.chdir=True`
+print(to_yaml(ExperimentConfig))
+# hydra.job.num
+store(
+    HydraConf(
+        job=JobConf(chdir=True), 
+        sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", 
+        subdir="${experiments.datamodule.downsampler_ratio}")
+    ), 
+    package="_global_",
+    group="experiments",
+    name="hydra"
+)  # store `hydra.job.chdir=True`
 
 store.add_to_hydra_store(overwrite_ok=True)
 
@@ -239,29 +252,29 @@ if __name__ == "__main__":
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
-        config_name="adam_muon_benchmarks",
         job_name="muon_class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
         overrides={
             "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++num_runs": "4,5,5,5",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "++trainer.limit_train_batches":"200",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            # "experiments.chkpt_cache": task_lbl, 
+            "experiments.datamodule": f"{cif10_lbl}", 
+            "experiments.params_cache":f"{mu_aux_ad_lbl}", 
+            "experiments.optims_cache":f"{mu_aux_ad_lbl}", 
+            "experiments.lit_module":f"{cif10_lbl}",
+            "++experiments.num_runs": "4,5,5,5",
+            "++experiments.params_cache.lr_muon":f"1e-1",
+            "++experiments.params_cache.lr_adam":f"1e-1",
+            "++experiments.params_cache.momentum_muon":f"0.9",
+            "++experiments.params_cache.beta_1_adam":f"0.95",
+            "++experiments.params_cache.beta_2_adam":f"0.999",
+            "++experiments.params_cache.nesterov":f"False",
+            "++experiments.params_cache.use_layer_recs":f"False",
+            "++experiments.params_cache.eps":f"1e-08",
+            "++experiments.datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "++experiments.trainer.limit_train_batches":"200",
+            "++experiments.trainer.limit_val_batches":"100",
+            "++experiments.trainer.limit_test_batches": "100"
         }
     )
 
@@ -274,25 +287,25 @@ if __name__ == "__main__":
         version_base="1.3",
         multirun=True,
         overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++num_runs": "2,5,5,5",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.use_muon":f"False",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "++trainer.limit_train_batches":"200",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            "experiments.model_cache": cif10_lbl, 
+            "experiments.datamodule": f"{cif10_lbl}", 
+            "experiments.params_cache":f"{mu_aux_ad_lbl}", 
+            "experiments.optims_cache":f"{mu_aux_ad_lbl}", 
+            "experiments.lit_module":f"{cif10_lbl}",
+            "++experiments.num_runs": "2,5,5,5",
+            "++experiments.params_cache.lr_muon":f"1e-1",
+            "++experiments.params_cache.lr_adam":f"1e-1",
+            "++experiments.params_cache.use_muon":f"False",
+            "++experiments.params_cache.momentum_muon":f"0.9",
+            "++experiments.params_cache.beta_1_adam":f"0.95",
+            "++experiments.params_cache.beta_2_adam":f"0.999",
+            "++experiments.params_cache.nesterov":f"False",
+            "++experiments.params_cache.use_layer_recs":f"False",
+            "++experiments.params_cache.eps":f"1e-08",
+            "++experiments.datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "++experiments.trainer.limit_train_batches":"200",
+            "++experiments.trainer.limit_val_batches":"100",
+            "++experiments.trainer.limit_test_batches": "100"
         }
     )
 
