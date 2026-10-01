@@ -6,6 +6,8 @@ from torchmetrics import Accuracy, Metric
 import torch 
 import matplotlib.pyplot as plt
 
+from torchvision.models import resnet18
+
 from torchmetrics.wrappers import ClasswiseWrapper
 from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
 
@@ -76,7 +78,7 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 
 outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
 print(outputs_dir.exists())
-all_metrics = sorted(outputs_dir.rglob("v_*/*.pt"))
+all_metrics = sorted(outputs_dir.rglob("*.pt"))
 cif10_labels = ["airplane",
         "automobile",
         "bird",
@@ -89,23 +91,27 @@ cif10_labels = ["airplane",
         "truck"]
 for path in all_metrics:
     metric = torch.load(path)
+    model = resnet18()
+    params = list(model.named_parameters())
+    param_names = [n for n, p in params if p.requires_grad]
     result = None
-    if not "gc" in str(path).lower():
-        if "acc" in str(path).lower():
+    path = str(path.stem).lower()
+    if not "gc" in path:
+        if "acc" in path:
             base_acc = MyMultiClassAccuracy(cif10_labels)
             base_acc.load_state_dict(metric)
             result = base_acc.compute()
-        elif "loss" in str(path).lower():
+        elif "loss" in path:
             base_loss = MyLoss()
             base_loss.load_state_dict(metric)
             result = base_loss.compute()
     else: 
-        if not "rgc" in str(path).lower():
-            metric_gch = GCH_Metric(header=[], name="")
+        if not "rgc" in path:
+            metric_gch = GCH_Metric(header=param_names, name="")
             metric_gch.load_state_dict(metric)
             result = metric_gch.compute()
         else: 
-            metric_gch = RGCH_Metric(header=[], name="")
+            metric_gch = RGCH_Metric(header=param_names, name="")
             metric_gch.load_state_dict(metric)
             result = metric_gch.compute()         
 
