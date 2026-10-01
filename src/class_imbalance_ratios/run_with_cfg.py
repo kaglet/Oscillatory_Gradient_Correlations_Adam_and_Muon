@@ -249,7 +249,13 @@ store.add_to_hydra_store(overwrite_ok=True)
 cfg_2_yaml = to_yaml(store["hydra", "config"])
 
 if __name__ == "__main__":
-    # TODO: Print yaml config at the end for seeing saved structure
+    def repeat_join_str(val: str | int | float, repeat_count:int = 4) -> str:
+        val = str(val) if type(val) is int else val
+        string = f"{val},"
+        string *= repeat_count
+        string = string[:-1]
+        return string   
+      
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
@@ -258,24 +264,24 @@ if __name__ == "__main__":
         version_base="1.3",
         multirun=True,
         overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++num_runs": "4,5,5,5",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "++trainer.limit_train_batches":"200",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            "model_cache": repeat_join_str(cif10_lbl), 
+            "datamodule": repeat_join_str(cif10_lbl), 
+            "params_cache":repeat_join_str(mu_aux_ad_lbl), 
+            "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
+            "lit_module":repeat_join_str(cif10_lbl),
+            "num_runs": repeat_join_str(2),
+            "params_cache.lr_muon":repeat_join_str(1e-1),
+            "params_cache.lr_adam":repeat_join_str(1e-1),
+            "params_cache.momentum_muon":repeat_join_str(0.9),
+            "params_cache.beta_1_adam":repeat_join_str(0.95),
+            "params_cache.beta_2_adam":repeat_join_str(0.999),
+            "params_cache.nesterov":repeat_join_str("False"),
+            "params_cache.use_layer_recs":repeat_join_str("False"),
+            "params_cache.eps":repeat_join_str(1e-08),
+            "datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "trainer.limit_train_batches":repeat_join_str(200),
+            "trainer.limit_val_batches":repeat_join_str(100),
+            "trainer.limit_test_batches": repeat_join_str(100)
         }
     )
 
@@ -289,24 +295,24 @@ if __name__ == "__main__":
         multirun=True,
         overrides={
             "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++num_runs": "2,5,5,5",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.use_muon":f"False",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "++trainer.limit_train_batches":"200",
-            "++trainer.limit_val_batches":"100",
-            "++trainer.limit_test_batches": "100"
+            "datamodule": repeat_join_str(cif10_lbl), 
+            "params_cache":repeat_join_str(mu_aux_ad_lbl), 
+            "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
+            "lit_module":repeat_join_str(cif10_lbl),
+            "num_runs": repeat_join_str(2),
+            "params_cache.lr_muon":repeat_join_str(1e-1),
+            "params_cache.lr_adam":repeat_join_str(1e-1),
+            "params_cache.use_muon":repeat_join_str("False"),
+            "params_cache.momentum_muon":repeat_join_str(0.9),
+            "params_cache.beta_1_adam":repeat_join_str(0.95),
+            "params_cache.beta_2_adam":repeat_join_str(0.999),
+            "params_cache.nesterov":repeat_join_str("False"),
+            "params_cache.use_layer_recs":repeat_join_str("False"),
+            "params_cache.eps":repeat_join_str(1e-08),
+            "datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "trainer.limit_train_batches":repeat_join_str(200),
+            "trainer.limit_val_batches":repeat_join_str(100),
+            "trainer.limit_test_batches": repeat_join_str(100)
         }
     )
 

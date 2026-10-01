@@ -22,7 +22,7 @@ class StoreAllGCH(Callback):
         if not trainer.training:
             return 
         
-        self.trainable_params = [p for p in pl_module.parameters() if p.grad is not None]
+        self.trainable_params = [p for p in pl_module.parameters() if p.requires_grad]
         
         curr_param_grads = []
         prev_grads_exist = len(self.state["prev_param_grads"]) != 0

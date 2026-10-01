@@ -75,45 +75,57 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 # non_scalar_a(3)
 # multi_step()
 # metric_collection()
-
-outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
-print(outputs_dir.exists())
-all_metrics = sorted(outputs_dir.rglob("*.pt"))
-cif10_labels = ["airplane",
-        "automobile",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck"]
-for path in all_metrics:
-    # Step numbers are correct for acc vs GC (1 behind)
-    metric = torch.load(path)
-    model = resnet18()
-    params = list(model.named_parameters())
-    param_names = [n for n, p in params if not p.grad is None]
-    result = None
-    path = str(path.stem).lower()
-    if not "gc" in path:
-        if "acc" in path:
-            base_acc = MyMultiClassAccuracy(cif10_labels)
-            base_acc.load_state_dict(metric)
-            result = base_acc.compute()
-        elif "loss" in path:
-            base_loss = MyLoss()
-            base_loss.load_state_dict(metric)
-            result = base_loss.compute()
-    else: 
-        if not "rgc" in path:
-            metric_gch = GCH_Metric(header=param_names, name="")
-            # metric_gch.load_state_dict(metric)
-            # result = metric_gch.compute()
+def analyse_metrics():
+    outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
+    print(outputs_dir.exists())
+    all_metrics = sorted(outputs_dir.rglob("*.pt"))
+    cif10_labels = ["airplane",
+            "automobile",
+            "bird",
+            "cat",
+            "deer",
+            "dog",
+            "frog",
+            "horse",
+            "ship",
+            "truck"]
+    for path in all_metrics:
+        # Step numbers are correct for acc vs GC (1 behind)
+        metric = torch.load(path)
+        model = resnet18()
+        params = list(model.named_parameters())
+        param_names = [n for n, p in params if not p.grad is None]
+        result = None
+        path = str(path.stem).lower()
+        if not "gc" in path:
+            if "acc" in path:
+                base_acc = MyMultiClassAccuracy(cif10_labels)
+                base_acc.load_state_dict(metric)
+                result = base_acc.compute()
+            elif "loss" in path:
+                base_loss = MyLoss()
+                base_loss.load_state_dict(metric)
+                result = base_loss.compute()
         else: 
-            metric_gch = RGCH_Metric(header=param_names, name="")
-            # metric_gch.load_state_dict(metric)
-            # result = metric_gch.compute()         
+            if not "rgc" in path:
+                metric_gch = GCH_Metric(header=param_names, name="")
+                # metric_gch.load_state_dict(metric)
+                # result = metric_gch.compute()
+            else: 
+                metric_gch = RGCH_Metric(header=param_names, name="")
+                # metric_gch.load_state_dict(metric)
+                # result = metric_gch.compute()         
 
-    print(result)
+        print(result)
+
+# analyse_metrics()
+
+def repeat_join_str(val: str | int | float, repeat_count:int = 5) -> str:
+    val = str(val) if type(val) is int else val
+    string = f"{val},"
+    string *= repeat_count
+    string = string[:-1]
+    return string   
+      
+
+print(repeat_join_str(1e-4, 5))
