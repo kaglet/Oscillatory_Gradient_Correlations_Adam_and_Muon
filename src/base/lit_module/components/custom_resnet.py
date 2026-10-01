@@ -18,7 +18,13 @@ def create_resnet_model(net: Any = resnet18, num_classes: int = 10, num_in: int=
     model.conv1 = nn.Conv2d(num_in, num_out, kernel_size=kern_size_n, stride=stride_n, padding=padding_n, bias=bias)
     model.maxpool = nn.Identity()
     fc_num_in = model.fc.in_features 
-    model.fc = nn.Sequential(nn.Linear(fc_num_in, num_classes))
+    model.fc = nn.Sequential(
+        nn.Linear(fc_num_in, 100),
+        nn.ReLU(),
+        nn.Linear(100, 40),
+        nn.ReLU(),
+        nn.Linear(40, num_classes)
+    )
 
     return model
 
