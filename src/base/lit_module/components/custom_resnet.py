@@ -21,3 +21,16 @@ def create_resnet_model(net: Any = resnet18, num_classes: int = 10, num_in: int=
     model.fc = nn.Sequential(nn.Linear(fc_num_in, num_classes))
 
     return model
+
+if __name__ == "__main__":
+
+    def print_metadata(model):
+        total = sum(p.numel() for p in model.parameters())
+        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"Total parameters    : {total:,}")
+        print(f"Trainable parameters: {trainable:,}  ({100*trainable/total:.2f}%)")
+    
+    og_model = resnet18()
+    new_model = create_resnet_model(resnet18)
+    print_metadata(og_model)
+    print_metadata(new_model)
