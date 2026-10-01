@@ -255,7 +255,28 @@ if __name__ == "__main__":
         string *= repeat_count
         string = string[:-1]
         return string   
-      
+    
+    overrides={
+        "model_cache": repeat_join_str(cif10_lbl), 
+        "datamodule": repeat_join_str(cif10_lbl), 
+        "params_cache":repeat_join_str(mu_aux_ad_lbl), 
+        "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
+        "lit_module":repeat_join_str(cif10_lbl),
+        "++num_runs": repeat_join_str(2),
+        "++params_cache.lr_muon":repeat_join_str(1e-1),
+        "++params_cache.lr_adam":repeat_join_str(1e-1),
+        "++params_cache.momentum_muon":repeat_join_str(0.9),
+        "++params_cache.beta_1_adam":repeat_join_str(0.95),
+        "++params_cache.beta_2_adam":repeat_join_str(0.999),
+        "++params_cache.nesterov":repeat_join_str("False"),
+        "++params_cache.use_layer_recs":repeat_join_str("False"),
+        "++params_cache.eps":repeat_join_str(1e-8),
+        "++datamodule.downsampler_ratio":"20,10,5,1",
+        "++trainer.limit_train_batches":repeat_join_str(200),
+        "++trainer.limit_val_batches":repeat_join_str(100),
+        "++trainer.limit_test_batches": repeat_join_str(100)
+    }
+    
     (jobs,) = launch(
         ExperimentConfig,
         task_function,
@@ -263,28 +284,31 @@ if __name__ == "__main__":
         job_name="muon_class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
-        overrides={
-            "model_cache": repeat_join_str(cif10_lbl), 
-            "datamodule": repeat_join_str(cif10_lbl), 
-            "params_cache":repeat_join_str(mu_aux_ad_lbl), 
-            "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
-            "lit_module":repeat_join_str(cif10_lbl),
-            "num_runs": repeat_join_str(2),
-            "params_cache.lr_muon":repeat_join_str(1e-1),
-            "params_cache.lr_adam":repeat_join_str(1e-1),
-            "params_cache.momentum_muon":repeat_join_str(0.9),
-            "params_cache.beta_1_adam":repeat_join_str(0.95),
-            "params_cache.beta_2_adam":repeat_join_str(0.999),
-            "params_cache.nesterov":repeat_join_str("False"),
-            "params_cache.use_layer_recs":repeat_join_str("False"),
-            "params_cache.eps":repeat_join_str(1e-08),
-            "datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "trainer.limit_train_batches":repeat_join_str(200),
-            "trainer.limit_val_batches":repeat_join_str(100),
-            "trainer.limit_test_batches": repeat_join_str(100)
-        }
+        overrides=overrides
     )
 
+    overrides={
+        "model_cache":repeat_join_str(cif10_lbl), 
+        "datamodule":repeat_join_str(cif10_lbl), 
+        "params_cache":repeat_join_str(mu_aux_ad_lbl), 
+        "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
+        "lit_module":repeat_join_str(cif10_lbl),
+        "num_runs": repeat_join_str(2),
+        "params_cache.lr_muon":repeat_join_str(1e-1),
+        "params_cache.lr_adam":repeat_join_str(1e-1),
+        "params_cache.use_muon":repeat_join_str("False"),
+        "params_cache.momentum_muon":repeat_join_str(0.9),
+        "params_cache.beta_1_adam":repeat_join_str(0.95),
+        "params_cache.beta_2_adam":repeat_join_str(0.999),
+        "params_cache.nesterov":repeat_join_str("False"),
+        "params_cache.use_layer_recs":repeat_join_str("False"),
+        "params_cache.eps":repeat_join_str(1e-8),
+        "datamodule.downsampler_ratio":"20,10,5,1",
+        "trainer.limit_train_batches":repeat_join_str(200),
+        "trainer.limit_val_batches":repeat_join_str(100),
+        "trainer.limit_test_batches": repeat_join_str(100)
+    }
+    
     # TODO: Unpack shared dict args in both vs unshared
     (jobs,) = launch(
         ExperimentConfig,
@@ -293,26 +317,6 @@ if __name__ == "__main__":
         job_name="adam_class_imbalance_ratios",
         version_base="1.3",
         multirun=True,
-        overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": repeat_join_str(cif10_lbl), 
-            "params_cache":repeat_join_str(mu_aux_ad_lbl), 
-            "optims_cache":repeat_join_str(mu_aux_ad_lbl), 
-            "lit_module":repeat_join_str(cif10_lbl),
-            "num_runs": repeat_join_str(2),
-            "params_cache.lr_muon":repeat_join_str(1e-1),
-            "params_cache.lr_adam":repeat_join_str(1e-1),
-            "params_cache.use_muon":repeat_join_str("False"),
-            "params_cache.momentum_muon":repeat_join_str(0.9),
-            "params_cache.beta_1_adam":repeat_join_str(0.95),
-            "params_cache.beta_2_adam":repeat_join_str(0.999),
-            "params_cache.nesterov":repeat_join_str("False"),
-            "params_cache.use_layer_recs":repeat_join_str("False"),
-            "params_cache.eps":repeat_join_str(1e-08),
-            "datamodule.downsampler_ratio":"20, 10, 5, 1",
-            "trainer.limit_train_batches":repeat_join_str(200),
-            "trainer.limit_val_batches":repeat_join_str(100),
-            "trainer.limit_test_batches": repeat_join_str(100)
-        }
+        overrides=overrides # TODO: Create interleaving function
     )
 
