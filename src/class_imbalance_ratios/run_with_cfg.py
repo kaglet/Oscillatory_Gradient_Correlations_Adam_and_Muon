@@ -235,8 +235,8 @@ store.add_to_hydra_store(overwrite_ok=True)
 store(
     HydraConf(
         job=JobConf(chdir=True), 
-        run=RunDir("outputs/${hydra.job.name}/multijob/"),
-        output_subdir="R_${datamodule.downsampler_ratio}", 
+        run=RunDir("outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"),
+        output_subdir="hydra_output", 
     ),
     group="hydra",
     name="config"
