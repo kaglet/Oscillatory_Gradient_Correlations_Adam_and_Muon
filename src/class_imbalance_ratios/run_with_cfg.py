@@ -237,7 +237,7 @@ store(
         job=JobConf(chdir=True), 
         sweep=SweepDir(
             dir="outputs/${hydra.job.name}/multijob/", 
-            subdir="${datamodule.downsampler_ratio}" # key access chain
+            subdir="R_${datamodule.downsampler_ratio}" # key access chain
         )
     ),
     group="hydra",
