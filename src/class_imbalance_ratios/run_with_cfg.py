@@ -230,7 +230,7 @@ store(ExperimentConfig, name="adam_muon_benchmarks")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
-store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="R_${adam_muon_benchmarks.datamodule.downsampler_ratio}")))  # store `hydra.job.chdir=True`
+store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="{hydra.job.num}")))  # store `hydra.job.chdir=True`
 
 store.add_to_hydra_store(overwrite_ok=True)
 
