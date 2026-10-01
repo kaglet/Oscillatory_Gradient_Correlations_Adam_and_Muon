@@ -234,7 +234,7 @@ class DualOptLitModule(pl.LightningModule):
 
         # Save train loss metric
         self._save_metric(
-            metric=self.metric_train_acc,
+            metric=self.metric_train_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="train"

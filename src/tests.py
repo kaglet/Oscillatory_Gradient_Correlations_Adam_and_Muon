@@ -90,6 +90,7 @@ cif10_labels = ["airplane",
         "ship",
         "truck"]
 for path in all_metrics:
+    # Step numbers are correct for acc vs GC (1 behind)
     metric = torch.load(path)
     model = resnet18()
     params = list(model.named_parameters())
@@ -108,11 +109,11 @@ for path in all_metrics:
     else: 
         if not "rgc" in path:
             metric_gch = GCH_Metric(header=param_names, name="")
-            metric_gch.load_state_dict(metric)
-            result = metric_gch.compute()
+            # metric_gch.load_state_dict(metric)
+            # result = metric_gch.compute()
         else: 
             metric_gch = RGCH_Metric(header=param_names, name="")
-            metric_gch.load_state_dict(metric)
-            result = metric_gch.compute()         
+            # metric_gch.load_state_dict(metric)
+            # result = metric_gch.compute()         
 
     print(result)
