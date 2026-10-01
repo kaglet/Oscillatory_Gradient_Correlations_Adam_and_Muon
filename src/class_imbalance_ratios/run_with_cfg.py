@@ -230,7 +230,7 @@ store(ExperimentConfig, name="adam_muon_benchmarks")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
-store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
+store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="R_${adam_muon_benchmarks.datamodule.downsampler_ratio}")))  # store `hydra.job.chdir=True`
 
 store.add_to_hydra_store(overwrite_ok=True)
 
@@ -259,6 +259,9 @@ if __name__ == "__main__":
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
             "++datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "++trainer.limit_train_batches":"200",
+            "++trainer.limit_val_batches":"100",
+            "++trainer.limit_test_batches": "100"
         }
     )
 
@@ -286,7 +289,10 @@ if __name__ == "__main__":
             "++params_cache.nesterov":f"False",
             "++params_cache.use_layer_recs":f"False",
             "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20, 10, 5, 1"
+            "++datamodule.downsampler_ratio":"20, 10, 5, 1",
+            "++trainer.limit_train_batches":"200",
+            "++trainer.limit_val_batches":"100",
+            "++trainer.limit_test_batches": "100"
         }
     )
 
