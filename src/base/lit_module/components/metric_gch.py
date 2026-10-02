@@ -41,10 +41,10 @@ class RGCH_Metric(Metric):
             setattr(self, name, curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"
-        self.steps.append(torch.tensor(step, dtype=torch.int8))
+        self.steps.append(torch.tensor(step, dtype=torch.int32))
         
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
-        self.epochs.append(torch.tensor(epoch, dtype=torch.int8))
+        self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
     def compute(self) -> dict[str, list[torch.Tensor]]:
         """ 
