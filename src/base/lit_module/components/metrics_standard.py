@@ -111,19 +111,19 @@ class MyLoss(Metric):
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
         self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
-    def compute(self, mode: str = "all") -> list[torch.Tensor] | torch.Tensor:
+    def compute(self, mode: str = "all") -> Any:
         """ 
         Returns loss as "all" values or "mean" of values. 
         """
-        assert type(self.loss) is list[torch.Tensor], "Loss is not list of tensor in metrics tracker"
+        # assert type(list(self.loss)) is list[torch.Tensor], f"Loss of type {type(self.loss)} is not list of tensor in metrics tracker"
 
         if mode == "all":
-            return self.loss
+            loss = self.loss
         elif mode == "mean":
             loss = torch.as_tensor(self.loss)
-            return loss.mean(dim=0)
+            loss = loss.mean(dim=0)
 
-        return self.loss # fallback if modes not parseable
+        return dict(loss = self.loss) # fallback if modes not parseable
 
 if __name__ == "__main__":
     pass

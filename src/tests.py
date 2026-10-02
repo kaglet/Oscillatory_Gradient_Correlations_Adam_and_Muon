@@ -92,9 +92,7 @@ def analyse_metrics():
     for path in all_metrics:
         # Step numbers are correct for acc vs GC (1 behind)
         metric = torch.load(path)
-        model = resnet18()# TODO: Change this to my custom model of course, this was the main issue I am sure
-        params = list(model.named_parameters())
-        param_names = [n for n, p in params if not p.grad is None]
+        # assert type(metric) is OrderedDict | dict, f"Metric of {type(metric)} is not OrderedDict | dict"
         result = None
         path = str(path.stem).lower()
         if not "gc" in path:
@@ -105,16 +103,18 @@ def analyse_metrics():
             elif "loss" in path:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
-                # result = base_loss.compute()
+                result = base_loss.compute()
         else: 
+            header = list(metric.keys())
+
             if not "rgc" in path:
-                metric_gch = GCH_Metric(header=param_names, name="")
-                # metric_gch.load_state_dict(metric)
-                # result = metric_gch.compute()
+                metric_gch = GCH_Metric(header=header, name="")
+                metric_gch.load_state_dict(metric)
+                result = metric_gch.compute()
             else: 
-                metric_gch = RGCH_Metric(header=param_names, name="")
-                # metric_gch.load_state_dict(metric)
-                # result = metric_gch.compute()         
+                metric_gch = RGCH_Metric(header=header, name="")
+                metric_gch.load_state_dict(metric)
+                result = metric_gch.compute()         
 
         print(result)
 
