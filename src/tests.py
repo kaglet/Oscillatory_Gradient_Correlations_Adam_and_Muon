@@ -105,7 +105,7 @@ def analyse_metrics():
             elif "loss" in path:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
-                result = base_loss.compute()
+                # result = base_loss.compute()
         else: 
             if not "rgc" in path:
                 metric_gch = GCH_Metric(header=param_names, name="")
