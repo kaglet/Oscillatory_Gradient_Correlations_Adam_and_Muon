@@ -92,7 +92,7 @@ def analyse_metrics():
     for path in all_metrics:
         # Step numbers are correct for acc vs GC (1 behind)
         metric = torch.load(path)
-        model = resnet18()
+        model = resnet18()# TODO: Change this to my custom model of course, this was the main issue I am sure
         params = list(model.named_parameters())
         param_names = [n for n, p in params if not p.grad is None]
         result = None
