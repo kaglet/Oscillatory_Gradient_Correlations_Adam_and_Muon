@@ -244,7 +244,7 @@ store(
 
 store.add_to_hydra_store(overwrite_ok=True)
 
-cfg_2_yaml = to_yaml(store["hydra", "config"])
+# cfg_2_yaml = to_yaml(store["hydra", "config"])
 
 # TODO: Move this, depends on cif10 labels and so on, which should be in a separate file
 class UnifiedJobsStore():

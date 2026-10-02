@@ -94,41 +94,29 @@ def analyse_metrics():
         metric = torch.load(path)
         # assert type(metric) is OrderedDict | dict, f"Metric of {type(metric)} is not OrderedDict | dict"
         result = None
-        derived = None
         path = str(path.stem).lower()
         if not "gc" in path:
             if "acc" in path:
                 base_acc = MyMultiClassAccuracy(cif10_labels)
                 base_acc.load_state_dict(metric)
-                result1 = base_acc
-                result2 = base_acc.clone()
-                derived = result1 + result2
+                result = base_acc.compute()
             elif "loss" in path:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
-                result1 = base_loss
-                result2 = base_loss.clone()
-                derived = result1 + result2
+                result = base_loss.compute()
         else: 
             header = list(metric.keys())
-            if not "rgc" in path:
-                metric_gch = GCH_Metric(header=header, name="gch")
-                metric_gch.load_state_dict(metric)
-                result = metric_gch
-                result1 = metric_gch
-                result2 = metric_gch.clone()
-                derived = result1 + result2
-            else: 
-                metric_gch = RGCH_Metric(header=header, name="rgch")
-                metric_gch.load_state_dict(metric)
-                result = metric_gch   
-                result1 = metric_gch
-                result2 = metric_gch.clone()
-                derived = result1 + result2      
 
-        print(result1.compute()) # type: ignore
-        print(derived.compute()) # type: ignore
-        print("Done print derived")
+            if not "rgc" in path:
+                metric_gch = GCH_Metric(header=header, name="")
+                metric_gch.load_state_dict(metric)
+                result = metric_gch.compute()
+            else: 
+                metric_gch = RGCH_Metric(header=header, name="")
+                metric_gch.load_state_dict(metric)
+                result = metric_gch.compute()         
+
+        print(result)
 
 analyse_metrics()
 

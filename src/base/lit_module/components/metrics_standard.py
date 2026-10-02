@@ -2,6 +2,7 @@ from typing import Any
 
 from torchmetrics import Metric
 import torch 
+import numpy as np
 
 """
 Still follow general convention of returning main desired result in compute etc., some reducible state beyond useful metadata. 
@@ -61,23 +62,23 @@ class MyMultiClassAccuracy(Metric):
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
         self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
-    def compute(self, mode: str = "all") -> dict[str, list[torch.Tensor]] | dict[str, torch.Tensor] | dict[str, tuple[torch.Tensor, torch.Tensor]]:
+    def compute(self, mode: str = "all") -> dict[str, list[np.ndarray]] | dict[str, np.ndarray] | dict[str, tuple[np.ndarray, np.ndarray]]:
         """ 
         Returns a dict of each lbl name and its paired list of tensor scalar values for "all"
         In other reduction modes we may get a single tensor summary value, or the value preceded by metadata, such as the step_idx. 
         """
-        layer_dict = {lbl: getattr(self, lbl) for lbl in self._labels}
+        layer_dict = {lbl: np.asarray(getattr(self, lbl)) for lbl in self._labels}
 
         if mode == "all":
             return layer_dict
         elif mode == "mean":
-            mean_dict = {lbl: torch.as_tensor(getattr(self, lbl)).mean() for lbl in self._labels}
+            mean_dict = {lbl: np.asarray(getattr(self, lbl).mean()) for lbl in self._labels}
             return mean_dict
         elif mode == "last":
-            last_dict = {lbl: getattr(self, lbl)[-1] for lbl in self._labels}
+            last_dict = {lbl: np.asarray(self, lbl)[-1] for lbl in self._labels}
             return last_dict   
         elif mode == "max":
-            max_dict = {lbl: (torch.as_tensor(getattr(self, lbl)).argmax(), torch.as_tensor(getattr(self, lbl)).max()) for lbl in self._labels}
+            max_dict = {lbl: (np.asarray(getattr(self, lbl).argmax()), np.asarray(getattr(self, lbl).max())) for lbl in self._labels}
             return max_dict        
 
         return layer_dict
@@ -111,7 +112,7 @@ class MyLoss(Metric):
         assert type(self.epochs) is list, "Epochs must be list of GC metric"
         self.epochs.append(torch.tensor(epoch, dtype=torch.int32))
 
-    def compute(self, mode: str = "all") -> Any:
+    def compute(self, mode: str = "all") -> dict[str, np.ndarray]:
         """ 
         Returns loss as "all" values or "mean" of values. 
         """
@@ -123,7 +124,7 @@ class MyLoss(Metric):
             loss = torch.as_tensor(self.loss)
             loss = loss.mean(dim=0)
 
-        return dict(loss = self.loss) # fallback if modes not parseable
+        return dict(loss = np.asarray(self.loss)) # fallback if modes not parseable
 
 if __name__ == "__main__":
     pass
