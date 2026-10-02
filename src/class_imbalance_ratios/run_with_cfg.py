@@ -283,9 +283,7 @@ class UnifiedJobsStore():
             "++params_cache.use_layer_recs": self._repeat_join_str("False"),
             "++params_cache.eps": self._repeat_join_str(1e-8),
             "++datamodule.downsampler_ratio":self.downsampler_ratios,
-            "++trainer.limit_train_batches": self._repeat_join_str(200),
-            "++trainer.limit_val_batches": self._repeat_join_str(100),
-            "++trainer.limit_test_batches": self._repeat_join_str(100),
+            "++trainer.limit_val_batches": self._repeat_join_str(6000),
         }
 
         return adam_overrides
@@ -308,9 +306,7 @@ class UnifiedJobsStore():
         "++params_cache.use_layer_recs":self._repeat_join_str("False"),
         "++params_cache.eps":self._repeat_join_str(1e-8),
         "++datamodule.downsampler_ratio":self.downsampler_ratios,
-        "++trainer.limit_train_batches":self._repeat_join_str(200),
-        "++trainer.limit_val_batches":self._repeat_join_str(100),
-        "++trainer.limit_test_batches": self._repeat_join_str(100),
+        "++trainer.limit_val_batches": self._repeat_join_str(6000),
         }
 
         return muon_overrides
