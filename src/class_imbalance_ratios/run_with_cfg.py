@@ -333,6 +333,10 @@ class UnifiedJobsStore():
         return self._downsampler_ratios
 
 if __name__ == "__main__":
+    """ 
+    Now emergent structure is 1 run idx, shared for Muon and Adam.
+    Do all inner experiments for 1 run, Muon for a ratio, then Adam. 
+    """
     jobs_store = UnifiedJobsStore()
     run_idxs = [0,1,2,3]
     for r in run_idxs:
@@ -340,6 +344,7 @@ if __name__ == "__main__":
         adam_counter = 0
         for i in range(jobs_store.job_num_each * 2):
             if i % 2 == 0:
+                # TODO: Make experims idx based too, dynamically merged, or set maybe idk
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
                 job = launch(
                     ExperimentConfig,

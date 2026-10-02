@@ -118,14 +118,14 @@ def analyse_metrics():
 
         print(result)
 
-# analyse_metrics()
+analyse_metrics()
 
-def repeat_join_str(val: str | int | float, repeat_count:int = 5) -> str:
-    val = str(val) if type(val) is int else val
-    string = f"{val},"
-    string *= repeat_count
-    string = string[:-1]
-    return string   
+# def repeat_join_str(val: str | int | float, repeat_count:int = 5) -> str:
+#     val = str(val) if type(val) is int else val
+#     string = f"{val},"
+#     string *= repeat_count
+#     string = string[:-1]
+#     return string   
       
 
-print(repeat_join_str(1e-4, 5))
+# print(repeat_join_str(1e-4, 5))
