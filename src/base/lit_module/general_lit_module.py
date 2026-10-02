@@ -306,10 +306,12 @@ class DualOptLitModule(pl.LightningModule):
         self._save_train_metrics()
 
     def on_validation_end(self) -> None:
-        self._save_val_metrics()
+        # self._save_val_metrics()
+        pass
 
     def on_test_end(self) -> None:
-        self._save_test_metrics()
+        # self._save_test_metrics()
+        pass
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
