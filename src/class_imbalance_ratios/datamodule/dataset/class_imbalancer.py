@@ -106,8 +106,10 @@ if __name__ == "__main__":
     print(len(chosen_subset))
     print(len(unchosen_subset))
 
-    print("Num target classes", np.unique(np.asarray(unchosen_subset[:, -1])))
+    # print("Num target classes", np.unique(np.asarray(unchosen_subset[:, -1])))
     count = len(unchosen_subset)
     targets = np.zeros(count)
     for i in range(count):
-        targets[i] = unchosen_subset[i][1]
+        targets[i] = unchosen_subset[i][1] # type: ignore
+
+    print(np.unique(targets))
