@@ -1,0 +1,326 @@
+
+Sat Oct  3 17:00:54 SAST 2026: executing CUDA job on host gpu2005
+Available GPU devices: 1
+
+Starting Pixi Test...
+Starting Pixi Run...
+data_dir set to:  /mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/data
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 42.65it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 45.40it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:10 • 0:00:00 42.63it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 45.42it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:10 • 0:00:00 42.66it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 45.20it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:10 • 0:00:00 42.61it/s v_num: 0.000
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 45.15it/s v_num: 0.000
+Executing run 1
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 42.84it/s v_num: 0.000
+Executing run 1
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 19/19 ━━━━━━━━━━━━━━━━━━━ 411/411 0:00:09 • 0:00:00 45.24it/s v_num: 0.000
+Executing run 1
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+
+=== CALLBACK IS ACTIVE ===
+
+Epoch 16/19 ━━━━━━━━━━━━━╸      301/411 0:00:07 • 0:00:03 42.67it/s v_num: 0.000
