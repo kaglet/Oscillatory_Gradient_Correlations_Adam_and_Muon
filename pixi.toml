@@ -45,7 +45,7 @@ scienceplots = ">=2.2.2,<3"
 triton-windows = ">=3.8.0.post28, <4"
 
 [target.linux-64.pypi-dependencies]
-setuptools = "*"
+setuptools = "<81"
 
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
