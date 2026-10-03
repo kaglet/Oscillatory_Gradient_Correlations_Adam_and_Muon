@@ -15,11 +15,15 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 from hydra_zen.typing import Partial
 from hydra_zen import instantiate
-from torchmetrics import MaxMetric, MeanMetric, Metric
+from torchmetrics.wrappers import ClasswiseWrapper
+from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
 from torchmetrics.classification.accuracy import Accuracy
 import torchvision
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 import matplotlib.pyplot as plt
+
+from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]
 
@@ -33,23 +37,35 @@ class DualOptLitModule(pl.LightningModule):
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
+        labels: list[str] = 
+        ["airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"] #cifar10 labels
     ):
         super().__init__()
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
-        
-        # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
-        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
 
-        # for averaging loss across batches
-        self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
+        self.metric_train_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_train_acc.persistent(mode=True)
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_val_acc.persistent(mode=True)
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_test_acc.persistent(mode=True)
 
-        # for tracking best so far validation accuracy
-        self.max_val_acc = MaxMetric()
+        self.metric_train_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
+        self.metric_val_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
+        self.metric_test_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
@@ -60,26 +76,37 @@ class DualOptLitModule(pl.LightningModule):
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
 
-        self._init_grad_corr_stores()
+        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
+        
+        self.metric_rgch = RGCH_Metric(header=self._per_param_names, name="RGCH")
+        self.metric_gch = GCH_Metric(header=self._per_param_names, name="GCH")
 
         self.save_hyperparameters(logger=False, ignore=["model"])
 
-    def _init_grad_corr_stores(self) -> bool:
-        self.trainable_params = []
-        self.global_gcs = []
-        self.global_r_gcs = []
-        self.prev_param_grads = []
-        self.per_param_names = []
+    def _reset_gch_stores(self) -> bool:
+        self.metric_rgch.reset() 
+        self.metric_gch.reset()
         return True
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # By default lightning executes validation step sanity checks before training starts,
         # So it's worth to make sure validation metrics don't store results from these checks
-        self.val_loss.reset()
-        self.val_acc.reset()
-        self.max_val_acc.reset()
-        self._init_grad_corr_stores()
+        self.metric_train_acc.reset()
+        self.metric_train_loss.reset()
+
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+        self._reset_gch_stores()
+
+    def on_validation_start(self) -> None:
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+    def on_test_start(self) -> None:
+        self.metric_test_acc.reset()
+        self.metric_test_loss.reset()
     
     def forward(self, input):
         return self.model(input)
@@ -88,46 +115,6 @@ class DualOptLitModule(pl.LightningModule):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
 
         return self.optims
-
-    def _store_grad_corr(self):
-        self.trainable_params = [p for p in self.model.parameters() if p.grad is not None]
-        
-        curr_param_grads = []
-        prev_grads_exist = len(self.prev_param_grads) != 0
-        curr_gcs = torch.Tensor(size=(len(self.trainable_params),))
-        curr_r_gcs = torch.zeros_like(curr_gcs)
-
-        for i, p in enumerate(self.trainable_params):
-            assert p.grad is not None, "None gradients detected, debug optimizer/s invoked on current step"
-
-            curr_p_grad = p.grad.detach().clone()
-            curr_param_grads.append(curr_p_grad) 
-
-            # Do not compute dot product if record does not exist
-            if prev_grads_exist:
-                prev_p_grad = self.prev_param_grads[i].detach().clone()
-                dot_prod = torch.sum(torch.mul(prev_p_grad, curr_p_grad))
-                norm = prev_p_grad.data.norm() * curr_p_grad.data.norm()
-                curr_gcs[i] = dot_prod / norm
-                curr_r_gcs[i] = dot_prod
-
-        # Current grad becomes past grads
-        self.prev_param_grads = curr_param_grads 
-
-        # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
-        # Given the above, the global stores can be filled
-        if len(curr_gcs) != 0: 
-            self.global_gcs.append(np.asarray(curr_gcs, dtype=np.float32))
-            self.global_r_gcs.append(np.asarray(curr_r_gcs, dtype=np.float32))
-
-        # Sanity check
-        if len(self.global_gcs) >= 2:
-            prev_store_len = len(self.global_gcs[-1])
-            curr_store_len = len(self.global_gcs[-1])
-
-            assert prev_store_len == curr_store_len, f"Mismatch between sizes {prev_store_len} and {curr_store_len} for batch {self.global_step}"
-        
-        return 1
     
     def _get_current_grad_accum(self) -> int:
         """Get current gradient accumulation factor.
@@ -155,9 +142,9 @@ class DualOptLitModule(pl.LightningModule):
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
             if stage == "val":
-                self._log_standard_metrics(self.val_loss, self.val_acc, stage, metrics)
+                self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
             elif stage == "test": 
-                self._log_standard_metrics(self.test_loss, self.test_acc, stage, metrics)
+                self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
 
         return loss
 
@@ -178,7 +165,7 @@ class DualOptLitModule(pl.LightningModule):
         if should_step:
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
-            self._log_standard_metrics(self.train_loss, self.train_acc, stage, metrics)
+            self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
 
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
@@ -191,7 +178,7 @@ class DualOptLitModule(pl.LightningModule):
                     # Access underlying optimizer directly to avoid double-counting
                     opt.optimizer.step()
 
-                self._store_grad_corr()
+                # Before this, GCH callback will run
                 opt.zero_grad()
 
             self._optimizer_step_count += 1
@@ -209,22 +196,9 @@ class DualOptLitModule(pl.LightningModule):
                 len_ad += len(g["params"])
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
-    def _log_standard_metrics(self, loss_store: MeanMetric, acc_store: Metric, stage: str, metrics: Dict[str,torch.Tensor]):
-        loss_store(metrics["loss"])
-        acc_store(metrics["preds"], metrics["targets"])
-        
-        metrics_dict = {
-            f"{stage}/loss": loss_store.compute(),
-            f"{stage}/acc": acc_store.compute()
-        }
-
-        # Choose different loggers, configured with different paths 
-        if stage == "train":
-            self.loggers[0].log_metrics(metrics_dict)
-        elif stage == "val":
-            self.loggers[1].log_metrics(metrics_dict)
-        elif stage == "test":
-            self.loggers[2].log_metrics(metrics_dict)
+    def _update_standard_metrics(self, loss_store: MyLoss, acc_store: MyMultiClassAccuracy, stage: str, metrics: Dict[str,torch.Tensor]):
+        loss_store.update(metrics["loss"], self.trainer.global_step, self.trainer.current_epoch)
+        acc_store.update(metrics["preds"], metrics["targets"], self.trainer.global_step, self.trainer.current_epoch)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
@@ -251,26 +225,93 @@ class DualOptLitModule(pl.LightningModule):
 
         return metrics 
 
-    def _log_GCH_store(self, gc_store: list[torch.Tensor], type: str = "GCH") -> None:
-        self.per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
-        fields = self.per_param_names
-        rows = np.array(gc_store, np.float32)
+    def _save_metric(self, metric: Metric, root_dir: str, prefix: str, main_name: str) -> None: 
+        log_path = Path(root_dir + f"/{prefix}_{main_name}.pt")
+        torch.save(metric.state_dict(), log_path)
 
-        # Required check to infer for join operation after
-        assert self.trainer.default_root_dir is not None, "Trainer log directory not set, cannot log GCH"
-        log_dir = os.path.join(self.trainer.default_root_dir, f'{type}_Epoch')
+    def _save_train_metrics(self) -> None: 
+        root_dir = self.trainer.default_root_dir 
 
-        os.makedirs(log_dir, exist_ok=True)
+        # Save train loss metric
+        self._save_metric(
+            metric=self.metric_train_loss,
+            root_dir=root_dir, 
+            main_name="loss", 
+            prefix="train"
+        )
 
-        with open(log_dir + f'/{self.current_epoch}.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(fields)     # Write header
-            writer.writerows(rows)      # Write many data rows
-        
-    def on_train_epoch_end(self) -> None:
-        self._log_GCH_store(gc_store=self.global_gcs, type="GCS")
-        self._log_GCH_store(gc_store=self.global_r_gcs, type="RGCS")
-        self._init_grad_corr_stores()
+        # Save train acc metric
+        self._save_metric(
+            metric=self.metric_train_acc,
+            root_dir=root_dir, 
+            main_name="acc", 
+            prefix="train"
+        )
+
+        # Save rgch metric
+        self._save_metric(
+            metric=self.metric_rgch,
+            root_dir=root_dir, 
+            main_name=self.metric_rgch.name, 
+            prefix="train"
+        )
+
+        # Save gch metric
+        self._save_metric(
+            metric=self.metric_gch,
+            root_dir=root_dir, 
+            main_name=self.metric_gch.name, 
+            prefix="train"
+        )
+
+    def _save_val_metrics(self) -> None: 
+        root_dir = self.trainer.default_root_dir 
+
+        # Save val loss metric
+        self._save_metric(
+            metric=self.metric_val_loss,
+            root_dir=root_dir, 
+            main_name="loss", 
+            prefix="val"
+        )
+
+        self._save_metric(
+            metric=self.metric_val_acc,
+            root_dir=root_dir, 
+            main_name="acc", 
+            prefix="val"
+        )
+
+    def _save_test_metrics(self) -> None: 
+        root_dir = self.trainer.default_root_dir 
+        self._save_metric(
+            metric=self.metric_test_loss,
+            root_dir=root_dir, 
+            main_name="loss", 
+            prefix="test"
+        )
+
+        self._save_metric(
+            metric=self.metric_test_acc,
+            root_dir=root_dir, 
+            main_name="acc", 
+            prefix="test"
+        )
+
+    def on_fit_end(self) -> None:   
+        self._save_train_metrics()
+        self._save_val_metrics()
+
+    def on_train_end(self) -> None:
+        self._save_train_metrics()
+
+    def on_validation_end(self) -> None:
+        # self._save_val_metrics()
+        pass
+
+    def on_test_end(self) -> None:
+        # self._save_test_metrics()
+        pass
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(

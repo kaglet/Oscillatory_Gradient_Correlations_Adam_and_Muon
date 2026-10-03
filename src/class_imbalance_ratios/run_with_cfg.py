@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import os
 import multiprocessing
 from pathlib import Path
-from typing import Any, Type
+from typing import Any, Literal, Type
 
 from omegaconf import OmegaConf
 import torch
@@ -15,13 +15,14 @@ import torchvision
 import torch.nn as nn
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
-from hydra_zen import instantiate, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
+from hydra_zen import instantiate, to_yaml, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim.lr_scheduler import LRScheduler
-from hydra.conf import HydraConf, JobConf, SweepDir
+from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
+from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -33,6 +34,7 @@ from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
 from hydra_zen.third_party.pydantic import validates_with_pydantic
+# from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
 builds = make_custom_builds_fn(populate_full_signature=True)
 pbuilds = make_custom_builds_fn(
@@ -95,8 +97,6 @@ max_checkpt_cfg = pbuilds(
     save_last=True,
 )
 
-chkpts_cfg_list = [max_checkpt_cfg]
-
 tb_logger_cfg = pbuilds(TensorBoardLogger, name="train")
 csv_logger_cfg = [
     pbuilds(CSVLogger, name="train", version=""), # Remove version nesting
@@ -107,15 +107,15 @@ csv_logger_cfg = [
 # Define base trainer cfg
 trainer_cfg = pbuilds(
     pl.Trainer, 
-    max_epochs=2,
-    deterministic=False,
+    num_sanity_val_steps = 0,
+    max_epochs=20,
+    deterministic=True,
+    accelerator="gpu",
     benchmark=False,
     detect_anomaly=False,
-    devices=2, 
-    precision = "bf16-mixed",
-    default_root_dir = root_dir,
-    strategy="ddp",
-    accelerator="gpu",
+    devices=1, 
+    # precision = "bf16-mixed",
+    callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -153,7 +153,7 @@ cls_imb_datamdl_s_cfg = builds(
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 16
+    num_workers = 8
 )
 
 cls_imb_datamdl_l_cfg = builds(
@@ -165,7 +165,7 @@ cls_imb_datamdl_l_cfg = builds(
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
     batch_size = 64,
-    num_workers = 16
+    num_workers = 8
 )
 
 # TODO: Store these overlapping keys in a dictionary rather to not keep repeating prefix values and to make config easier
@@ -231,69 +231,140 @@ ExperimentConfig = make_config(
     ]
 )
 
-store(ExperimentConfig, name="adam_muon_benchmarks")
+store(ExperimentConfig, name="adam_muon_benchmarks", group="experiments")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed)
 
+store.add_to_hydra_store(overwrite_ok=True)
+
+store(
+    HydraConf(
+        job=JobConf(chdir=True), 
+        run=RunDir("outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"),
+        output_subdir="hydra_run_${run_idx}", 
+    ),
+    group="hydra",
+    name="config"
+)  # store `hydra.job.chdir=True`
+
+store.add_to_hydra_store(overwrite_ok=True)
+
+# cfg_2_yaml = to_yaml(store["hydra", "config"])
+
+# TODO: Move this, depends on cif10 labels and so on, which should be in a separate file
+class UnifiedJobsStore():
+    """ 
+    Unified serial job run store for Muon and Adam. Can later be separated as potential TODO. 
+    This stores values for a series of experiments. It does not control running experiments multiple times at a meta level. 
+    The `get_run_vals` function augments this functional need however. 
+    """
+    def __init__(self, downsampler_ratios: list[int] = [20, 10, 5, 1]) -> None:
+        self._downsampler_ratios = downsampler_ratios
+        self._job_num_each = len(self._downsampler_ratios)
+        self._adam_overrides = self._set_adam_overrides()
+        self._muon_overrides = self._set_muon_overrides()
+
+    def _repeat_join_str(self, val: str | int | float) -> list[str]:
+        val = str(val) if type(val) is int else val
+        string = [f"{val}"]
+        string *= self._job_num_each
+        string = string
+        return string   
+
+    def _set_muon_overrides(self): 
+        adam_overrides = {
+            "model_cache": self._repeat_join_str(cif10_lbl), 
+            "datamodule": self._repeat_join_str(cif10_lbl), 
+            "params_cache": self._repeat_join_str(mu_aux_ad_lbl), 
+            "optims_cache": self._repeat_join_str(mu_aux_ad_lbl), 
+            "lit_module": self._repeat_join_str(cif10_lbl),
+            "++run_idx": self._repeat_join_str(2),
+            "++params_cache.lr_muon": self._repeat_join_str(1e-1),
+            "++params_cache.lr_adam": self._repeat_join_str(1e-1),
+            "++params_cache.momentum_muon": self._repeat_join_str(0.9),
+            "++params_cache.beta_1_adam": self._repeat_join_str(0.95),
+            "++params_cache.beta_2_adam": self._repeat_join_str(0.999),
+            "++params_cache.nesterov": self._repeat_join_str("False"),
+            "++params_cache.use_layer_recs": self._repeat_join_str("False"),
+            "++params_cache.eps": self._repeat_join_str(1e-8),
+            "++datamodule.downsampler_ratio":self.downsampler_ratios,
+            "++trainer.limit_val_batches": self._repeat_join_str(6000),
+        }
+
+        return adam_overrides
+
+    def _set_adam_overrides(self): # TODO: Find way to merge into each dict intelligently shared definite params to not repeat. Could do merge dict after defining shared properties.
+        muon_overrides = {
+        "model_cache":self._repeat_join_str(cif10_lbl), 
+        "datamodule":self._repeat_join_str(cif10_lbl), 
+        "params_cache":self._repeat_join_str(mu_aux_ad_lbl), 
+        "optims_cache":self._repeat_join_str(mu_aux_ad_lbl), 
+        "lit_module":self._repeat_join_str(cif10_lbl),
+        "++run_idx": self._repeat_join_str(2),
+        "++params_cache.lr_muon":self._repeat_join_str(1e-1),
+        "++params_cache.lr_adam":self._repeat_join_str(1e-1),
+        "++params_cache.use_muon":self._repeat_join_str("False"),
+        "++params_cache.momentum_muon":self._repeat_join_str(0.9),
+        "++params_cache.beta_1_adam":self._repeat_join_str(0.95),
+        "++params_cache.beta_2_adam":self._repeat_join_str(0.999),
+        "++params_cache.nesterov":self._repeat_join_str("False"),
+        "++params_cache.use_layer_recs":self._repeat_join_str("False"),
+        "++params_cache.eps":self._repeat_join_str(1e-8),
+        "++datamodule.downsampler_ratio":self.downsampler_ratios,
+        "++trainer.limit_val_batches": self._repeat_join_str(6000),
+        }
+
+        return muon_overrides
+    
+    def get_run_vals(self, outer_run: int, inner_experim_idx: int = 0, which: Literal['muon', "adam"] = 'muon') -> dict[str, str]:
+        """ 
+        
+        """
+        overrides = self._muon_overrides if which == "muon" else self._adam_overrides
+        valid_slice = {k:v[inner_experim_idx] for k,v in overrides.items()}
+        run_slice = {**valid_slice, "++run_idx":f"{str(outer_run)}"}
+        return run_slice
+
+    @property
+    def job_num_each(self):
+        return self._job_num_each
+
+    @property
+    def downsampler_ratios(self):
+        return self._downsampler_ratios
+
 if __name__ == "__main__":
-    store(HydraConf(job=JobConf(chdir=True), sweep=SweepDir(dir="outputs/${hydra.job.name}/multijob/", subdir="v_${hydra.job.num}")))  # store `hydra.job.chdir=True`
-
-    store.add_to_hydra_store(overwrite_ok=True)
-    torch.set_float32_matmul_precision(precision="low")
-
-    (jobs,) = launch(
-        ExperimentConfig,
-        task_function,
-        config_name="adam_muon_benchmarks",
-        job_name="adam_class_imbalance_ratios",
-        version_base="1.3",
-        multirun=True,
-        overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.use_muon":f"False",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1",
-            # "++trainer.fast_dev_run": "1",
-            "++num_runs": "2"
-        }
-    )
-
-    # TODO: Print yaml config at the end for seeing saved structure
-    (jobs,) = launch(
-        ExperimentConfig,
-        task_function,
-        config_name="adam_muon_benchmarks",
-        job_name="muon_class_imbalance_ratios",
-        version_base="1.3",
-        multirun=True,
-        overrides={
-            "model_cache": cif10_lbl, 
-            "datamodule": f"{cif10_lbl}", 
-            "params_cache":f"{mu_aux_ad_lbl}", 
-            "optims_cache":f"{mu_aux_ad_lbl}", 
-            "lit_module":f"{cif10_lbl}",
-            "++params_cache.lr_muon":f"1e-1",
-            "++params_cache.lr_adam":f"1e-1",
-            "++params_cache.momentum_muon":f"0.9",
-            "++params_cache.beta_1_adam":f"0.95",
-            "++params_cache.beta_2_adam":f"0.999",
-            "++params_cache.nesterov":f"False",
-            "++params_cache.use_layer_recs":f"False",
-            "++params_cache.eps":f"1e-08",
-            "++datamodule.downsampler_ratio":"20,1",
-            # "++trainer.fast_dev_run": "1",
-            "++num_runs": "2"
-        }
-    )
+    """ 
+    Now emergent structure is 1 run idx, shared for Muon and Adam.
+    Do all inner experiments for 1 run, Muon for a ratio, then Adam. 
+    """
+    jobs_store = UnifiedJobsStore()
+    run_idxs = [0,1,2,3]
+    for r in run_idxs:
+        muon_counter = 0
+        adam_counter = 0
+        for i in range(jobs_store.job_num_each * 2):
+            if i % 2 == 0:
+                # TODO: Make experims idx based too, dynamically merged, or set maybe idk
+                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
+                job = launch(
+                    ExperimentConfig,
+                    task_function,
+                    config_name="adam_muon_benchmarks",
+                    job_name="muon_class_imbalance_ratios",
+                    version_base="1.3",
+                    overrides=curr_job
+                )
+                muon_counter += 1
+            else:
+                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=adam_counter, which='adam')
+                job = launch(
+                    ExperimentConfig,
+                    task_function,
+                    config_name="adam_muon_benchmarks",
+                    job_name="adam_class_imbalance_ratios",
+                    version_base="1.3",
+                    overrides=curr_job
+                )
+                adam_counter += 1
 

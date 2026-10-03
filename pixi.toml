@@ -9,12 +9,11 @@ platforms = [
 ]
 
 [tasks]
-random_tests = "python src/random_tests.py +db=postgresql"
+tests = "python -m src.tests"
 cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
-test = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
+cls_imb_datamodule = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]
-setuptools = "<81"
 pytorch-gpu = "*"
 lightning = "*"
 hydra-zen = ">=0.16.0,<0.17"
@@ -32,21 +31,23 @@ scikit-image = "*"
 pillow = "10.4.0.*"
 pandas = "*"
 imbalanced-learn = ">=0.14.2,<0.15"
-tqdm = ">=4.70.0,<5"
+tqdm = ">=4.70.1,<5"
 pydantic = ">=2.13.5,<3"
 jupyterlab = ">=4.6.3,<5"
 ipykernel = ">=7.3.0,<8"
 pip = ">=26.2.1,<27"
 ipywidgets = ">=8.1.9,<9"
-notebook = ">=7.6.2,<8"
+notebook = ">=7.6.3,<8"
 nbconvert = ">=7.17.1,<8"
 scienceplots = ">=2.2.2,<3"
 
 [target.win-64.pypi-dependencies]
 triton-windows = ">=3.8.0.post28, <4"
 
+[target.linux-64.pypi-dependencies]
+setuptools = "*"
+
 [pypi-dependencies]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
 jupyter-contrib-nbextensions = ">=0.7.0, <0.8"
 torchmetrics = { version = "*", extras = ["visual"] }
-
