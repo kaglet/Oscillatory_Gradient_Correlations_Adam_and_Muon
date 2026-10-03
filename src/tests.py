@@ -96,7 +96,7 @@ def analyse_metrics():
         result = None
         path = str(path.stem).lower()
         if not "gc" in path:
-            if "acc" in path:
+            if "val_acc" in path:
                 base_acc = MyMultiClassAccuracy(cif10_labels)
                 base_acc.load_state_dict(metric)
                 result = base_acc.compute()
