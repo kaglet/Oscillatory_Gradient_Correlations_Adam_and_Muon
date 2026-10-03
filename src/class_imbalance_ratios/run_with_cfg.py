@@ -107,7 +107,7 @@ csv_logger_cfg = [
 trainer_cfg = pbuilds(
     pl.Trainer, 
     num_sanity_val_steps = 0,
-    max_epochs=200,
+    max_epochs=2,
     deterministic=True,
     accelerator="gpu",
     benchmark=False,
