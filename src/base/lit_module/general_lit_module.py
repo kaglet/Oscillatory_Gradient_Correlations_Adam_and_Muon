@@ -53,11 +53,11 @@ class DualOptLitModule(pl.LightningModule):
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
 
-        self.metric_train_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_train_acc = MyMultiClassAccuracy(labels=labels, name="train/acc")
         self.metric_train_acc.persistent(mode=True)
-        self.metric_val_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
         self.metric_val_acc.persistent(mode=True)
-        self.metric_test_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
         self.metric_test_acc.persistent(mode=True)
 
         self.metric_train_loss = MyLoss()

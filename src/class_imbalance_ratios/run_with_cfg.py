@@ -267,7 +267,7 @@ class UnifiedJobsStore():
         return string   
 
     def _set_muon_overrides(self): 
-        adam_overrides = {
+        muon_overrides = {
             "model_cache": self._repeat_join_str(cif10_lbl), 
             "datamodule": self._repeat_join_str(cif10_lbl), 
             "params_cache": self._repeat_join_str(mu_aux_ad_lbl), 
@@ -286,10 +286,10 @@ class UnifiedJobsStore():
             "++trainer.limit_val_batches": self._repeat_join_str(6000),
         }
 
-        return adam_overrides
+        return muon_overrides
 
     def _set_adam_overrides(self): # TODO: Find way to merge into each dict intelligently shared definite params to not repeat. Could do merge dict after defining shared properties.
-        muon_overrides = {
+        adam_overrides = {
         "model_cache":self._repeat_join_str(cif10_lbl), 
         "datamodule":self._repeat_join_str(cif10_lbl), 
         "params_cache":self._repeat_join_str(mu_aux_ad_lbl), 
@@ -309,7 +309,7 @@ class UnifiedJobsStore():
         "++trainer.limit_val_batches": self._repeat_join_str(6000),
         }
 
-        return muon_overrides
+        return adam_overrides
     
     def get_run_vals(self, outer_run: int, inner_experim_idx: int = 0, which: Literal['muon', "adam"] = 'muon') -> dict[str, str]:
         """ 
@@ -339,6 +339,7 @@ if __name__ == "__main__":
         muon_counter = 0
         adam_counter = 0
         for i in range(jobs_store.job_num_each * 2):
+            print(f"Muon run {muon_counter} of global run {i} is running")
             if i % 2 == 0:
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
@@ -352,6 +353,8 @@ if __name__ == "__main__":
                 )
                 muon_counter += 1
             else:
+                print(f"Adam run {adam_counter} of global run {i} is running")
+
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=adam_counter, which='adam')
                 job = launch(
                     ExperimentConfig,
