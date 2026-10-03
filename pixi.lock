@@ -145,7 +145,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/python-fastjsonschema-2.22.2-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-gil-3.14.7-h4df99d1_106.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-json-logger-4.2.0-pyhd8ed1ab_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/python-tzdata-2026.4-pyh5ded981_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/python-tzdata-2026.5-pyh5ded981_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/python_abi-3.14-9_cp314.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytorch-lightning-2.6.6-pyh5ded981_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/referencing-0.37.0-pyhcf101f3_0.conda
@@ -2231,19 +2231,18 @@ packages:
   run_exports: {}
   size: 19367
   timestamp: 1786872772907
-- conda: https://prefix.dev/conda-forge/noarch/python-tzdata-2026.4-pyh5ded981_0.conda
-  sha256: 4a66a09c6c18e6488000b1a848ed557669d12f673feac682d58208e7e8b66434
-  md5: 6fc085ba8fa446b73bff580281b21ce3
+- conda: https://prefix.dev/conda-forge/noarch/python-tzdata-2026.5-pyh5ded981_0.conda
+  sha256: b66b783be882069a9f6c00bc44ee561fc3dfba21fe4bab6de31599caf3c63154
+  md5: 4a0ae2a06b469e6f8ca95d0655e31c86
   depends:
   - python >=3.11
   - python
   license: Apache-2.0
-  license_family: APACHE
   purls:
   - pkg:pypi/tzdata?source=compressed-mapping
   run_exports: {}
-  size: 141252
-  timestamp: 1790159994982
+  size: 141379
+  timestamp: 1791025923003
 - conda: https://prefix.dev/conda-forge/noarch/python_abi-3.14-9_cp314.conda
   build_number: 9
   sha256: e7f8e965bbfb98e08feb2365cacdad8bb218fa5b5a0a2752f747287f425f213c

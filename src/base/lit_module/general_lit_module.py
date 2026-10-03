@@ -143,6 +143,7 @@ class DualOptLitModule(pl.LightningModule):
             metrics = dict(loss=loss, preds=preds, targets=targets)
             if stage == "val":
                 self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
+                breakpoint()
             elif stage == "test": 
                 self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
 
