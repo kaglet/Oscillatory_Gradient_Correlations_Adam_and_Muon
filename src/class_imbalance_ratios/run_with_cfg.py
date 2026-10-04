@@ -289,6 +289,7 @@ class UnifiedJobsStore():
         return muon_overrides
 
     def _set_adam_overrides(self): # TODO: Find way to merge into each dict intelligently shared definite params to not repeat. Could do merge dict after defining shared properties.
+        # TODO; Set Muon defaults so this need not be set here
         adam_overrides = {
         "model_cache":self._repeat_join_str(cif10_lbl), 
         "datamodule":self._repeat_join_str(cif10_lbl), 
@@ -297,7 +298,7 @@ class UnifiedJobsStore():
         "lit_module":self._repeat_join_str(cif10_lbl),
         "++run_idx": self._repeat_join_str(2),
         "++params_cache.lr_muon":self._repeat_join_str(1e-1),
-        "++params_cache.lr_adam":self._repeat_join_str(3e-4),
+        "++params_cache.lr_adam":self._repeat_join_str(1e-1),
         "++params_cache.use_muon":self._repeat_join_str("False"),
         "++params_cache.momentum_muon":self._repeat_join_str(0.9),
         "++params_cache.beta_1_adam":self._repeat_join_str(0.95),
@@ -340,6 +341,7 @@ if __name__ == "__main__":
         adam_counter = 0
         for i in range(jobs_store.job_num_each * 2):
             if i % 2 == 0:
+                continue
                 print(f"Muon run {muon_counter} of global run {i} is running")
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
