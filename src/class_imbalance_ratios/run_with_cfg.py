@@ -297,14 +297,14 @@ class UnifiedJobsStore():
         "lit_module":self._repeat_join_str(cif10_lbl),
         "++run_idx": self._repeat_join_str(2),
         "++params_cache.lr_muon":self._repeat_join_str(1e-1),
-        "++params_cache.lr_adam":self._repeat_join_str(1e-1),
+        "++params_cache.lr_adam":self._repeat_join_str(3e-4),
         "++params_cache.use_muon":self._repeat_join_str("False"),
         "++params_cache.momentum_muon":self._repeat_join_str(0.9),
         "++params_cache.beta_1_adam":self._repeat_join_str(0.95),
         "++params_cache.beta_2_adam":self._repeat_join_str(0.999),
         "++params_cache.nesterov":self._repeat_join_str("False"),
         "++params_cache.use_layer_recs":self._repeat_join_str("False"),
-        "++params_cache.eps":self._repeat_join_str(1e-8),
+        "++params_cache.eps":self._repeat_join_str(1e-10),
         "++datamodule.downsampler_ratio":self.downsampler_ratios,
         "++trainer.limit_val_batches": self._repeat_join_str(6000),
         }
@@ -339,8 +339,8 @@ if __name__ == "__main__":
         muon_counter = 0
         adam_counter = 0
         for i in range(jobs_store.job_num_each * 2):
-            print(f"Muon run {muon_counter} of global run {i} is running")
             if i % 2 == 0:
+                print(f"Muon run {muon_counter} of global run {i} is running")
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
                 curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
                 job = launch(
