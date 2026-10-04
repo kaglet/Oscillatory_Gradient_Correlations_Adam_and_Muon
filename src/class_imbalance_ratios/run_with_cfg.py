@@ -124,9 +124,6 @@ cls_imb_s_transforms = builds(
     ]
 )
 
-total_local_cores = 0
-total_local_cores = total_local_cores if type(total_local_cores) == int else 1
-
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
@@ -201,37 +198,39 @@ if __name__ == "__main__":
     Now emergent structure is 1 run idx, shared for Muon and Adam.
     Do all inner experiments for 1 run, Muon for a ratio, then Adam. 
     """
-    jobs_store = UnifiedJobsStore()
-    run_idxs = [0,1,2,3]
-    for r in run_idxs:
-        muon_counter = 0
-        adam_counter = 0
-        for i in range(jobs_store.job_num_each * 2):
+    adam_experiment_cfg_store = OverridesRunManager(adam_overrides, autofill_exceptions, 4, [0, 1])
+    muon_experiment_cfg_store = OverridesRunManager(muon_overrides, autofill_exceptions, 4, [0, 1])
+
+    for run_counter in range(adam_experiment_cfg_store.get_num_runs()):
+        adam_experiment_cfg_store.advance_run()
+        muon_experiment_cfg_store.advance_run()
+
+        for i in range(adam_experiment_cfg_store.job_num_each * 2):
             if i % 2 == 0:
-                continue
-                print(f"Muon run {muon_counter} of global run {i} is running")
+                muon_experiment_cfg_store.advance_experim()
+
+                print(f"Muon run {run_counter} of global run {i} is running")
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
-                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=muon_counter, which='muon')
+                curr_vals = adam_experiment_cfg_store.get_experim_vals()
                 job = launch(
                     ExperimentConfig,
                     task_function,
                     config_name="adam_muon_benchmarks",
                     job_name="muon_class_imbalance_ratios",
                     version_base="1.3",
-                    overrides=curr_job
+                    overrides=curr_vals
                 )
-                muon_counter += 1
             else:
-                print(f"Adam run {adam_counter} of global run {i} is running")
+                adam_experiment_cfg_store.advance_experim()
+                print(f"Adam run {adam_experiment_cfg_store.get_curr_run} of global run {i} is running")
 
-                curr_job = jobs_store.get_run_vals(r, inner_experim_idx=adam_counter, which='adam')
+                curr_vals = adam_experiment_cfg_store.get_experim_vals()
                 job = launch(
                     ExperimentConfig,
                     task_function,
                     config_name="adam_muon_benchmarks",
                     job_name="adam_class_imbalance_ratios",
                     version_base="1.3",
-                    overrides=curr_job
+                    overrides=curr_vals
                 )
-                adam_counter += 1
 
