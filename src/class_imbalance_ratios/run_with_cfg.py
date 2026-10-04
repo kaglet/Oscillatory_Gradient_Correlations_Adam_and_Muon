@@ -189,7 +189,7 @@ ExperimentConfig = make_config(
 
         {group_names.loggers: shared_config_names.experiment},
 
-        # {group_names.checkpoints: shared_config_names.experiment},
+        {group_names.checkpoints: shared_config_names.experiment},
 
         {group_names.overrides_manager: shared_config_names.muon},
 
