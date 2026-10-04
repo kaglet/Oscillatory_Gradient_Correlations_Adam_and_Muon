@@ -7,12 +7,17 @@ cfg_key_downsampler = f"++{group_names.datamodule}.downsampler_ratios"
 autofill_exceptions = [cfg_key_downsampler]
 
 adam_overrides = {
+    f"{group_names.overrides_manager}": shared_config_names.adam,
+
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
     f"{group_names.parameters_set}": shared_config_names.experiment, 
     f"{group_names.optimizers}": shared_config_names.experiment, 
     f"{group_names.lightning_module}": shared_config_names.experiment,
-    f"{group_names.overrides_manager}": shared_config_names.experiment,
+    f"{group_names.checkpoints}": shared_config_names.experiment,
+    f"{group_names.trainer}": shared_config_names.experiment,
+    f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
+
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-1,
     f"++{group_names.parameters_set}.use_muon": "False",
@@ -28,11 +33,17 @@ adam_overrides = {
 }
 
 muon_overrides = {
+    f"{group_names.overrides_manager}": shared_config_names.muon,
+
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
     f"{group_names.parameters_set}": shared_config_names.experiment, 
     f"{group_names.optimizers}": shared_config_names.experiment, 
     f"{group_names.lightning_module}": shared_config_names.experiment,
+    f"{group_names.checkpoints}": shared_config_names.experiment,
+    f"{group_names.trainer}": shared_config_names.experiment,
+    f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
+
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-1,
     f"++{group_names.parameters_set}.use_muon": "False",

@@ -10,7 +10,7 @@ platforms = [
 
 [tasks]
 tests = "python -m src.tests"
-cls_imb = "python -m pdb -m src.class_imbalance_ratios.run_with_cfg"
+cls_imb = "python -m src.class_imbalance_ratios.run_with_cfg"
 cls_imb_datamodule = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 
 [dependencies]

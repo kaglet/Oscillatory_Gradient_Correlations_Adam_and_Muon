@@ -171,15 +171,34 @@ overrides_manager_store(builds(OverridesRunManager, muon_overrides, autofill_exc
 ExperimentConfig = make_config(
     seed=1, # TODO: Make new seed per run as param to overrides not here 
     hydra_defaults=[
-        "__self__"
+        {group_names.lightning_module: shared_config_names.experiment},
+
+        {group_names.parameters_set: shared_config_names.experiment},
+
+        {group_names.models: shared_config_names.experiment},
+
+        {group_names.datamodule: shared_config_names.experiment},
+
+        {group_names.trainer: shared_config_names.experiment},      
+
+        {group_names.optimizers: shared_config_names.experiment},
+
+        {group_names.schedulers: shared_config_names.experiment},
+
+        {group_names.gradient_accumulator_schedule: shared_config_names.experiment},
+
+        {group_names.loggers: shared_config_names.experiment},
+
+        # {group_names.checkpoints: shared_config_names.experiment},
+
+        {group_names.overrides_manager: shared_config_names.muon},
+
+        '_self_'
     ]
 )
 
-store(ExperimentConfig, name="adam_muon_benchmarks", group="experiments")
 pre_seed = zen(lambda seed: pl.seed_everything(seed))
 task_function = zen(train_and_val, pre_call=pre_seed) # Remove seeding here caught as input to config
-
-store.add_to_hydra_store(overwrite_ok=True)
 
 store(
     HydraConf(
@@ -211,12 +230,13 @@ if __name__ == "__main__":
 
                 print(f"Muon run {run_counter} of global run {i} is running")
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
-                curr_vals = adam_experiment_cfg_store.get_experim_vals()
+                curr_vals = muon_experiment_cfg_store.get_experim_vals()
+                print(curr_vals)
                 job = launch(
                     ExperimentConfig,
                     task_function,
-                    config_name="adam_muon_benchmarks",
-                    job_name="muon_class_imbalance_ratios",
+                    config_name="muon_class_imbalance_ratios",
+                    job_name="muon_benchmarks",
                     version_base="1.3",
                     overrides=curr_vals
                 )
@@ -228,8 +248,8 @@ if __name__ == "__main__":
                 job = launch(
                     ExperimentConfig,
                     task_function,
-                    config_name="adam_muon_benchmarks",
-                    job_name="adam_class_imbalance_ratios",
+                    config_name="adam_class_imbalance_ratios",
+                    job_name="adam_benchmarks",
                     version_base="1.3",
                     overrides=curr_vals
                 )

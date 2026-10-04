@@ -12,8 +12,8 @@ __all__ = ["group_names"]
 
 @dataclass
 class GroupNameStore:
-    lightning_module:str="lit_module"
-    trainer="trainer"
+    lightning_module = "lit_module"
+    trainer = "trainer"
     datamodule = "datamodule"
     models = "model_cache"
     parameters_set = "params_cache"
