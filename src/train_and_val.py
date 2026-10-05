@@ -26,7 +26,7 @@ def train_and_val(
     model_cache: nn.Module, # as built class instance
     params_cache: Callable, # as getter method instance
     optims_cache: list[Partial[Optimizer]],
-    schdlr_cache: Partial[LRScheduler], 
+    schdlrs_cache: Partial[LRScheduler], 
     logger_cache: Any,
     chkpt_cache: Any,
     run_idx: int,
@@ -37,7 +37,7 @@ def train_and_val(
     print(f"Executing run {run_idx}") 
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
-    schdlrs = [schdlr_cache(optimizer=optims[0]) for _ in optims]
+    schdlrs = [schdlrs_cache(optimizer=optims[0]) for _ in optims]
     lit_module_built = lit_module(model=model_cache, params=params, optims=optims, schedulers=schdlrs)
 
     path_all = Path(os.getcwd(), f"run_{run_idx}") # 

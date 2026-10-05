@@ -3,16 +3,14 @@ from src.class_imbalance_ratios.group_names import shared_config_names
 
 __all__ = ["adam_overrides", "muon_overrides", "autofill_exceptions"]
 
-cfg_key_downsampler = f"++{group_names.datamodule}.downsampler_ratios"
+cfg_key_downsampler = f"++{group_names.datamodule}.downsampler_ratio"
 autofill_exceptions = [cfg_key_downsampler]
 run_idx = "run_idx"
 seed = "seed"
 
 adam_overrides = {
-    f"{run_idx}": "0",
-    f"{seed}": "0",
-
-    f"{group_names.overrides_manager}": shared_config_names.adam,
+    f"++{run_idx}": "0",
+    f"++{seed}": "0",
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -33,17 +31,16 @@ adam_overrides = {
     f"++{group_names.parameters_set}.nesterov": "False",
     f"++{group_names.parameters_set}.use_layer_recs": "False",
     f"++{group_names.parameters_set}.eps": 1e-10, # Not given
-    f"{cfg_key_downsampler}":"[20, 10, 5, 1]", # Part of map blueprint given
-    f"++{group_names.trainer}.limit_val_batches": 200,
-    f"++{group_names.trainer}.max_epochs": 50,
+    f"{cfg_key_downsampler}": [20, 10, 5, 1], # Part of map blueprint given
+    f"++{group_names.trainer}.limit_train_batches": 100,
+    f"++{group_names.trainer}.limit_val_batches": 30,
+    f"++{group_names.trainer}.max_epochs": 2,
 }
 
 muon_overrides = {
-    f"{run_idx}": "0",
-    f"{seed}": "0",
+    f"++{run_idx}": "0",
+    f"++{seed}": "0",
 
-    f"{group_names.overrides_manager}": shared_config_names.muon,
-    
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
     f"{group_names.parameters_set}": shared_config_names.experiment, 
@@ -63,7 +60,8 @@ muon_overrides = {
     f"++{group_names.parameters_set}.nesterov": "False",
     f"++{group_names.parameters_set}.use_layer_recs": "False",
     f"++{group_names.parameters_set}.eps": 1e-10, # Not given
-    f"{cfg_key_downsampler}":"[20, 10, 5, 1]",
-    f"++{group_names.trainer}.limit_val_batches": 200,
-    f"++{group_names.trainer}.max_epochs": 50,
+    f"{cfg_key_downsampler}": [20, 10, 5, 1],
+    f"++{group_names.trainer}.limit_train_batches": 100,
+    f"++{group_names.trainer}.limit_val_batches": 30,
+    f"++{group_names.trainer}.max_epochs": 2,
 }
