@@ -1,77 +1,84 @@
-__all__ = ["OverridesRunManager"]
+__all__ = ["ArtificialOverridesPadder"]
 
-class OverridesRunManager():
+class ArtificialOverridesPadder():
     """ 
-    This manages only the independent experiments and value matching done to get appropriate combinations of values at the desired experiment index.
-    Dict keys AND their values are expected in the VALID strict OmegaConf overrides syntax and types bubbled up to Hydra-zen. 
-    Multi-run is NOT recommended to be set via this. Ensure any range of values is in pure list format `[]`.
-
-    Exception to the typing of overrides is when passing a dict of python `list` of `str` values (not OmegaConf).
-    Each `str` entry is therefore individually of the required OmegaCong type. 
-
-    Experiments map 
-
-    Unified serial job run store for Muon and Adam. Can later be separated as potential TODO. 
-    This stores values for a series of experiments. It does not control running experiments multiple times at a meta level. 
-    The `get_run_vals` function augments this functional need however. 
+    This class is entirely made up to reduce workload, hence the "Artifical" prefix.  
+    Input is dict of keys AND their values as expected in the VALID strict OmegaConf overrides 
+    syntax and types bubbled up to Hydra-zen. 
+    It creates something like a map (in the "grid of values" sense) with key labels
+    of experiment config values that match. 
     """
-    def __init__(self, overrides: dict[str,  float | int | str], autofill_exceptions: list[str], num_experiments: int, run_idxs: list[int] = [0,1,2,3], autofill: bool = True) -> None:
-        self._num_experiments = num_experiments
-        self._experim_iter = iter(list(range(self._num_experiments)))
-        self._run_iter = iter(run_idxs) # custom run index
-        self._num_runs = len(run_idxs)
+    def __init__(self, overrides: dict[str,  float | int | str], padding_exceptions: list[str], pad_num: int) -> None:
+        self._autofill_exceptions = padding_exceptions
+        self._pad_num = pad_num
+        self._overrides = self._padded_form(overrides)  
 
-        self._autofill_exceptions = autofill_exceptions
-        if autofill_exceptions:
-            self._overrides = self._set_overrides_for_experiments(overrides) 
-        else: 
-            self._overrides = self._set_overrides_for_experiments(overrides) 
-
-    def _repeat_join_str(self, val: str | int | float) -> list[str]:
-        val = str(val) if type(val) is int else val
-        string = [f"{val}"]
-        string *= self._num_experiments
-        string = string
-
-        return string   
-
-    def _set_overrides_for_experiments(self, overrides: dict[str,  float | int | str]) -> dict[str, list[str]]: 
+    def _padded_form(self, overrides: dict[str,  float | int | str]) -> dict[str, list[str]]: 
         """ 
         Returns override map for internal use and typing. 
         It repeats values in a python list of the initial OmegaConf syntax.
         """
-        appended_overrides = {
+        padded_overrides = {
             k: self._repeat_join_str(v) 
             for k, v in overrides.items()
-            if k not in self._autofill_exceptions # TODO: All will be set to exceptions if manually set in full i.e. autofill is off, then store must match in type, don't like dual dependencies but yeah 
+            if k not in self._autofill_exceptions 
         }
 
-        return appended_overrides
-
-    @property
-    def get_curr_run(self) -> int:
-        return self._curr_run
-
-    @property
-    def get_curr_experim(self) -> int:
-        return self._curr_experim
-
-    def advance_run(self) -> None:
-        self._curr_run = next(self._run_iter)
-
-    def advance_experim(self):
-        self._curr_experim = next(self._experim_iter)
-
-    def get_num_runs(self) -> int:
-        return self._num_runs
+        return padded_overrides
     
-    def get_experim_vals(self) -> dict[str, str]:
-        overrides = self._overrides
-        valid_slice = {k:v[self._curr_experim] for k,v in overrides.items()}
-        run_slice = {**valid_slice, "++run_idx":f"{str(self._curr_run)}"}
-        
-        return run_slice
+    def _repeat_join_str(self, val: str | int | float) -> list[str]:
+        val = str(val) if type(val) is int else val
+        string = [f"{val}"]
+        string *= self._pad_num
+        string = string
 
-    @property
-    def job_num_each(self):
-        return self._num_experiments
+        return string   
+
+    @property 
+    def overrides_map(self) -> dict[str, list[str]]:
+        return self._overrides
+
+    def pad_constant(self) -> int:
+        return self._pad_num
+    
+class ExperimentMapStore():
+    """ 
+    This store allows obtaining experiment values matched 
+    at a requested index as a valid overrides dictionary. 
+    It additionally allows overrides of a single key value.
+    Additional extension may be a dict of keys and vals to override. 
+    """
+    def __init__(self, overrides_map: dict[str, list[str]], consistent_len: int) -> None:
+        for item in overrides_map.items():
+            if len(item) != consistent_len:
+                ValueError(f"{item} in the overrides map of {len(item)} does not match assured consistent length of {consistent_len}")
+
+        self._overrides_map = overrides_map
+        self._consistent_len = consistent_len
+
+    def overwrite(self, key: str, remap_vals: list[str]):
+        """
+        Overwrite the map at key with list of values. 
+        """
+        assert len(remap_vals) == self._consistent_len, f"Length of remap values of {len(remap_vals)} must match the length assured in map of {self._consistent_len}"
+
+        try:
+            setattr(self._overrides_map, key, remap_vals) 
+        except:
+            ValueError(f"{key} not found in current overrides map")
+
+    def overwrite_many(self, subset_map: dict[str, list[str]]):
+        """
+        Overwrite the map at requested keys with new values. 
+        """
+        for k, v in subset_map.items():
+            self.overwrite(k, v)
+    
+    def get_map_slice(self, map_idx:int) -> dict[str, str]:
+        """ 
+        Obtains a vertical slice 
+        """
+        overrides = self._overrides_map
+        requested_slice = {k:v[map_idx] for k,v in overrides.items()}
+        
+        return requested_slice

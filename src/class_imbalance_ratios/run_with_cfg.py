@@ -33,7 +33,7 @@ from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
 from src.base.lit_module.components.simple_net import SimpleCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
-from src.class_imbalance_ratios.experim_cfg_manager import OverridesRunManager
+from src.class_imbalance_ratios.experim_cfg_manager import ArtificialOverridesPadder
 from src.class_imbalance_ratios.group_names import shared_config_names
 from src.class_imbalance_ratios.override_strings import adam_overrides, muon_overrides, autofill_exceptions
 from src.train_and_val import train_and_val
@@ -166,8 +166,8 @@ chkpt_store = store(group=group_names.checkpoints)
 chkpt_store(max_checkpt_cfg, name=shared_config_names.experiment)
 
 overrides_manager_store = store(group=group_names.overrides_manager)
-overrides_manager_store(builds(OverridesRunManager, adam_overrides, autofill_exceptions, 4), name=shared_config_names.adam)
-overrides_manager_store(builds(OverridesRunManager, muon_overrides, autofill_exceptions, 4), name=shared_config_names.muon)
+overrides_manager_store(builds(ArtificialOverridesPadder, adam_overrides, autofill_exceptions, 4), name=shared_config_names.adam)
+overrides_manager_store(builds(ArtificialOverridesPadder, muon_overrides, autofill_exceptions, 4), name=shared_config_names.muon)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
@@ -219,8 +219,8 @@ if __name__ == "__main__":
     This advances runs assuming equality and therefore that modulus can work for Adam and Muon. 
     To many assumed dependencies. TODO: Will deprecate.
     """
-    adam_experiment_cfg_store = OverridesRunManager(adam_overrides, autofill_exceptions, 4, [0, 1])
-    muon_experiment_cfg_store = OverridesRunManager(muon_overrides, autofill_exceptions, 4, [0, 1])
+    adam_experiment_cfg_store = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4, [0, 1])
+    muon_experiment_cfg_store = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4, [0, 1])
 
     for run_counter in range(adam_experiment_cfg_store.get_num_runs()):
         adam_experiment_cfg_store.advance_run()
@@ -232,7 +232,7 @@ if __name__ == "__main__":
 
                 print(f"Muon run {run_counter} of global run {i} is running")
                 # TODO: Make experims idx based too, dynamically merged, or set maybe idk
-                curr_vals = muon_experiment_cfg_store.get_experim_vals()
+                curr_vals = muon_experiment_cfg_store.get_map_vals()
                 print(curr_vals)
                 job = launch(
                     ExperimentConfig,
@@ -246,7 +246,7 @@ if __name__ == "__main__":
                 adam_experiment_cfg_store.advance_experim()
                 print(f"Adam run {adam_experiment_cfg_store.get_curr_run} of global run {i} is running")
 
-                curr_vals = adam_experiment_cfg_store.get_experim_vals()
+                curr_vals = adam_experiment_cfg_store.get_map_vals()
                 job = launch(
                     ExperimentConfig,
                     task_function,
