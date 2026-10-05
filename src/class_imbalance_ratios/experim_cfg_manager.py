@@ -41,7 +41,7 @@ class ArtificialOverridesPadder():
     def pad_constant(self) -> int:
         return self._pad_num
     
-class ExperimentMapStore():
+class ConfMapStore():
     """ 
     This store allows obtaining experiment values matched 
     at a requested index as a valid overrides dictionary. 

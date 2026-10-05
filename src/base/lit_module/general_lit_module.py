@@ -33,7 +33,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -72,7 +72,7 @@ class DualOptLitModule(pl.LightningModule):
 
         self.optims = optims
         self.params = params
-        self.my_lr_schdlrs = schdlrs
+        self.my_lr_schdlrs = schedulers
         self.automatic_optimization = False 
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
@@ -324,11 +324,11 @@ class SingleOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, schedulers, grad_accum_schedule, num_classes)
 
 class DistOptLitModule(DualOptLitModule):
     def __init__(
@@ -336,8 +336,8 @@ class DistOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: list[LRScheduler],
+        schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         num_classes: int = 10,
     ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
+        super().__init__(model, params, optims, schedulers, grad_accum_schedule, num_classes)

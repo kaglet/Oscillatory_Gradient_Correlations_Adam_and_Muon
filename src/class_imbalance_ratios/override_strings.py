@@ -5,8 +5,13 @@ __all__ = ["adam_overrides", "muon_overrides", "autofill_exceptions"]
 
 cfg_key_downsampler = f"++{group_names.datamodule}.downsampler_ratios"
 autofill_exceptions = [cfg_key_downsampler]
+run_idx = "run_idx"
+seed = "seed"
 
 adam_overrides = {
+    f"{run_idx}": "0",
+    f"{seed}": "0",
+
     f"{group_names.overrides_manager}": shared_config_names.adam,
 
     f"{group_names.models}": shared_config_names.experiment, 
@@ -34,8 +39,11 @@ adam_overrides = {
 }
 
 muon_overrides = {
-    f"{group_names.overrides_manager}": shared_config_names.muon,
+    f"{run_idx}": "0",
+    f"{seed}": "0",
 
+    f"{group_names.overrides_manager}": shared_config_names.muon,
+    
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
     f"{group_names.parameters_set}": shared_config_names.experiment, 

@@ -199,8 +199,7 @@ ExperimentConfig = make_config(
     ]
 )
 
-pre_seed = zen(lambda seed: pl.seed_everything(seed))
-task_function = zen(train_and_val, pre_call=pre_seed) # Remove seeding here caught as input to config
+task_function = zen(train_and_val) # Remove seeding here caught as input to config
 
 store(
     HydraConf(
@@ -219,7 +218,7 @@ if __name__ == "__main__":
     This advances runs assuming equality and therefore that modulus can work for Adam and Muon. 
     To many assumed dependencies. TODO: Will deprecate.
     """
-    adam_experiment_cfg_store = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4, [0, 1])
+    overrides_padder = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4, [0, 1])
     muon_experiment_cfg_store = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4, [0, 1])
 
     for run_counter in range(adam_experiment_cfg_store.get_num_runs()):

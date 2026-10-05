@@ -22,6 +22,5 @@ class GroupNameStore:
     optimizers = "optims_cache"
     loggers = "logger_cache"
     checkpoints = "chkpt_cache"  
-    overrides_manager = "overrides_run_manager"   
 
 group_names = GroupNameStore()
