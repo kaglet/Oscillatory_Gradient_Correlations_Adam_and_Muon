@@ -20,7 +20,7 @@ from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
 from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import LRScheduler
 
-from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
+from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModuleS
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -204,13 +204,13 @@ sbg_rob_transforms = builds(
 )
 
 cifr10_datamdl_cfg = builds(
-    ClsImbDataModule, 
+    ClsImbDataModuleS, 
     downsampler_ratio=20, 
     weighted_ratios=None,     
 )
 
 cifr100_datamdl_cfg = builds(
-    ClsImbDataModule, 
+    ClsImbDataModuleS, 
     downsampler_ratio=20, 
     weighted_ratios=None
 )

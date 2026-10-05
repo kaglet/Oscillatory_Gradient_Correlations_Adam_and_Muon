@@ -1,7 +1,7 @@
 from logging import log
 import os
 from pathlib import Path
-from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
+from typing import Callable, Dict, Iterator, Literal, Optional, Type, Tuple, AnyStr, Any
 import lightning
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 
@@ -36,36 +36,10 @@ class DualOptLitModule(pl.LightningModule):
         schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        num_classes: int = 10,
-        labels: list[str] = 
-        ["airplane",
-        "automobile",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck"] #cifar10 labels
     ):
         super().__init__()
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
-
-        self.metric_train_acc = MyMultiClassAccuracy(labels=labels, name="train/acc")
-        self.metric_train_acc.persistent(mode=True)
-        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
-        self.metric_val_acc.persistent(mode=True)
-        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
-        self.metric_test_acc.persistent(mode=True)
-
-        self.metric_train_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
-        self.metric_val_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
-        self.metric_test_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
@@ -84,22 +58,43 @@ class DualOptLitModule(pl.LightningModule):
 
         self.save_hyperparameters(logger=False, ignore=["model"])
 
+    def _setup_accuracy_metrics(self, stages_attr:list[str]) -> None:
+        labels = getattr(self.datamodule, "class_labels")
+        assert type(labels) is list[str], f"{type(labels)} is not list[str]"
+        for stage in stages_attr:     
+            metric = MyMultiClassAccuracy(labels=labels, name="train/acc")   
+            setattr(self, stage, metric)
+            module_metric = getattr(self, stage)
+            module_metric.persistent(mode=True)
+
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
+        self.metric_val_acc.persistent(mode=True)
+
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
+        self.metric_test_acc.persistent(mode=True)
+
+        self.metric_train_loss = MyLoss()
+        self.metric_train_loss.persistent(mode=True)
+
+        self.metric_val_loss = MyLoss()
+        self.metric_val_loss.persistent(mode=True)
+
+        self.metric_test_loss = MyLoss()
+        self.metric_test_loss.persistent(mode=True)
+
     def _reset_gch_stores(self) -> bool:
         self.metric_rgch.reset() 
         self.metric_gch.reset()
         return True
 
+    def on_fit_start(self) -> None:
+        self._setup_accuracy_metrics()
+
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # By default lightning executes validation step sanity checks before training starts,
         # So it's worth to make sure validation metrics don't store results from these checks
-        self.metric_train_acc.reset()
-        self.metric_train_loss.reset()
-
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
-
-        self._reset_gch_stores()
+        self._setup_accuracy_metrics()
 
     def on_validation_start(self) -> None:
         self.metric_val_acc.reset()
@@ -305,16 +300,29 @@ class DualOptLitModule(pl.LightningModule):
             prefix="test"
         )
 
+    def _reset_metrics(self) -> None:
+        self.metric_train_acc.reset()
+        self.metric_train_loss.reset()
+
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+        self._reset_gch_stores()
+
     def on_fit_end(self) -> None:   
         self._save_train_metrics()
         self._save_val_metrics()
+        self._reset_metrics()
 
     def on_train_end(self) -> None:
         self._save_train_metrics()
+        self._reset_metrics()
 
     def on_validation_end(self) -> None:
         self._save_val_metrics()
+        self._reset_metrics()
 
     def on_test_end(self) -> None:
         self._save_test_metrics()
+        self._reset_metrics()
 

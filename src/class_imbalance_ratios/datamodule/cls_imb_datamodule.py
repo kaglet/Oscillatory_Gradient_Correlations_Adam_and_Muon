@@ -28,9 +28,9 @@ from PIL import Image
 
 from src.class_imbalance_ratios.datamodule.dataset.class_imbalancer import TrainClassImbalancer
 
-__all__ = ["ClsImbDataModule"]
+__all__ = ["ClsImbDataModuleS"]
 
-class ClsImbDataModule(CIFARDataModule):
+class ClsImbDataModuleS(CIFAR10DataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
@@ -50,7 +50,20 @@ class ClsImbDataModule(CIFARDataModule):
             weighted_ratios = None 
 
         self._target_weights = weighted_ratios
-        self.experiment_ratio = downsampler_ratio 
+        self._experiment_ratio = downsampler_ratio 
+        self._class_labels: list[str] = [
+            "airplane",
+            "automobile",
+            "bird",
+            "cat",
+            "deer",
+            "dog",
+            "frog",
+            "horse",
+            "ship",
+            "truck"
+        ] # CIFAR 10
+        self._num_classes: int = len(self.class_labels)
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
@@ -61,18 +74,6 @@ class ClsImbDataModule(CIFARDataModule):
             chosen_subset = imbalancer.get_chosen_subset(apply_dset_norm=True)
             unchosen_subset = imbalancer.get_unchosen_subset()
             self._class_ratios = imbalancer.class_ratios
-            self._class_labels: list[str] = [
-                "airplane",
-                "automobile",
-                "bird",
-                "cat",
-                "deer",
-                "dog",
-                "frog",
-                "horse",
-                "ship",
-                "truck"
-            ]
 
             self._train = chosen_subset
             self._val = unchosen_subset
@@ -91,6 +92,10 @@ class ClsImbDataModule(CIFARDataModule):
     @property
     def class_labels(self) -> list[str]:
         return self._class_labels
+
+    @property
+    def num_classes(self) -> int:
+        return self._num_classes
     
 # Entry point
 if __name__ == "__main__":
@@ -101,7 +106,7 @@ if __name__ == "__main__":
         ToTensor(),
     ])
 
-    dmodule = ClsImbDataModule(
+    dmodule = ClsImbDataModuleS(
         downsampler_ratio=20, 
         num_workers=8, 
         weighted_ratios=None,         
