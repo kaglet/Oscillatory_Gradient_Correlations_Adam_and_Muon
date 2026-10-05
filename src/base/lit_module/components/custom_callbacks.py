@@ -8,105 +8,10 @@ import torch
 import numpy as np
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
-from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
 
-__all__ = ["UpdateAllGCH", "TimerCallback", "DebugCallback", "StoreClassRatiosCallback"]
+__all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback", "StoreClassRatiosCallback"]
 
-class StoreMetrics(Callback):
-    def __init__(self, verbose=True):
-        self._acc_metric_attr_names = dict(train="metric_train_acc", val="metric_val_acc", test="metric_test_acc")
-        self._loss_metric_attr_names = dict(train="metric_train_loss", val="val_loss", test="metric_test_loss")
-        self._gc_metric_names = dict(gc="GCH", rgc="RGCH")
-
-    def _setup_gc_metrics(self, model: LightningModule) -> None:
-        self._per_param_names = [n for (n,p) in model.named_parameters() if p.requires_grad]
-
-        attr_name = self._gc_metric_names["rgc"]
-        metric = RGCH_Metric(
-                    header=self._per_param_names, 
-                    name=attr_name
-                )
-        setattr(self, attr_name, metric)
-
-        attr_name = self._gc_metric_names["gc"]
-        metric = GCH_Metric(
-                    header=self._per_param_names, 
-                    name=attr_name
-                )
-        setattr(self, attr_name, metric)
-
-    def _setup_loss_metrics(self, datamodule, subset_stages:dict[str, str]) -> None:
-        labels = getattr(datamodule, "class_labels")
-        assert type(labels) is list[str], f"{type(labels)} is not list[str]"
-        for attr_name in subset_stages.values():     
-            metric = MyLoss(name=attr_name)   
-            setattr(self, attr_name, metric)
-            module_metric = getattr(self, attr_name)
-            module_metric.persistent(mode=True)
-
-    def _setup_accuracy_metrics(self, datamodule, subset_stages:dict[str, str]) -> None:
-        labels = getattr(datamodule, "class_labels")
-        assert type(labels) is list[str], f"{type(labels)} is not list[str]"
-        for stage in subset_stages.values():     
-            metric = MyMultiClassAccuracy(labels=labels, name=stage)   
-            setattr(self, stage, metric)
-            module_metric = getattr(self, stage)
-            module_metric.persistent(mode=True)
-
-    def on_fit_start(self, trainer, pl_module) -> None:
-        fit_metric_names = self._exclude_in_subset(["test"])
-        self._setup_accuracy_metrics(pl_module.datamodule, fit_metric_names)
-
-        fit_metric_names = self._exclude_in_subset(["test"])
-        self._setup_loss_metrics(pl_module.datamodule, fit_metric_names)
-
-        self._setup_gc_metrics(pl_module)
-
-    def _exclude_in_subset(self, target_attrs: list[str]) -> dict[str, str]:
-        fit_metric_names = {
-            k:v for k,v 
-            in self._acc_metric_attr_names.items() 
-            if k not in target_attrs
-        }
-
-        return fit_metric_names
-
-    def _target_in_subset(self, target_attr: str) -> dict[str, str]:
-        fit_metric_names = {
-            k:v for k,v 
-            in self._acc_metric_attr_names.items() 
-            if k == target_attr
-        }
-
-        return fit_metric_names
-
-    def on_train_start(self, trainer, pl_module) -> None:
-        """Lightning hook that is called when training begins."""
-        # By default lightning executes validation step sanity checks before training starts,
-        # So it's worth to make sure validation metrics don't store results from these checks
-        fit_metric_names = self._target_in_subset("train")
-        self._setup_accuracy_metrics(pl_module.datamodule, fit_metric_names)
-
-        fit_metric_names = self._target_in_subset("train")
-        self._setup_loss_metrics(pl_module.datamodule, fit_metric_names)
-
-        self._setup_gc_metrics(pl_module)
-
-    def on_validation_start(self, trainer, pl_module) -> None:
-        fit_metric_names = self._target_in_subset("val")
-        self._setup_accuracy_metrics(pl_module.datamodule, fit_metric_names)
-
-        fit_metric_names = self._target_in_subset("val")
-        self._setup_loss_metrics(pl_module.datamodule, fit_metric_names)
-
-    def on_test_start(self, trainer, pl_module) -> None:
-        fit_metric_names = self._target_in_subset("test")
-        self._setup_accuracy_metrics(pl_module.datamodule, fit_metric_names)
-
-        fit_metric_names = self._target_in_subset("test")
-        self._setup_loss_metrics(pl_module.datamodule, fit_metric_names)
-
-class UpdateAllGCH(Callback):
+class StoreAllGCH(Callback):
     def __init__(self, what="CH", verbose=True):
         self.what = what
         self.verbose = verbose

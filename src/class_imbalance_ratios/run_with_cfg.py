@@ -24,8 +24,8 @@ from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.base.group_name_store import group_names
-from src.base.lit_module.components.custom_callbacks import DebugCallback, UpdateAllGCH, StoreClassRatiosCallback, TimerCallback
-from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModuleS
+from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, StoreClassRatiosCallback, TimerCallback
+from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
@@ -109,7 +109,7 @@ trainer_cfg = pbuilds(
     devices=1, 
     enable_checkpointing = False,
     # precision = "bf16-mixed",
-    callbacks=[builds(UpdateAllGCH), builds(DebugCallback), builds(TimerCallback), builds(StoreClassRatiosCallback)]
+    callbacks=[builds(StoreAllGCH), builds(DebugCallback), builds(TimerCallback), builds(StoreClassRatiosCallback)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -127,7 +127,7 @@ cls_imb_s_transforms = builds(
 )
 
 cls_imb_datamdl_s_cfg = builds(
-    ClsImbDataModuleS, 
+    ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
@@ -203,7 +203,7 @@ store(
         output_subdir="hydra_run_${run_idx}",  # TODO: Ensure run_idx is interpolated right with new override structure
     ),
     group="hydra",
-    name="config" 
+    name="config"
 )  # store `hydra.job.chdir=True`
 
 store.add_to_hydra_store(overwrite_ok=True)

@@ -1,7 +1,7 @@
 from logging import log
 import os
 from pathlib import Path
-from typing import Callable, Dict, Iterator, Literal, Optional, Type, Tuple, AnyStr, Any
+from typing import Callable, Dict, Iterator, Optional, Type, Tuple, AnyStr, Any
 import lightning
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 
@@ -36,10 +36,40 @@ class DualOptLitModule(pl.LightningModule):
         schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
+        num_classes: int = 10,
+        labels: list[str] = 
+        ["airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"] #cifar10 labels
     ):
         super().__init__()
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
+
+        self.metric_train_acc = MyMultiClassAccuracy(labels=labels, name="train/acc")
+        self.metric_train_acc.persistent(mode=True)
+
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
+        self.metric_val_acc.persistent(mode=True)
+
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
+        self.metric_test_acc.persistent(mode=True)
+
+        self.metric_train_loss = MyLoss("train/loss")
+        self.metric_train_loss.persistent(mode=True)
+
+        self.metric_val_loss = MyLoss("val/loss")
+        self.metric_val_loss.persistent(mode=True)
+
+        self.metric_test_loss = MyLoss("test/loss")
+        self.metric_test_loss.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
@@ -51,16 +81,44 @@ class DualOptLitModule(pl.LightningModule):
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
 
-        self._acc_metric_attr_names = dict(train="metric_train_acc", val="metric_val_acc", test="metric_test_acc")
-        self._loss_metric_attr_names = dict(train="metric_train_loss", val="val_loss", test="metric_test_loss")
-        self._gc_metric_names = dict(gc="GCH", rgc="RGCH")
+        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
         
+        self.metric_rgch = RGCH_Metric(header=self._per_param_names, name="RGCH")
+        self.metric_gch = GCH_Metric(header=self._per_param_names, name="GCH")
+
         self.save_hyperparameters(logger=False, ignore=["model"])
+
+    def _reset_gch_stores(self) -> bool:
+        self.metric_rgch.reset() 
+        self.metric_gch.reset()
+        return True
+
+    def on_train_start(self) -> None:
+        """Lightning hook that is called when training begins."""
+        # By default lightning executes validation step sanity checks before training starts,
+        # So it's worth to make sure validation metrics don't store results from these checks
+        self.metric_train_acc.reset()
+        self.metric_train_loss.reset()
+
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+        self._reset_gch_stores()
+
+    def on_validation_start(self) -> None:
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+    def on_test_start(self) -> None:
+        self.metric_test_acc.reset()
+        self.metric_test_loss.reset()
     
     def forward(self, input):
         return self.model(input)
 
-    def configure_optimizers(self):        
+    def configure_optimizers(self):
+        # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
+        
         return self.optims, self.my_lr_schdlrs
     
     def _get_current_grad_accum(self) -> int:
@@ -89,13 +147,9 @@ class DualOptLitModule(pl.LightningModule):
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
             if stage == "val":
-                val_loss = getattr(self, self._loss_metric_attr_names["val"])
-                val_acc = getattr(self, self._acc_metric_attr_names["val"])
-                self._update_standard_metrics(val_loss, val_acc, stage, metrics)
+                self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
             elif stage == "test": 
-                test_loss = getattr(self, self._loss_metric_attr_names["test"])
-                test_acc = getattr(self, self._acc_metric_attr_names["test"])
-                self._update_standard_metrics(test_loss, test_acc, stage, metrics)
+                self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
 
         return loss
 
@@ -116,9 +170,7 @@ class DualOptLitModule(pl.LightningModule):
         if should_step:
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
-            train_loss = getattr(self, self._loss_metric_attr_names["train"])
-            train_acc = getattr(self, self._acc_metric_attr_names["train"])
-            self._update_standard_metrics(train_loss, train_acc, stage, metrics)
+            self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
 
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
@@ -184,25 +236,16 @@ class DualOptLitModule(pl.LightningModule):
 
         return metrics 
 
-    def _reset_gch_stores(self) -> bool:
-        metric_rgch = getattr(self, self._gc_metric_names["rgc"])
-        metric_gch = getattr(self, self._gc_metric_names["gc"])
-
-        metric_rgch.reset() 
-        metric_gch.reset()
-        return True
-
     def _save_metric(self, metric: Metric, root_dir: str, prefix: str, main_name: str) -> None: 
         log_path = Path(root_dir + f"/{prefix}_{main_name}.pt")
         torch.save(metric.state_dict(), log_path)
 
     def _save_train_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 
-        train_loss = getattr(self, self._loss_metric_attr_names["train"])
-        train_acc = getattr(self, self._acc_metric_attr_names["train"])
+
         # Save train loss metric
         self._save_metric(
-            metric=train_loss,
+            metric=self.metric_train_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="train"
@@ -210,97 +253,72 @@ class DualOptLitModule(pl.LightningModule):
 
         # Save train acc metric
         self._save_metric(
-            metric=train_acc,
+            metric=self.metric_train_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="train"
         )
 
-        metric_rgch = getattr(self, self._gc_metric_names["rgc"])
-        metric_gch = getattr(self, self._gc_metric_names["gc"])
-
         # Save rgch metric
         self._save_metric(
-            metric=metric_rgch,
+            metric=self.metric_rgch,
             root_dir=root_dir, 
-            main_name=metric_rgch.name, 
+            main_name=self.metric_rgch.name, 
             prefix="train"
         )
 
         # Save gch metric
         self._save_metric(
-            metric=metric_gch,
+            metric=self.metric_gch,
             root_dir=root_dir, 
-            main_name=metric_gch.name, 
+            main_name=self.metric_gch.name, 
             prefix="train"
         )
 
     def _save_val_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 
-        val_loss = getattr(self, self._loss_metric_attr_names["val"])
-        val_acc = getattr(self, self._acc_metric_attr_names["val"])
+
         # Save val loss metric
         self._save_metric(
-            metric=val_loss,
+            metric=self.metric_val_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="val"
         )
 
         self._save_metric(
-            metric=val_acc,
+            metric=self.metric_val_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="val"
         )
 
     def _save_test_metrics(self) -> None: 
-        test_loss = getattr(self, self._loss_metric_attr_names["test"])
-        test_acc = getattr(self, self._acc_metric_attr_names["test"])
         root_dir = self.trainer.default_root_dir 
         self._save_metric(
-            metric=test_loss,
+            metric=self.metric_test_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="test"
         )
 
         self._save_metric(
-            metric=test_acc,
+            metric=self.metric_test_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="test"
         )
 
-    def _reset_metrics(self) -> None:
-        train_loss = getattr(self, self._loss_metric_attr_names["train"])
-        train_acc = getattr(self, self._acc_metric_attr_names["train"])
-
-        train_acc.reset()
-        train_loss.reset()
-
-        val_loss = getattr(self, self._loss_metric_attr_names["val"])
-        val_acc = getattr(self, self._acc_metric_attr_names["val"])
-
-        val_acc.reset()
-        val_loss.reset()
-
-        self._reset_gch_stores()
-
     def on_fit_end(self) -> None:   
         self._save_train_metrics()
         self._save_val_metrics()
-        self._reset_metrics()
 
     def on_train_end(self) -> None:
         self._save_train_metrics()
-        self._reset_metrics()
 
     def on_validation_end(self) -> None:
         self._save_val_metrics()
-        self._reset_metrics()
 
     def on_test_end(self) -> None:
         self._save_test_metrics()
-        self._reset_metrics()
 
