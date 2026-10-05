@@ -24,7 +24,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.base.group_name_store import group_names
-from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, StoreClassRatiosCallback, TimerCallback
+from src.base.lit_module.components.custom_callbacks import DebugCallback, UpdateAllGCH, StoreClassRatiosCallback, TimerCallback
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModuleS
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
@@ -109,7 +109,7 @@ trainer_cfg = pbuilds(
     devices=1, 
     enable_checkpointing = False,
     # precision = "bf16-mixed",
-    callbacks=[builds(StoreAllGCH), builds(DebugCallback), builds(TimerCallback), builds(StoreClassRatiosCallback)]
+    callbacks=[builds(UpdateAllGCH), builds(DebugCallback), builds(TimerCallback), builds(StoreClassRatiosCallback)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
