@@ -51,65 +51,104 @@ class DualOptLitModule(pl.LightningModule):
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
 
-        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
-        
-        self.metric_rgch = RGCH_Metric(header=self._per_param_names, name="RGCH")
-        self.metric_gch = GCH_Metric(header=self._per_param_names, name="GCH")
+        self._acc_metric_attr_names = dict(train="metric_train_acc", val="metric_val_acc", test="metric_test_acc")
+        self._loss_metric_attr_names = dict(train="metric_train_loss", val="metric_val_loss", test="metric_test_loss")
+        self._gc_metric_names = dict(gc="GCH", rgc="RGCH")
 
         self.save_hyperparameters(logger=False, ignore=["model"])
 
-    def _setup_accuracy_metrics(self, stages_attr:list[str]) -> None:
+    def _setup_gc_metrics(self) -> None:
+        self._per_param_names = [n for (n,p) in self.model.named_parameters() if p.requires_grad]
+
+        attr_name = self._gc_metric_names["rgc"]
+        metric = RGCH_Metric(
+                    header=self._per_param_names, 
+                    name=attr_name
+                )
+        setattr(self, attr_name, metric)
+
+        attr_name = self._gc_metric_names["gc"]
+        metric = GCH_Metric(
+                    header=self._per_param_names, 
+                    name=attr_name
+                )
+        setattr(self, attr_name, metric)
+
+    def _setup_loss_metrics(self, subset_stages:dict[str, str]) -> None:
         labels = getattr(self.datamodule, "class_labels")
         assert type(labels) is list[str], f"{type(labels)} is not list[str]"
-        for stage in stages_attr:     
-            metric = MyMultiClassAccuracy(labels=labels, name="train/acc")   
+        for attr_name in subset_stages.values():     
+            metric = MyLoss(name=attr_name)   
+            setattr(self, attr_name, metric)
+            module_metric = getattr(self, attr_name)
+            module_metric.persistent(mode=True)
+
+    def _setup_accuracy_metrics(self, subset_stages:dict[str, str]) -> None:
+        labels = getattr(self.datamodule, "class_labels")
+        assert type(labels) is list[str], f"{type(labels)} is not list[str]"
+        for stage in subset_stages.values():     
+            metric = MyMultiClassAccuracy(labels=labels, name=stage)   
             setattr(self, stage, metric)
             module_metric = getattr(self, stage)
             module_metric.persistent(mode=True)
 
-        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
-        self.metric_val_acc.persistent(mode=True)
-
-        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
-        self.metric_test_acc.persistent(mode=True)
-
-        self.metric_train_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
-
-        self.metric_val_loss = MyLoss()
-        self.metric_val_loss.persistent(mode=True)
-
-        self.metric_test_loss = MyLoss()
-        self.metric_test_loss.persistent(mode=True)
-
-    def _reset_gch_stores(self) -> bool:
-        self.metric_rgch.reset() 
-        self.metric_gch.reset()
-        return True
-
     def on_fit_start(self) -> None:
-        self._setup_accuracy_metrics()
+        fit_metric_names = self._exclude_in_subset(["test"])
+        self._setup_accuracy_metrics(fit_metric_names)
+
+        fit_metric_names = self._exclude_in_subset(["test"])
+        self._setup_loss_metrics(fit_metric_names)
+
+        self._setup_gc_metrics()
+
+    def _exclude_in_subset(self, target_attrs: list[str]) -> dict[str, str]:
+        fit_metric_names = {
+            k:v for k,v 
+            in self._acc_metric_attr_names.items() 
+            if k not in target_attrs
+        }
+
+        return fit_metric_names
+
+    def _target_in_subset(self, target_attr: str) -> dict[str, str]:
+        fit_metric_names = {
+            k:v for k,v 
+            in self._acc_metric_attr_names.items() 
+            if k == target_attr
+        }
+
+        return fit_metric_names
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # By default lightning executes validation step sanity checks before training starts,
         # So it's worth to make sure validation metrics don't store results from these checks
-        self._setup_accuracy_metrics()
+        fit_metric_names = self._target_in_subset("train")
+        self._setup_accuracy_metrics(fit_metric_names)
+
+        fit_metric_names = self._target_in_subset("train")
+        self._setup_loss_metrics(fit_metric_names)
+
+        self._setup_gc_metrics()
 
     def on_validation_start(self) -> None:
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
+        fit_metric_names = self._target_in_subset("val")
+        self._setup_accuracy_metrics(fit_metric_names)
+
+        fit_metric_names = self._target_in_subset("val")
+        self._setup_loss_metrics(fit_metric_names)
 
     def on_test_start(self) -> None:
-        self.metric_test_acc.reset()
-        self.metric_test_loss.reset()
+        fit_metric_names = self._target_in_subset("test")
+        self._setup_accuracy_metrics(fit_metric_names)
+
+        fit_metric_names = self._target_in_subset("test")
+        self._setup_loss_metrics(fit_metric_names)
     
     def forward(self, input):
         return self.model(input)
 
-    def configure_optimizers(self):
-        # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-        
+    def configure_optimizers(self):        
         return self.optims, self.my_lr_schdlrs
     
     def _get_current_grad_accum(self) -> int:
@@ -138,9 +177,13 @@ class DualOptLitModule(pl.LightningModule):
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
             if stage == "val":
-                self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
+                val_loss = getattr(self, self._loss_metric_attr_names["val"])
+                val_acc = getattr(self, self._acc_metric_attr_names["val"])
+                self._update_standard_metrics(val_loss, val_acc, stage, metrics)
             elif stage == "test": 
-                self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
+                test_loss = getattr(self, self._loss_metric_attr_names["test"])
+                test_acc = getattr(self, self._acc_metric_attr_names["test"])
+                self._update_standard_metrics(test_loss, test_acc, stage, metrics)
 
         return loss
 
@@ -161,7 +204,9 @@ class DualOptLitModule(pl.LightningModule):
         if should_step:
             preds = torch.argmax(logits, dim=1)
             metrics = dict(loss=loss, preds=preds, targets=targets)
-            self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
+            train_loss = getattr(self, self._loss_metric_attr_names["train"])
+            train_acc = getattr(self, self._acc_metric_attr_names["train"])
+            self._update_standard_metrics(train_loss, train_acc, stage, metrics)
 
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
@@ -227,16 +272,25 @@ class DualOptLitModule(pl.LightningModule):
 
         return metrics 
 
+    def _reset_gch_stores(self) -> bool:
+        metric_rgch = getattr(self, self._gc_metric_names["rgc"])
+        metric_gch = getattr(self, self._gc_metric_names["gc"])
+
+        metric_rgch.reset() 
+        metric_gch.reset()
+        return True
+
     def _save_metric(self, metric: Metric, root_dir: str, prefix: str, main_name: str) -> None: 
         log_path = Path(root_dir + f"/{prefix}_{main_name}.pt")
         torch.save(metric.state_dict(), log_path)
 
     def _save_train_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 
-
+        train_loss = getattr(self, self._loss_metric_attr_names["train"])
+        train_acc = getattr(self, self._acc_metric_attr_names["train"])
         # Save train loss metric
         self._save_metric(
-            metric=self.metric_train_loss,
+            metric=train_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="train"
@@ -244,41 +298,45 @@ class DualOptLitModule(pl.LightningModule):
 
         # Save train acc metric
         self._save_metric(
-            metric=self.metric_train_acc,
+            metric=train_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="train"
         )
 
+        metric_rgch = getattr(self, self._gc_metric_names["rgc"])
+        metric_gch = getattr(self, self._gc_metric_names["gc"])
+
         # Save rgch metric
         self._save_metric(
-            metric=self.metric_rgch,
+            metric=metric_rgch,
             root_dir=root_dir, 
-            main_name=self.metric_rgch.name, 
+            main_name=metric_rgch.name, 
             prefix="train"
         )
 
         # Save gch metric
         self._save_metric(
-            metric=self.metric_gch,
+            metric=metric_gch,
             root_dir=root_dir, 
-            main_name=self.metric_gch.name, 
+            main_name=metric_gch.name, 
             prefix="train"
         )
 
     def _save_val_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 
-
+        val_loss = getattr(self, self._loss_metric_attr_names["train"])
+        val_acc = getattr(self, self._acc_metric_attr_names["train"])
         # Save val loss metric
         self._save_metric(
-            metric=self.metric_val_loss,
+            metric=metric_val_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="val"
         )
 
         self._save_metric(
-            metric=self.metric_val_acc,
+            metric=metric_val_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="val"
