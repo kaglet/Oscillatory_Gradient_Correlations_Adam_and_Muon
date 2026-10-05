@@ -9,6 +9,8 @@ class OverridesRunManager():
     Exception to the typing of overrides is when passing a dict of python `list` of `str` values (not OmegaConf).
     Each `str` entry is therefore individually of the required OmegaCong type. 
 
+    Experiments map 
+
     Unified serial job run store for Muon and Adam. Can later be separated as potential TODO. 
     This stores values for a series of experiments. It does not control running experiments multiple times at a meta level. 
     The `get_run_vals` function augments this functional need however. 

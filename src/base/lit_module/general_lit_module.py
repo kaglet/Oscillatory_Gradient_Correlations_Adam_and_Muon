@@ -33,7 +33,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -72,6 +72,7 @@ class DualOptLitModule(pl.LightningModule):
 
         self.optims = optims
         self.params = params
+        self.my_lr_schdlrs = schdlrs
         self.automatic_optimization = False 
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
@@ -111,10 +112,10 @@ class DualOptLitModule(pl.LightningModule):
     def forward(self, input):
         return self.model(input)
 
-    def configure_optimizers(self) -> list[Optimizer]:
+    def configure_optimizers(self):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-
-        return self.optims
+        
+        return self.optims, self.my_lr_schdlrs
     
     def _get_current_grad_accum(self) -> int:
         """Get current gradient accumulation factor.
@@ -169,14 +170,20 @@ class DualOptLitModule(pl.LightningModule):
 
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
+            schdlrs = self.lr_schedulers()
+            schdlrs = schdlrs if isinstance(schdlrs, list) else [schdlrs]
 
-            for i, opt in enumerate(optims):
+            for i, (opt, lr_schdlr) in enumerate(zip(optims, schdlrs)):
+                # Only this needs check where type changes to set type | None, unlike optims
+                assert lr_schdlr is not None, "LR Scheduler, is None" 
                 # Call global opt step only at the end to help hooks
                 if i == len(optims) - 1:
                     opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
+                    lr_schdlr.step(self.current_epoch)
                 else:
                     # Access underlying optimizer directly to avoid double-counting
                     opt.optimizer.step()
+                    lr_schdlr.step(self.current_epoch)
 
                 # Before this, GCH callback will run
                 opt.zero_grad()
@@ -306,12 +313,10 @@ class DualOptLitModule(pl.LightningModule):
         self._save_train_metrics()
 
     def on_validation_end(self) -> None:
-        # self._save_val_metrics()
-        pass
+        self._save_val_metrics()
 
     def on_test_end(self) -> None:
-        # self._save_test_metrics()
-        pass
+        self._save_test_metrics()
 
 class SingleOptLitModule(DualOptLitModule):
     def __init__(
@@ -319,9 +324,8 @@ class SingleOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
         super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
@@ -332,9 +336,8 @@ class DistOptLitModule(DualOptLitModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
+        schdlrs: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
     ):
         super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)

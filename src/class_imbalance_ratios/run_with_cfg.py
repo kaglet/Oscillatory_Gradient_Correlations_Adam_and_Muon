@@ -67,8 +67,9 @@ mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 # Gradient accum schedules 
 grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
-# LR Schedulers
-lr_sch_pcfg = [pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}")]
+# LR Scheduler
+adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
+muon_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_adam}")
 
 single_lit_module_cfg = pbuilds(SingleOptLitModule)
 
@@ -149,7 +150,8 @@ params_store = store(group=group_names.parameters_set)
 params_store(mu_aux_adam_params_cfg, name=shared_config_names.experiment)
 
 schdlr_store = store(group=group_names.schedulers)
-schdlr_store(lr_sch_pcfg, name=shared_config_names.experiment)
+schdlr_store(adam_lr_sch_pcfg, name=shared_config_names.adam)
+schdlr_store(muon_lr_sch_pcfg, name=shared_config_names.muon)
 
 grad_accum_schedule_store = store(group=group_names.gradient_accumulator_schedule)
 grad_accum_schedule_store(grad_accum_schedule_cfg, name=shared_config_names.experiment)
@@ -183,7 +185,7 @@ ExperimentConfig = make_config(
 
         {group_names.optimizers: shared_config_names.experiment},
 
-        {group_names.schedulers: shared_config_names.experiment},
+        {group_names.schedulers: shared_config_names.muon},
 
         {group_names.gradient_accumulator_schedule: shared_config_names.experiment},
 
@@ -214,8 +216,8 @@ store.add_to_hydra_store(overwrite_ok=True)
 
 if __name__ == "__main__":
     """ 
-    Now emergent structure is 1 run idx, shared for Muon and Adam.
-    Do all inner experiments for 1 run, Muon for a ratio, then Adam. 
+    This advances runs assuming equality and therefore that modulus can work for Adam and Muon. 
+    To many assumed dependencies. TODO: Will deprecate.
     """
     adam_experiment_cfg_store = OverridesRunManager(adam_overrides, autofill_exceptions, 4, [0, 1])
     muon_experiment_cfg_store = OverridesRunManager(muon_overrides, autofill_exceptions, 4, [0, 1])
