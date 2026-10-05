@@ -1,3 +1,4 @@
+from pathlib import Path
 import time
 from typing import Any
 
@@ -143,5 +144,8 @@ class StoreClassRatiosCallback(Callback):
 
         labelled_ratios = {k: v for k, v in zip(class_labels, raw_class_ratios.values())}
         assert type(labelled_ratios) is dict[str, int], f"Labelled class ratios {labelled_ratios} is not of required type"
+
+        log_path = Path(trainer.default_root_dir + f"/class_ratios.pt")
+        torch.save(labelled_ratios, log_path)
         
-        pl_module.log_dict(labelled_ratios, rank_zero_only=True)
+        # pl_module.log_dict(labelled_ratios, rank_zero_only=True)

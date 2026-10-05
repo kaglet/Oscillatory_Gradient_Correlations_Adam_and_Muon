@@ -318,26 +318,3 @@ class DualOptLitModule(pl.LightningModule):
     def on_test_end(self) -> None:
         self._save_test_metrics()
 
-class SingleOptLitModule(DualOptLitModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schedulers: list[LRScheduler],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        num_classes: int = 10,
-    ):
-        super().__init__(model, params, optims, schedulers, grad_accum_schedule, num_classes)
-
-class DistOptLitModule(DualOptLitModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schedulers: list[LRScheduler],
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        num_classes: int = 10,
-    ):
-        super().__init__(model, params, optims, schedulers, grad_accum_schedule, num_classes)

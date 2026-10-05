@@ -32,7 +32,7 @@ from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
 from src.base.lit_module.components.simple_net import SimpleCNN
-from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
+from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.class_imbalance_ratios.artificial_overrides_padder import ArtificialOverridesPadder
 from src.class_imbalance_ratios.group_names import shared_config_names
 from src.class_imbalance_ratios.override_strings import adam_overrides, muon_overrides, autofill_exceptions
@@ -71,10 +71,10 @@ grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
 muon_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_adam}")
 
-single_lit_module_cfg = pbuilds(SingleOptLitModule)
+single_lit_module_cfg = pbuilds(DualOptLitModule)
 
 cls_imb_s_module_cfg = pbuilds(
-    SingleOptLitModule,
+    DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
