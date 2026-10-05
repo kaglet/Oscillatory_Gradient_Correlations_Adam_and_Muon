@@ -52,7 +52,7 @@ class DualOptLitModule(pl.LightningModule):
         self._optimizer_step_count = 0
 
         self._acc_metric_attr_names = dict(train="metric_train_acc", val="metric_val_acc", test="metric_test_acc")
-        self._loss_metric_attr_names = dict(train="metric_train_loss", val="metric_val_loss", test="metric_test_loss")
+        self._loss_metric_attr_names = dict(train="metric_train_loss", val="val_loss", test="metric_test_loss")
         self._gc_metric_names = dict(gc="GCH", rgc="RGCH")
 
         self.save_hyperparameters(logger=False, ignore=["model"])
@@ -325,45 +325,53 @@ class DualOptLitModule(pl.LightningModule):
 
     def _save_val_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 
-        val_loss = getattr(self, self._loss_metric_attr_names["train"])
-        val_acc = getattr(self, self._acc_metric_attr_names["train"])
+        val_loss = getattr(self, self._loss_metric_attr_names["val"])
+        val_acc = getattr(self, self._acc_metric_attr_names["val"])
         # Save val loss metric
         self._save_metric(
-            metric=metric_val_loss,
+            metric=val_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="val"
         )
 
         self._save_metric(
-            metric=metric_val_acc,
+            metric=val_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="val"
         )
 
     def _save_test_metrics(self) -> None: 
+        test_loss = getattr(self, self._loss_metric_attr_names["test"])
+        test_acc = getattr(self, self._acc_metric_attr_names["test"])
         root_dir = self.trainer.default_root_dir 
         self._save_metric(
-            metric=self.metric_test_loss,
+            metric=test_loss,
             root_dir=root_dir, 
             main_name="loss", 
             prefix="test"
         )
 
         self._save_metric(
-            metric=self.metric_test_acc,
+            metric=test_acc,
             root_dir=root_dir, 
             main_name="acc", 
             prefix="test"
         )
 
     def _reset_metrics(self) -> None:
-        self.metric_train_acc.reset()
-        self.metric_train_loss.reset()
+        train_loss = getattr(self, self._loss_metric_attr_names["train"])
+        train_acc = getattr(self, self._acc_metric_attr_names["train"])
 
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
+        train_acc.reset()
+        train_loss.reset()
+
+        val_loss = getattr(self, self._loss_metric_attr_names["val"])
+        val_acc = getattr(self, self._acc_metric_attr_names["val"])
+
+        val_acc.reset()
+        val_loss.reset()
 
         self._reset_gch_stores()
 
