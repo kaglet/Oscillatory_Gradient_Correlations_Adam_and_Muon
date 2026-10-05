@@ -135,17 +135,3 @@ class TimerCallback(Callback):
             rank_zero_only=True  # no need to log for all devices
         )
 
-class StoreClassRatiosCallback(Callback):
-    def on_train_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
-        raw_class_ratios = getattr(pl_module.datamodule, "class_ratios") 
-        class_labels = getattr(pl_module.datamodule, "class_labels") 
-        assert type(raw_class_ratios) is dict[str, int], f"Raw class ratios {raw_class_ratios} is not of required type"
-        assert type(class_labels) is list[str], f"Class labels {class_labels} is not of required type"
-
-        labelled_ratios = {k: v for k, v in zip(class_labels, raw_class_ratios.values())}
-        assert type(labelled_ratios) is dict[str, int], f"Labelled class ratios {labelled_ratios} is not of required type"
-
-        log_path = Path(trainer.default_root_dir + f"/class_ratios.pt")
-        torch.save(labelled_ratios, log_path)
-        
-        # pl_module.log_dict(labelled_ratios, rank_zero_only=True)
