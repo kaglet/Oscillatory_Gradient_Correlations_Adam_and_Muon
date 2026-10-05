@@ -8,7 +8,7 @@ import numpy as np
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 
-__all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback"]
+__all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback", "StoreClassRatiosCallback"]
 
 class StoreAllGCH(Callback):
     def __init__(self, what="CH", verbose=True):
@@ -133,3 +133,15 @@ class TimerCallback(Callback):
             on_epoch=False,
             rank_zero_only=True  # no need to log for all devices
         )
+
+class StoreClassRatiosCallback(Callback):
+    def on_train_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        raw_class_ratios = getattr(pl_module.datamodule, "class_ratios") 
+        class_labels = getattr(pl_module.datamodule, "class_labels") 
+        assert type(raw_class_ratios) is dict[str, int], f"Raw class ratios {raw_class_ratios} is not of required type"
+        assert type(class_labels) is list[str], f"Class labels {class_labels} is not of required type"
+
+        labelled_ratios = {k: v for k, v in zip(class_labels, raw_class_ratios.values())}
+        assert type(labelled_ratios) is dict[str, int], f"Labelled class ratios {labelled_ratios} is not of required type"
+        
+        pl_module.log_dict(labelled_ratios, rank_zero_only=True)

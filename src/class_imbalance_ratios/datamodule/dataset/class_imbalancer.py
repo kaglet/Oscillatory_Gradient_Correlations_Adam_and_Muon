@@ -21,8 +21,9 @@ class TrainClassImbalancer():
 
         self._targets = self._targets[new_idxs]
 
+        self._ratios = self._set_sample_counts(self._targets)
         sampler = DeterministicUnderSampler(
-            weighted_ratios=self._set_sample_counts(self._targets), 
+            weighted_ratios=self._ratios, 
             targets=self._targets
         )
 
@@ -32,6 +33,12 @@ class TrainClassImbalancer():
         stats = self._get_data_stats(self._chosen_data)
         self._chosen_data_stats = stats
 
+    @property 
+    def class_ratios(self) -> dict[str, int]:
+        ratios = {str(k):v for k,v in self._ratios.items()}
+
+        return ratios
+    
     def get_chosen_subset(self, apply_dset_norm:bool=False) -> Subset:
         if apply_dset_norm:
             normalize = transforms.Normalize(

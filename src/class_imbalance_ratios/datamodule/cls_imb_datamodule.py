@@ -60,6 +60,20 @@ class ClsImbDataModule(CIFARDataModule):
             imbalancer = TrainClassImbalancer(dataset=dset, extra_settings=settings)
             chosen_subset = imbalancer.get_chosen_subset(apply_dset_norm=True)
             unchosen_subset = imbalancer.get_unchosen_subset()
+            self._class_ratios = imbalancer.class_ratios
+            self._class_labels: list[str] = [
+                "airplane",
+                "automobile",
+                "bird",
+                "cat",
+                "deer",
+                "dog",
+                "frog",
+                "horse",
+                "ship",
+                "truck"
+            ]
+
             self._train = chosen_subset
             self._val = unchosen_subset
             
@@ -69,6 +83,14 @@ class ClsImbDataModule(CIFARDataModule):
 
         if stage == "predict":
             self._predict = self.ds(self.data_dir, train=False, transform=self.train_transforms, target_transform=None)
+
+    @property
+    def class_ratios(self) -> dict[str, int]:
+        return self._class_ratios
+
+    @property
+    def class_labels(self) -> list[str]:
+        return self._class_labels
     
 # Entry point
 if __name__ == "__main__":
