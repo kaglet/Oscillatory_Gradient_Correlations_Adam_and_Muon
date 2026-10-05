@@ -24,7 +24,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 from src.base.configs.experiment_data import Experiment_Data
 from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.base.group_name_store import group_names
-from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH
+from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
@@ -109,7 +109,7 @@ trainer_cfg = pbuilds(
     devices=1, 
     enable_checkpointing = False,
     # precision = "bf16-mixed",
-    callbacks=[builds(StoreAllGCH), builds(DebugCallback)]
+    callbacks=[builds(StoreAllGCH), builds(DebugCallback), builds(TimerCallback)]
 )  
 
 # ---- DATAMODULE CONFIGS START ---- #
@@ -212,15 +212,26 @@ if __name__ == "__main__":
     """ 
     
     """
+    injected_run = 1
+    injected_slice = 1
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
-    curr_vals = muon_overrides_map.get_map_slice(1)
+    muon_overrides_map.overwrite(
+        "run_idx", 
+        [
+            f"{injected_run}", # TODO: Can automate with pad_constant of Padder
+            f"{injected_run}", 
+            f"{injected_run}", 
+            f"{injected_run}"
+        ]
+    )
+    curr_vals = muon_overrides_map.get_map_slice(injected_slice)
 
     print(curr_vals)
     job = launch(
         ExperimentConfig,
         task_function,
         config_name="muon_class_imbalance_ratios",
-        job_name="muon_benchmarks",
+        job_name="muon_class_imbalance_ratios",
         version_base="1.3",
         overrides=curr_vals
     )
@@ -233,7 +244,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_class_imbalance_ratios",
-        job_name="adam_benchmarks",
+        job_name="adam_class_imbalance_ratios",
         version_base="1.3",
         overrides=curr_vals
     )
