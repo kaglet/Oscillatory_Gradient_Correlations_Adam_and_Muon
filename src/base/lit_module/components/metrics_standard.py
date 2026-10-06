@@ -38,7 +38,7 @@ class MyMultiClassAccuracy(Metric):
         TODO: Update for this metric from GCH inspired. 
         """
         unique_labels = list(targets.unique())
-        all_labels = list(torch.as_tensor(range(0, len(self._labels))))
+        all_labels = list(range(0, len(self._labels)))
         for i in all_labels:
             if i in unique_labels:
                 total = (targets == i).sum()
