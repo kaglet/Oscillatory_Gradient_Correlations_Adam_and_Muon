@@ -20,7 +20,7 @@ lit_module:
 params_cache:
   _target_: src.base.lit_module.components.per_optim_params.resnet_params.get_params.get_nondist_Muon_Adam_params
   _partial_: true
-  use_muon: true
+  use_muon: false
   w_decay_muon: 0.0
   w_decay_adam: 0.0
   momentum_muon: 0.9
@@ -52,7 +52,7 @@ model_cache:
   weights: IMAGENET1K_V1
 datamodule:
   _target_: src.class_imbalance_ratios.datamodule.cls_imb_datamodule.ClsImbDataModule
-  metadata_dir: :/${run_idx}
+  metadata_dir: ./${run_idx}
   train_transforms:
     _target_: torchvision.transforms.transforms.Compose
     _args_:
@@ -96,7 +96,7 @@ datamodule:
   batch_size: 64
   num_workers: 0
   weighted_ratios: null
-  downsampler_ratio: 10
+  downsampler_ratio: 20
 trainer:
   _target_: lightning.pytorch.trainer.trainer.Trainer
   _partial_: true
@@ -154,7 +154,7 @@ schdlrs_cache:
   _partial_: true
   T_0: ${trainer.max_epochs}
   T_mult: 1
-  eta_min: ${params_cache.lr_adam}
+  eta_min: ${params_cache.lr_muon}
   last_epoch: -1
 grad_accum_schedule:
   _target_: src.base.lit_module.components.custom_grad_accum.GradAccumSchedule

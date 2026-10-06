@@ -126,8 +126,8 @@ cls_imb_s_transforms = builds(
     ]
 )
 
-run_dir = "./${run_idx}"
-user_access_run_dir = run_dir
+run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
+user_access_to_run_dir = "./${run_idx}"
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
@@ -135,7 +135,7 @@ cls_imb_datamdl_s_cfg = builds(
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 0,
-    metadata_dir = user_access_run_dir
+    metadata_dir = user_access_to_run_dir
 )
 
 lit_module_store = store(group=group_names.lightning_module)

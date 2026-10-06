@@ -121,10 +121,10 @@ hydra:
     - chkpt_cache=cls_imb_cif10
     - trainer=cls_imb_cif10
     - grad_accum_schedule=cls_imb_cif10
-    - schdlrs_cache=muon
+    - schdlrs_cache=adam
     - ++params_cache.lr_muon=0.1
     - ++params_cache.lr_adam=0.001
-    - ++params_cache.use_muon=True
+    - ++params_cache.use_muon=False
     - ++params_cache.momentum_muon=0.9
     - ++params_cache.beta_1_adam=0.9
     - ++params_cache.beta_2_adam=0.999
@@ -134,14 +134,14 @@ hydra:
     - ++trainer.limit_train_batches=100
     - ++trainer.limit_val_batches=30
     - ++trainer.max_epochs=2
-    - ++datamodule.downsampler_ratio=10
+    - ++datamodule.downsampler_ratio=20
   job:
-    name: muon_class_imbalance_ratios
+    name: adam_class_imbalance_ratios
     chdir: true
-    override_dirname: ++datamodule.downsampler_ratio=10,++params_cache.beta_1_adam=0.9,++params_cache.beta_2_adam=0.999,++params_cache.eps=1e-10,++params_cache.lr_adam=0.001,++params_cache.lr_muon=0.1,++params_cache.momentum_muon=0.9,++params_cache.nesterov=False,++params_cache.use_layer_recs=False,++params_cache.use_muon=True,++run_idx=0,++seed=0,++trainer.limit_train_batches=100,++trainer.limit_val_batches=30,++trainer.max_epochs=2,chkpt_cache=cls_imb_cif10,datamodule=cls_imb_cif10,grad_accum_schedule=cls_imb_cif10,lit_module=cls_imb_cif10,model_cache=cls_imb_cif10,optims_cache=cls_imb_cif10,params_cache=cls_imb_cif10,schdlrs_cache=muon,trainer=cls_imb_cif10
+    override_dirname: ++datamodule.downsampler_ratio=20,++params_cache.beta_1_adam=0.9,++params_cache.beta_2_adam=0.999,++params_cache.eps=1e-10,++params_cache.lr_adam=0.001,++params_cache.lr_muon=0.1,++params_cache.momentum_muon=0.9,++params_cache.nesterov=False,++params_cache.use_layer_recs=False,++params_cache.use_muon=False,++run_idx=0,++seed=0,++trainer.limit_train_batches=100,++trainer.limit_val_batches=30,++trainer.max_epochs=2,chkpt_cache=cls_imb_cif10,datamodule=cls_imb_cif10,grad_accum_schedule=cls_imb_cif10,lit_module=cls_imb_cif10,model_cache=cls_imb_cif10,optims_cache=cls_imb_cif10,params_cache=cls_imb_cif10,schdlrs_cache=adam,trainer=cls_imb_cif10
     id: ???
     num: ???
-    config_name: muon_class_imbalance_ratios
+    config_name: adam_class_imbalance_ratios
     env_set: {}
     env_copy: []
     config:
@@ -165,7 +165,7 @@ hydra:
       chkpt_cache: cls_imb_cif10
       logger_cache: cls_imb_cif10
       grad_accum_schedule: cls_imb_cif10
-      schdlrs_cache: muon
+      schdlrs_cache: adam
       optims_cache: cls_imb_cif10
       trainer: cls_imb_cif10
       datamodule: cls_imb_cif10

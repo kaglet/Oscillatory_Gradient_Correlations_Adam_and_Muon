@@ -8,10 +8,10 @@
 - chkpt_cache=cls_imb_cif10
 - trainer=cls_imb_cif10
 - grad_accum_schedule=cls_imb_cif10
-- schdlrs_cache=muon
+- schdlrs_cache=adam
 - ++params_cache.lr_muon=0.1
 - ++params_cache.lr_adam=0.001
-- ++params_cache.use_muon=True
+- ++params_cache.use_muon=False
 - ++params_cache.momentum_muon=0.9
 - ++params_cache.beta_1_adam=0.9
 - ++params_cache.beta_2_adam=0.999
@@ -21,4 +21,4 @@
 - ++trainer.limit_train_batches=100
 - ++trainer.limit_val_batches=30
 - ++trainer.max_epochs=2
-- ++datamodule.downsampler_ratio=10
+- ++datamodule.downsampler_ratio=20
