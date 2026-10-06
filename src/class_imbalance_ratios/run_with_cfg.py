@@ -127,7 +127,7 @@ cls_imb_s_transforms = builds(
 )
 
 run_dir = "./${run_idx}"
-user_access_run_dir = run_dir.replace(".", ":", count= 1)
+user_access_run_dir = run_dir
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,

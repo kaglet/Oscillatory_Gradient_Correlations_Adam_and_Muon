@@ -1,0 +1,201 @@
+lit_module:
+  _target_: src.base.lit_module.general_lit_module.DualOptLitModule
+  _partial_: true
+  grad_accum_schedule:
+    _target_: src.base.lit_module.components.custom_grad_accum.GradAccumSchedule
+    _args_:
+    - 0: 32
+  num_classes: 10
+  labels:
+  - airplane
+  - automobile
+  - bird
+  - cat
+  - deer
+  - dog
+  - frog
+  - horse
+  - ship
+  - truck
+params_cache:
+  _target_: src.base.lit_module.components.per_optim_params.resnet_params.get_params.get_nondist_Muon_Adam_params
+  _partial_: true
+  use_muon: true
+  w_decay_muon: 0.0
+  w_decay_adam: 0.0
+  momentum_muon: 0.9
+  beta_1_adam: 0.9
+  beta_2_adam: 0.999
+  use_layer_recs: false
+  eps: 1.0e-10
+  nesterov: false
+  lr_muon: 0.1
+  lr_adam: 0.001
+model_cache:
+  _target_: src.base.lit_module.components.custom_resnet.create_resnet_model
+  net:
+    path: torchvision.models.resnet.resnet18
+    _target_: hydra_zen.funcs.get_obj
+  num_classes: 10
+  num_in: 3
+  num_out: 64
+  kern_size:
+  - 3
+  - 3
+  stride:
+  - 1
+  - 1
+  padding:
+  - 1
+  - 1
+  bias: true
+  weights: IMAGENET1K_V1
+datamodule:
+  _target_: src.class_imbalance_ratios.datamodule.cls_imb_datamodule.ClsImbDataModule
+  metadata_dir: :/${run_idx}
+  train_transforms:
+    _target_: torchvision.transforms.transforms.Compose
+    _args_:
+    - - _target_: torchvision.transforms.transforms.RandomHorizontalFlip
+        p: 0.5
+      - _target_: torchvision.transforms.transforms.RandomCrop
+        size: 28
+        padding: null
+        pad_if_needed: false
+        fill: 0
+        padding_mode: constant
+      - _target_: torchvision.transforms.transforms.ToTensor
+  val_transforms:
+    _target_: torchvision.transforms.transforms.Compose
+    _args_:
+    - - _target_: torchvision.transforms.transforms.RandomHorizontalFlip
+        p: 0.5
+      - _target_: torchvision.transforms.transforms.RandomCrop
+        size: 28
+        padding: null
+        pad_if_needed: false
+        fill: 0
+        padding_mode: constant
+      - _target_: torchvision.transforms.transforms.ToTensor
+  test_transforms:
+    _target_: torchvision.transforms.transforms.Compose
+    _args_:
+    - - _target_: torchvision.transforms.transforms.RandomHorizontalFlip
+        p: 0.5
+      - _target_: torchvision.transforms.transforms.RandomCrop
+        size: 28
+        padding: null
+        pad_if_needed: false
+        fill: 0
+        padding_mode: constant
+      - _target_: torchvision.transforms.transforms.ToTensor
+  dataset:
+    path: torchvision.datasets.cifar.CIFAR10
+    _target_: hydra_zen.funcs.get_obj
+  data_dir: /data
+  batch_size: 64
+  num_workers: 0
+  weighted_ratios: null
+  downsampler_ratio: 10
+trainer:
+  _target_: lightning.pytorch.trainer.trainer.Trainer
+  _partial_: true
+  accelerator: gpu
+  strategy: auto
+  devices: 1
+  num_nodes: 1
+  precision: null
+  logger: null
+  callbacks:
+  - _target_: src.base.lit_module.components.custom_callbacks.StoreAllGCH
+    what: CH
+    verbose: true
+  - _target_: src.base.lit_module.components.custom_callbacks.DebugCallback
+  - _target_: src.base.lit_module.components.custom_callbacks.TimerCallback
+  fast_dev_run: false
+  max_epochs: 2
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: 100
+  limit_val_batches: 30
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  val_check_interval: null
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 0
+  log_every_n_steps: null
+  enable_checkpointing: false
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  deterministic: true
+  benchmark: false
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+  enable_autolog_hparams: true
+  model_registry: null
+optims_cache:
+- _target_: muon.SingleDeviceMuonWithAuxAdam
+  _partial_: true
+schdlrs_cache:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+  _partial_: true
+  T_0: ${trainer.max_epochs}
+  T_mult: 1
+  eta_min: ${params_cache.lr_adam}
+  last_epoch: -1
+grad_accum_schedule:
+  _target_: src.base.lit_module.components.custom_grad_accum.GradAccumSchedule
+  _args_:
+  - 0: 32
+logger_cache:
+- _target_: lightning.pytorch.loggers.csv_logs.CSVLogger
+  _partial_: true
+  name: train
+  version: ''
+  prefix: ''
+  flush_logs_every_n_steps: 100
+- _target_: lightning.pytorch.loggers.csv_logs.CSVLogger
+  _partial_: true
+  name: val
+  version: ''
+  prefix: ''
+  flush_logs_every_n_steps: 100
+- _target_: lightning.pytorch.loggers.csv_logs.CSVLogger
+  _partial_: true
+  name: test
+  version: ''
+  prefix: ''
+  flush_logs_every_n_steps: 100
+chkpt_cache:
+  _target_: lightning.pytorch.callbacks.model_checkpoint.ModelCheckpoint
+  _partial_: true
+  dirpath: null
+  filename: null
+  monitor: val/acc
+  verbose: false
+  save_last: true
+  save_top_k: 1
+  save_on_exception: false
+  save_weights_only: false
+  mode: max
+  auto_insert_metric_name: true
+  every_n_train_steps: null
+  train_time_interval: null
+  every_n_epochs: null
+  save_on_train_epoch_end: null
+  enable_version_counter: true
+seed: 0
+run_idx: 0
