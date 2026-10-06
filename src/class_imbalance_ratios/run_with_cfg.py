@@ -126,7 +126,7 @@ cls_imb_s_transforms = builds(
     ]
 )
 
-run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
+run_dir = "./${run_idx}"
 user_access_run_dir = run_dir.replace(".", ":", count= 1)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
