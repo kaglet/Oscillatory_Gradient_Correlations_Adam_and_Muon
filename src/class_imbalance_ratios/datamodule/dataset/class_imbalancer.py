@@ -8,6 +8,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import Subset, random_split, TensorDataset
 import torchvision.transforms as transforms
 
+from src.class_imbalance_ratios.datamodule.components.custom_subset import TupledSubset
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
 class TrainClassImbalancer():
@@ -39,7 +40,7 @@ class TrainClassImbalancer():
 
         return ratios
     
-    def get_chosen_subset(self, apply_dset_norm:bool=False) -> Subset:
+    def get_chosen_subset(self, apply_dset_norm:bool=False) -> TupledSubset:
         if apply_dset_norm:
             normalize = transforms.Normalize(
                 mean=self._chosen_data_stats[0], # ImageNet standard norm
@@ -50,7 +51,10 @@ class TrainClassImbalancer():
             self._dset.transforms = self._og_transforms
 
         idxs = list(np.flatnonzero(self._chosen_mask).astype(int))
-        return Subset(self._dset, idxs)
+
+        subset = TupledSubset(self._dset, idxs, self._dset.targets)
+
+        return subset
 
     def get_unchosen_subset(self) -> Subset:
         idxs = list(np.flatnonzero(self._unchosen_mask).astype(int))
