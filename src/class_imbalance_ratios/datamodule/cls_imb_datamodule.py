@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from pathlib import Path
 import random
 import numpy as np
 from typing import Any, Callable, Dict, Literal, Optional, Type
@@ -34,6 +35,7 @@ class ClsImbDataModule(CIFARDataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
+        metadata_dir: str,
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
         weighted_ratios: Dict[int, float] | None = None,
         downsampler_ratio: int = 20,
@@ -51,6 +53,7 @@ class ClsImbDataModule(CIFARDataModule):
 
         self._target_weights = weighted_ratios
         self.experiment_ratio = downsampler_ratio 
+        self._metadata_dir = metadata_dir
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
@@ -74,6 +77,10 @@ class ClsImbDataModule(CIFARDataModule):
                 "truck"
             ]
 
+            saved_labels = {k:v for k,v in zip(self.class_labels, self._class_ratios.values())}
+            os.makedirs(self._metadata_dir, exist_ok=True)
+            torch.save(saved_labels, self._metadata_dir + "class_ratios.pt")
+            
             self._train = chosen_subset
             self._val = unchosen_subset
             
@@ -107,7 +114,8 @@ if __name__ == "__main__":
         weighted_ratios=None,         
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
-        test_transforms=base_transforms
+        test_transforms=base_transforms,
+        metadata_dir=str(Path(__file__).parent)
     ) 
     dmodule.prepare_data()
     dmodule.setup("fit")

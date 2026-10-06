@@ -126,13 +126,16 @@ cls_imb_s_transforms = builds(
     ]
 )
 
+run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
+user_access_run_dir = run_dir.replace(".", ":", count= 1)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 0
+    num_workers = 0,
+    metadata_dir = user_access_run_dir
 )
 
 lit_module_store = store(group=group_names.lightning_module)
@@ -199,7 +202,7 @@ task_function = zen(train_and_val) # Remove seeding here caught as input to conf
 store(
     HydraConf(
         job=JobConf(chdir=True), 
-        run=RunDir("outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"),
+        run=RunDir(run_dir),
         output_subdir="hydra_run_${run_idx}",  # TODO: Ensure run_idx is interpolated right with new override structure
     ),
     group="hydra",
@@ -207,6 +210,12 @@ store(
 )  # store `hydra.job.chdir=True`
 
 store.add_to_hydra_store(overwrite_ok=True)
+
+def pyaml(x):
+    # for pretty printing configs
+    print(to_yaml(x))
+
+pyaml(store["hydra", "config"])
 
 if __name__ == "__main__":
     """ 
@@ -226,7 +235,7 @@ if __name__ == "__main__":
     )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
 
-    print(curr_vals)
+    # print(curr_vals)
     job = launch(
         ExperimentConfig,
         task_function,
