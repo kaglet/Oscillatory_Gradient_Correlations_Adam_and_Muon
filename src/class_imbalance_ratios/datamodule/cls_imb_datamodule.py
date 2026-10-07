@@ -114,7 +114,7 @@ class ClsImbDataModule(CIFARDataModule):
 
             # Create train dataset
             (train_data, train_targets), (leftover_data, leftover_targets) = self._get_masked_splits(
-                 data, 
+                 data,
                  targets, 
                  self._train_counts_map
             )
@@ -129,7 +129,7 @@ class ClsImbDataModule(CIFARDataModule):
             self._val = MyDataset(val_data, val_targets, self.val_transforms, None)
 
             # Apply custom normalization from train distribution
-            train_renormer = DataRenormalizer(self.train_transforms, np.asanyarray(self._train.data))
+            train_renormer = DataRenormalizer(self._train)
             # Train receives appended version of og transforms stored by normalizer
             self._train.transforms = train_renormer.renormed_transforms(True)
             # Train receives only norm to append to its own transform pipeline
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     i = 0
     for inputs, targets in dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
-        viz_img(img, label=targets[0])
+        viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
         if i == 10: 
             break

@@ -39,7 +39,7 @@ class MyDataset(Dataset):
         """ 
         Returns tuple of image, single spurious feature for experiment, target
         """
-        img, target = self.data[index], self.targets[index].squeeze()
+        img, target = self.data[index], self.targets[index]
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
