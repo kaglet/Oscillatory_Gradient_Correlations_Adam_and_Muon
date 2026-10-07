@@ -43,7 +43,7 @@ class MyDataset(Dataset):
         # to return a PIL Image
         img = convert_img_axes(img, channel_first=True)
         img = np.asarray(img)
-        img = Image.fromarray(img)
+        # img = Image.fromarray(img)
 
         if self.transforms is not None:
             img = self.transforms(img)

@@ -165,3 +165,6 @@ if __name__ == "__main__":
 
     print("Target classes in unchosen subset (label and count)\n", targets[unchosen_mask].unique(return_counts=True))
     print("Target classes in chosen subset (label and count)\n", targets[chosen_mask].unique(return_counts=True))
+
+    renormer = DataRenormalizer(my_transforms, np.asarray(data))
+    norm = renormer.norm_only
