@@ -30,7 +30,7 @@ class ReshuffleCountMap():
         new_counts_map = {k:int(v) for k,v in zip(self._counts_map.keys(), self._new_counts)}
         return new_counts_map
 
-class TrainClassImbalancer():
+class ClassImbalancer():
     """
     For agnostic rebalancing take only class distribution, absolute class count mapping. 
     Return a mask of indices of distribution chosen and unchosen "leftovers".
@@ -68,7 +68,7 @@ class TrainClassImbalancer():
         # This is due to the cumsum and no shuffling.
         """
         unchosen_mask = ~chosen_mask 
-        return torch.as_tensor(chosen_mask), torch.as_tensor(unchosen_mask)
+        return torch.as_tensor(chosen_mask).squeeze(), torch.as_tensor(unchosen_mask).squeeze() # Masks must match shape at dim[0] for indexed tensors
 
     @property
     def chosen_mask(self) -> torch.Tensor:
@@ -88,7 +88,7 @@ class TrainClassImbalancer():
         idxs = torch.nonzero(self._unchosen_mask)
         return idxs
 
-class DatasetRenormalizer():
+class DataRenormalizer():
     """
     In pipelines creating subsets of data, calculates the mean, std based of argument passed in data. 
     Based of dataset stats can obtain mean, std for internal use.
@@ -123,9 +123,9 @@ class DatasetRenormalizer():
 
         return global_mean, global_std
 
-    def renormed_transforms(self, apply_dset_norm: bool) -> transforms.Compose:
+    def renormed_transforms(self, output_new: bool) -> transforms.Compose:
         new_transforms = self._og_transforms
-        if apply_dset_norm:
+        if output_new:
             normalize = transforms.Normalize(
                 mean=self._data_stats[0], # ImageNet standard norm
                 std=self._data_stats[1]
@@ -133,6 +133,15 @@ class DatasetRenormalizer():
             new_transforms = transforms.Compose((self._og_transforms, normalize))
 
         return new_transforms
+
+    @property
+    def norm_only(self) -> transforms.Normalize:
+        normalize = transforms.Normalize(
+            mean=self._data_stats[0], # ImageNet standard norm
+            std=self._data_stats[1]
+        )
+
+        return normalize
 
 if __name__ == "__main__":
     my_transforms = transforms.Compose([
@@ -145,14 +154,14 @@ if __name__ == "__main__":
     class_counts = [200 for _ in range(10)]
     class_labels = list(range(10))
     class_counts_map = {k:v for k,v in zip(class_labels, class_counts)}
-    imbalancer = TrainClassImbalancer(class_distr=targets, counts_map=class_counts_map)
+    imbalancer = ClassImbalancer(class_distr=targets, counts_map=class_counts_map)
     chosen_mask = imbalancer.chosen_mask
     unchosen_mask = imbalancer.unchosen_mask
 
-    count_chosen = chosen_mask.count_nonzero()
-    count_unchosen = unchosen_mask.sum() - unchosen_mask.count_nonzero()
+    count_chosen = chosen_mask.sum()
+    count_unchosen = unchosen_mask.sum()
     print(count_chosen)
-    print(count_chosen)
+    print(count_unchosen)
 
     print("Target classes in unchosen subset (label and count)\n", targets[unchosen_mask].unique(return_counts=True))
     print("Target classes in chosen subset (label and count)\n", targets[chosen_mask].unique(return_counts=True))
