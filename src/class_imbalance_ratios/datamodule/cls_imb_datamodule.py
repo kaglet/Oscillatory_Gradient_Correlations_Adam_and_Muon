@@ -27,7 +27,7 @@ from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler im
 
 from PIL import Image
 
-from src.class_imbalance_ratios.datamodule.dataset.class_imbalancer import TrainClassImbalancer
+from src.class_imbalance_ratios.datamodule.dataset.class_imbalance_utils import TrainClassImbalancer
 
 __all__ = ["ClsImbDataModule"]
 
@@ -61,8 +61,8 @@ class ClsImbDataModule(CIFARDataModule):
             dset = self.ds("/data", train=True,transform=self.train_transforms, target_transform=None, download=True)
             settings = dict(experiment_ratio=20)
             imbalancer = TrainClassImbalancer(dataset=dset, extra_settings=settings)
-            chosen_subset = imbalancer.get_chosen_subset(apply_dset_norm=True)
-            unchosen_subset = imbalancer.get_unchosen_subset()
+            chosen_subset = imbalancer.chosen_mask(apply_dset_norm=True)
+            unchosen_subset = imbalancer.unchosen_mask()
             self._class_ratios = imbalancer.class_ratios
             self._class_labels: list[str] = [
                 "airplane",

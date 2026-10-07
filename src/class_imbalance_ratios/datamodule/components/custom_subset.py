@@ -21,7 +21,7 @@ class TupledSubset(Dataset):
     def __init__(self, dataset: CIFAR10 | CIFAR100, indices: list[int], targets: torch.Tensor | Any):
         self.dataset = dataset
         self.indices = indices
-        targets_hold = torch.ones(len(dataset)).type(torch.long) *300 #( some number not present in the #labels just to make sure
+        targets_hold = torch.ones(len(dataset)).type(torch.long) 
         targets_hold[self.indices] = targets 
         self.targets = targets_hold
     def __getitem__(self, idx):
