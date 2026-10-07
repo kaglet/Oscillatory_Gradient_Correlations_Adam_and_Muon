@@ -3,6 +3,8 @@ from torch.utils.data import Dataset
 
 from PIL import Image
 
+from torchvision.datasets import CIFAR10, CIFAR100
+
 import math
 from typing import Any, Optional, Tuple
 import logging
@@ -41,9 +43,9 @@ class MyDataset(Dataset):
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
-        img = convert_img_axes(img, channel_first=True)
+        img = convert_img_axes(img, channel_first=False)
         img = np.asarray(img)
-        # img = Image.fromarray(img)
+        img = Image.fromarray(img)
 
         if self.transforms is not None:
             img = self.transforms(img)
@@ -54,4 +56,14 @@ class MyDataset(Dataset):
         return self.data[index], self.targets[index].unsqueeze(0)
 
 if __name__ == "__main__":
-    pass
+    my_transforms = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
+    data = torch.as_tensor(og_ds.data)
+    targets = torch.as_tensor(og_ds.targets).reshape(-1,1)
+    my_ds = MyDataset(data=data, targets=targets, transforms=my_transforms, target_transforms= None)
+    print(len(og_ds))
+    print("Image\n",my_ds[0][0])
+    print("Target\n",my_ds[0][1])
+

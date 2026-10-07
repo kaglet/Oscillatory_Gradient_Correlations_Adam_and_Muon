@@ -8,6 +8,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import Subset, random_split, TensorDataset
 import torchvision.transforms as transforms
 import torch
+from src.base.datamodule.components.my_dataset import MyDataset
 from src.class_imbalance_ratios.datamodule.components.custom_subset import TupledSubset
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 import torch.nn as nn
@@ -93,26 +94,26 @@ class DataRenormalizer():
     In pipelines creating subsets of data, calculates the mean, std based of argument passed in data. 
     Based of dataset stats can obtain mean, std for internal use.
     Main use is to append `torch.transforms.Normalize` to original transforms as `og_transforms` of data.
-    Assumes existing transforms DO NOT include a Normalize based off the statistics of the dataset. 
+    Assumes existing transforms DO NOT include a `Normalize` based off the statistics of the dataset. 
     In the case this is not adhered to, dataset will be normalized once, instead of from the final attributes of the newly processed dataset. 
     """
-    def __init__(self, og_transforms: transforms.Compose, data: np.ndarray) -> None:
-        self._og_transforms = og_transforms
+    def __init__(self, data: MyDataset) -> None:
+        self._og_transforms = data.transforms
         self._data = data
         self._data_stats = self._get_data_stats(self._data)
 
-    def _get_data_stats(self, data: np.ndarray)-> tuple[np.ndarray, np.ndarray]:
+    def _get_data_stats(self, data: MyDataset)-> tuple[np.ndarray, np.ndarray]:
         """
         Assumes image data.
         """
-        pix_sum = np.zeros(shape=(3,), dtype=np.float32)
+        pix_sum = np.zeros(shape=(3,))
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the *transformed* image via getter method
-        img_dim = data[0].shape
+        img_dim = data[0][0].shape
         img_pix_count: int = img_dim[0] * img_dim[1]
         num_img = len(data)
         total_pix_count = num_img * img_pix_count
-        for input in data:
+        for input, _ in data:
             input_np = np.asarray(input)
             pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(0,1))], axis=0 )
             pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(0,1))], axis=0) 
@@ -166,5 +167,6 @@ if __name__ == "__main__":
     print("Target classes in unchosen subset (label and count)\n", targets[unchosen_mask].unique(return_counts=True))
     print("Target classes in chosen subset (label and count)\n", targets[chosen_mask].unique(return_counts=True))
 
-    renormer = DataRenormalizer(my_transforms, np.asarray(data))
+    my_ds = MyDataset(data=data, targets=targets, transforms=my_transforms, target_transforms= None)
+    renormer = DataRenormalizer(my_ds)
     norm = renormer.norm_only
