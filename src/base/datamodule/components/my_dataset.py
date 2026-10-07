@@ -39,7 +39,7 @@ class MyDataset(Dataset):
         """ 
         Returns tuple of image, single spurious feature for experiment, target
         """
-        img, target = self.data[index], self.targets[index]
+        img, target = self.data[index], self.targets[index].squeeze()
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
@@ -53,7 +53,7 @@ class MyDataset(Dataset):
         if self.target_transforms is not None:
             target = self.target_transforms(target)
 
-        return self.data[index], self.targets[index].unsqueeze(0)
+        return img, target
 
 if __name__ == "__main__":
     my_transforms = transforms.Compose([
