@@ -112,13 +112,13 @@ class DataRenormalizer():
         img_tensor = data[0][0]
         assert type(img_tensor) is torch.Tensor, "Image must minimally be of type tensor"
         img_dim = img_tensor.shape
-        img_pix_count: int = img_dim[0] * img_dim[1]
+        img_pix_count: int = img_dim[1] * img_dim[2]
         num_img = len(data)
         total_pix_count = num_img * img_pix_count
         for input, _ in data:
             input_np = np.asarray(input)
-            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(0,1))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(0,1))], axis=0) 
+            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
 
         global_mean = pix_sum / total_pix_count
         global_var = (pix_sum_sq / total_pix_count) - (np.square(global_mean))
