@@ -18,6 +18,8 @@ import pandas as pd
 from torchvision import transforms
 from torchvision.transforms import Compose
 
+from src.base.datamodule.components.convert_ax import convert_img_axes
+
 logger = logging.getLogger(__name__)
 
 class MyDataset(Dataset):
@@ -36,6 +38,12 @@ class MyDataset(Dataset):
         Returns tuple of image, single spurious feature for experiment, target
         """
         img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = convert_img_axes(img, channel_first=True)
+        img = np.asarray(img)
+        img = Image.fromarray(img)
 
         if self.transforms is not None:
             img = self.transforms(img)
