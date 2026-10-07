@@ -83,7 +83,9 @@ class ClsImbDataModule(CIFARDataModule):
             """
             Details data leftover after class imbalancer is used to select custom counts. 
             This can be used to denote data left over for own `test` OOD. 
-            This need not have any relation to `test` data. TODO: Clarify this point prior.  
+            This need not have any relation to `test` data. 
+            However some amount of data may be left from val, train, naturally per class that 
+            could be used intelligently for a test distribution, to carry on the same pipeline. 
             Due to stochasticity in shuffle the same indices in the unused_mask, needs to be used per model/seed combo. 
             """
             torch.save(counts_map, self._metadata_dir + f"unused_class_counts.pt")
@@ -135,16 +137,22 @@ class ClsImbDataModule(CIFARDataModule):
 
             # Store metadata for train counts map
             train_desired_labels = {k:v for k,v in zip(self.class_labels, self._train_counts_map.values())}
-            train_actual_labels = {v[0]:v[1] for v in train_targets.unique(return_counts=True, sorted=True)}
+            labels = train_targets.unique(return_counts=True, sorted=True)[0]
+            counts = train_targets.unique(return_counts=True, sorted=True)[1]
+            train_actual_labels = {int(l):int(c) for l,c in zip(labels, counts)}
             self._save_count_metadata("train", train_desired_labels, train_actual_labels)
 
             # Store metadata for val counts map
             val_desired_labels = {k:v for k,v in zip(self.class_labels, self._val_counts_map.values())}
-            val_actual_labels = {v[0]:v[1] for v in val_targets.unique(return_counts=True, sorted=True)}
+            labels = val_targets.unique(return_counts=True, sorted=True)[0]
+            counts = val_targets.unique(return_counts=True, sorted=True)[1]
+            val_actual_labels = {int(l):int(c) for l,c in zip(labels, counts)}
             self._save_count_metadata("val", val_desired_labels, val_actual_labels)
 
             # Store metadata for unused counts map. Note there CANNOT be a "desired" map. See @`self.save_unused_metadata()`
-            unused_actual_labels = {v[0]:v[1] for v in unused_targets.unique(return_counts=True, sorted=True)}
+            labels = unused_targets.unique(return_counts=True, sorted=True)[0]
+            counts = unused_targets.unique(return_counts=True, sorted=True)[1]
+            unused_actual_labels = {int(l):int(c) for l,c in zip(labels, counts)}
             self.save_unused_metadata(unused_actual_labels)
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
