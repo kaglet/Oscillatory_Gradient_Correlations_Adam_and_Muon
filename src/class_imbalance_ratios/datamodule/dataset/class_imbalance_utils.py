@@ -101,21 +101,21 @@ class DataRenormalizer():
         self._data = data
         self._data_stats = self._get_data_stats(self._data)
 
-    def _get_data_stats(self, data)-> tuple[np.ndarray, np.ndarray]:
+    def _get_data_stats(self, data: np.ndarray)-> tuple[np.ndarray, np.ndarray]:
         """
         Assumes image data.
         """
         pix_sum = np.zeros(shape=(3,), dtype=np.float32)
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the *transformed* image via getter method
-        img_dim = data[0][0].shape
-        img_pix_count = img_dim[1] * img_dim[2]
+        img_dim = data[0].shape
+        img_pix_count: int = img_dim[0] * img_dim[1]
         num_img = len(data)
         total_pix_count = num_img * img_pix_count
-        for input, _ in data:
+        for input in data:
             input_np = np.asarray(input)
-            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
-            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
+            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(0,1))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(0,1))], axis=0) 
 
         global_mean = pix_sum / total_pix_count
         global_var = (pix_sum_sq / total_pix_count) - (np.square(global_mean))
