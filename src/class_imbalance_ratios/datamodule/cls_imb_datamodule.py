@@ -37,6 +37,7 @@ class ClsImbDataModule(CIFARDataModule):
     def __init__(
         self,
         metadata_dir: str,
+        labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         train_counts_map: Dict[int, int],
         val_counts_map: Dict[int, int],
@@ -58,18 +59,7 @@ class ClsImbDataModule(CIFARDataModule):
 
         self._metadata_dir = metadata_dir
 
-        self._class_labels: list[str] = [
-            "airplane",
-            "automobile",
-            "bird",
-            "cat",
-            "deer",
-            "dog",
-            "frog",
-            "horse",
-            "ship",
-            "truck"
-        ]
+        self._class_labels: list[str] = labels
 
     def _get_masked_splits(self, data: torch.Tensor, targets: torch.Tensor, counts_map: dict[int, int]) -> tuple[tuple[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
             imbalancer = ClassImbalancer(class_distr=targets, counts_map=counts_map)
@@ -198,6 +188,18 @@ if __name__ == "__main__":
     test_class_counts = [500 for _ in range(10)]
     test_map = {k:v for k,v in zip(class_labels, test_class_counts)}
 
+    labels = [
+            "airplane",
+            "automobile",
+            "bird",
+            "cat",
+            "deer",
+            "dog",
+            "frog",
+            "horse",
+            "ship",
+            "truck"
+        ]
     dmodule = ClsImbDataModule(
         num_workers=8, 
         val_counts_map=val_map,         
@@ -206,7 +208,8 @@ if __name__ == "__main__":
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms,
-        metadata_dir=str(Path(__file__).parent)
+        metadata_dir=str(Path(__file__).parent), 
+        labels=labels
     ) 
     dmodule.prepare_data()
     dmodule.setup("fit")

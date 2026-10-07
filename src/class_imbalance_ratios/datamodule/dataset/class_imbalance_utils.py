@@ -13,24 +13,6 @@ from src.class_imbalance_ratios.datamodule.components.custom_subset import Tuple
 from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 import torch.nn as nn
 
-class ReshuffleCountMap():
-    """
-    From original map get a remap with shuffled values. 
-    Consistent  input -> output types prevents confusing type conversions. 
-    This is stochastic shuffling dictated by the torch manual seed. 
-
-    """
-    def __init__(self, counts_map: dict[int, int]) -> None:
-        self._counts_map = counts_map
-        counts = torch.as_tensor(list(counts_map.values()))
-        idxs = torch.randperm(counts.shape[0]) # torch lacks simple np.shuffle like function. 
-        self._new_counts = counts[idxs]
-
-    @property
-    def remapped(self) -> dict[int, int]:
-        new_counts_map = {k:int(v) for k,v in zip(self._counts_map.keys(), self._new_counts)}
-        return new_counts_map
-
 class ClassImbalancer():
     """
     For agnostic rebalancing take only class distribution, absolute class count mapping. 

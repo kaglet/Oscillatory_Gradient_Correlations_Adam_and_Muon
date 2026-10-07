@@ -4,6 +4,7 @@ Anything configurable or static in a configurable aspect is defined here and ass
 """
 
 from dataclasses import dataclass
+import math
 import os
 import multiprocessing
 from pathlib import Path
@@ -126,6 +127,21 @@ cls_imb_s_transforms = builds(
     ]
 )
 
+
+
+class_labels = [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+]
+
 run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
 user_access_to_run_dir = "run_${run_idx}/"
 cls_imb_datamdl_s_cfg = builds(
@@ -135,7 +151,8 @@ cls_imb_datamdl_s_cfg = builds(
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 0,
-    metadata_dir = user_access_to_run_dir
+    metadata_dir = user_access_to_run_dir,
+    labels=class_labels,
 )
 
 lit_module_store = store(group=group_names.lightning_module)
@@ -226,12 +243,7 @@ if __name__ == "__main__":
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
     muon_overrides_map.overwrite(
         "run_idx", 
-        [
-            f"{injected_run}", # TODO: Can automate with pad_constant of Padder
-            f"{injected_run}", 
-            f"{injected_run}", 
-            f"{injected_run}"
-        ]
+        [f"{injected_run}" for _ in list(range(4))]
     )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
 
