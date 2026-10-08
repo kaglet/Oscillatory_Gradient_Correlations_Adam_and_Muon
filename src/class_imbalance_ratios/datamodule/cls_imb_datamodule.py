@@ -28,6 +28,7 @@ from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler im
 
 from PIL import Image
 
+from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.datamodule.dataset.class_imbalance_utils import ClassImbalancer, DataRenormalizer
 
 __all__ = ["ClsImbDataModule"]
@@ -39,9 +40,7 @@ class ClsImbDataModule(CIFARDataModule):
         metadata_dir: str,
         labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
-        train_counts_map: Dict[int, int],
-        val_counts_map: Dict[int, int],
-        test_counts_map: Dict[int, int],
+        counts_prepper: CountsPrepperFromRatio,
         dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, 
         data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
     ):
@@ -53,9 +52,9 @@ class ClsImbDataModule(CIFARDataModule):
         * Exclusively one of the above two must be set, if both are set, dict input is discarded by convention. 
         """
         super().__init__(data_dir=data_dir, dataset=dataset ,train_transforms=train_transforms, val_transforms=val_transforms, test_transforms=test_transforms, batch_size=batch_size, num_workers=num_workers)
-        self._train_counts_map = train_counts_map
-        self._val_counts_map = val_counts_map
-        self._test_counts_map = test_counts_map
+        self._train_counts_map = counts_prepper.train_map
+        self._val_counts_map = counts_prepper.val_map 
+        self._test_counts_map = counts_prepper.test_map
 
         self._metadata_dir = metadata_dir
 
@@ -200,11 +199,17 @@ if __name__ == "__main__":
             "ship",
             "truck"
         ]
+
+    counts_prepper = CountsPrepperFromRatio(
+         val_map=val_map,         
+        train_map=train_map, 
+        test_map=test_map, 
+        downsampler_ratio=20, 
+        slice_random=True
+    )
     dmodule = ClsImbDataModule(
         num_workers=8, 
-        val_counts_map=val_map,         
-        train_counts_map=train_map, 
-        test_counts_map=test_map,        
+        counts_prepper=counts_prepper,    
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms,

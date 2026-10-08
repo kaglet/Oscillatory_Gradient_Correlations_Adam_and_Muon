@@ -156,7 +156,7 @@ val_map = {k:v for k,v in zip(labels, val_class_counts)}
 test_class_counts = [500 for _ in range(cls_imb_s_num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
-prepper = CountsPrepperFromRatio(downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+counts_prepper = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
 run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
 user_access_to_run_dir = "run_${run_idx}/"
@@ -170,9 +170,7 @@ cls_imb_datamdl_s_cfg = builds(
     num_workers = 0,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
-    train_counts_map=prepper.train_map,
-    val_counts_map=prepper.val_map,
-    test_counts_map=prepper.test_map
+    counts_map=counts_prepper,
 )
 
 lit_module_store = store(group=group_names.lightning_module)
