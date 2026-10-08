@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import logging
 from pathlib import Path
 
 import torchmetrics
@@ -76,6 +77,8 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 # multi_step()
 # metric_collection()
 def analyse_metrics():
+    count_each = dict(gc=0, rgc=0, train_acc=0, val_acc=0, train_loss=0, val_loss=0)
+
     outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
     print(outputs_dir.exists())
     all_metrics = sorted(outputs_dir.rglob("*.pt"))
@@ -89,34 +92,51 @@ def analyse_metrics():
             "horse",
             "ship",
             "truck"]
-    for path in all_metrics:
+    for idx, path in enumerate(all_metrics):
         # Step numbers are correct for acc vs GC (1 behind)
         metric = torch.load(path)
         # assert type(metric) is OrderedDict | dict, f"Metric of {type(metric)} is not OrderedDict | dict"
         result = None
         path = str(path.stem).lower()
         if not "gc" in path:
-            if "val_acc" in path:
+            if "val_acc" in path and count_each["val_acc"] < 1:
                 base_acc = MyMultiClassAccuracy(cif10_labels)
                 base_acc.load_state_dict(metric)
                 result = base_acc.compute()
-            elif "loss" in path:
+                count_each["val_acc"] += 1
+            elif "val_loss" in path and count_each["val_loss"] < 1:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
                 result = base_loss.compute()
+                count_each["val_loss"] += 1
+            if "train_acc" in path and count_each["train_acc"] < 1:
+                base_acc = MyMultiClassAccuracy(cif10_labels)
+                base_acc.load_state_dict(metric)
+                result = base_acc.compute()
+                count_each["train_acc"] += 1
+            elif "train_loss" in path and count_each["train_loss"] < 1:
+                base_loss = MyLoss()
+                base_loss.load_state_dict(metric)
+                result = base_loss.compute()
+                count_each["train_loss"] += 1
         else: 
             header = list(metric.keys())
 
-            if not "rgc" in path:
+            if not "rgc" in path and count_each["gc"] < 1:
                 metric_gch = GCH_Metric(header=header, name="")
                 metric_gch.load_state_dict(metric)
                 result = metric_gch.compute()
-            else: 
+                count_each["gc"] += 1
+            elif "rgc" in path and count_each["rgc"] < 1: 
                 metric_gch = RGCH_Metric(header=header, name="")
                 metric_gch.load_state_dict(metric)
                 result = metric_gch.compute()         
+                count_each["rgc"] += 1
 
-        print(result)
+        
+        logging.basicConfig(filename=f"{Path(__file__).parent.resolve()}/metric_tests_{idx}.log", level=logging.DEBUG)
+
+        logging.debug("Metric unknown: {}".format(result))
 
 analyse_metrics()
 
