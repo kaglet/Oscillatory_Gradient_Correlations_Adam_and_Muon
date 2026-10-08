@@ -243,7 +243,7 @@ store(
     HydraConf(
         job=JobConf(chdir=True), 
         run=RunDir(run_dir),
-        output_subdir="hydra_run_${run_idx}",  # TODO: Ensure run_idx is interpolated right with new override structure
+        output_subdir="run_${run_idx}/hydra",  # TODO: Ensure run_idx is interpolated right with new override structure
     ),
     group="hydra",
     name="config"
