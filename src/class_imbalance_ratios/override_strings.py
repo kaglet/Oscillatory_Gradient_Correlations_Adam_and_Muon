@@ -33,7 +33,7 @@ adam_overrides = {
     f"++{group_names.parameters_set}.eps": 1e-10, # Not given
     f"{cfg_key_downsampler}": [20, 10, 5, 1], # Part of map blueprint given
     f"++{group_names.trainer}.limit_train_batches": 100,
-    f"++{group_names.trainer}.limit_val_batches": 30,
+    f"++{group_names.trainer}.limit_val_batches": 100,
     f"++{group_names.trainer}.max_epochs": 2,
 }
 
@@ -62,6 +62,6 @@ muon_overrides = {
     f"++{group_names.parameters_set}.eps": 1e-10, # Not given
     f"{cfg_key_downsampler}": [20, 10, 5, 1],
     f"++{group_names.trainer}.limit_train_batches": 100,
-    f"++{group_names.trainer}.limit_val_batches": 30,
+    f"++{group_names.trainer}.limit_val_batches": 100,
     f"++{group_names.trainer}.max_epochs": 2,
 }
