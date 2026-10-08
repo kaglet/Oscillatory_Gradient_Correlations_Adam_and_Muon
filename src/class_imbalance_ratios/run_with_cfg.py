@@ -170,7 +170,7 @@ cls_imb_datamdl_s_cfg = builds(
     num_workers = 0,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
-    counts_map=counts_prepper_cfg,
+    counts_prepper=counts_prepper_cfg,
 )
 
 lit_module_store = store(group=group_names.lightning_module)
