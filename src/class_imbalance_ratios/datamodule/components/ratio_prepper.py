@@ -3,11 +3,15 @@ import numpy as np
 import torch
 
 class CountsPrepperFromRatio():
-    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int) -> None:
+    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int, slice_random: bool = False) -> None:
         train_map = train_map
         train_counts = np.asarray(list(train_map.values()))
         train_labels = np.asarray(list(train_map.keys()))
-        downsample_idxs = np.random.choice(np.arange(train_counts.size), size=math.floor(train_counts.size / 2), replace=False)
+        if slice_random:
+            downsample_idxs = np.random.choice(np.arange(train_counts.size), size=math.floor(train_counts.size / 2), replace=False)
+        else:
+            downsample_idxs = np.arange(train_counts.size)[:5]
+
         train_counts[downsample_idxs] = train_counts[downsample_idxs] / downsampler_ratio
 
         self.train_map: dict[int, int] = {int(l): int(c) for l, c in zip(train_labels, train_counts)}
