@@ -93,15 +93,19 @@ class DualOptLitModule(pl.LightningModule):
         self.metric_gch.reset()
         return True
 
+    def on_fit_start(self) -> None:
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
+        self.metric_train_acc.reset()
+        self.metric_train_loss.reset()
+
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # By default lightning executes validation step sanity checks before training starts,
         # So it's worth to make sure validation metrics don't store results from these checks
         self.metric_train_acc.reset()
         self.metric_train_loss.reset()
-
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
 
         self._reset_gch_stores()
 
