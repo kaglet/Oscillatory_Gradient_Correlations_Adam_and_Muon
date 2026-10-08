@@ -3,7 +3,7 @@ from src.class_imbalance_ratios.group_names import shared_config_names
 
 __all__ = ["adam_overrides", "muon_overrides", "autofill_exceptions"]
 
-cfg_key_downsampler = f"++{group_names.datamodule}.downsampler_ratio"
+cfg_key_downsampler = f"++{group_names.counts_prepper}.downsampler_ratio"
 autofill_exceptions = [cfg_key_downsampler]
 run_idx = "run_idx"
 seed = "seed"

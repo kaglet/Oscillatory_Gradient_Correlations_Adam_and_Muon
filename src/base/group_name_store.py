@@ -22,5 +22,6 @@ class GroupNameStore:
     optimizers = "optims_cache"
     loggers = "logger_cache"
     checkpoints = "chkpt_cache"  
+    counts_prepper = "counts_prepper"
 
 group_names = GroupNameStore()

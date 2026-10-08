@@ -156,9 +156,9 @@ val_map = {k:v for k,v in zip(labels, val_class_counts)}
 test_class_counts = [500 for _ in range(cls_imb_s_num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
-counts_prepper = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
+run_dir = "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
 user_access_to_run_dir = "run_${run_idx}/"
 
 cls_imb_datamdl_s_cfg = builds(
@@ -170,7 +170,7 @@ cls_imb_datamdl_s_cfg = builds(
     num_workers = 0,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
-    counts_map=counts_prepper,
+    counts_map=counts_prepper_cfg,
 )
 
 lit_module_store = store(group=group_names.lightning_module)
@@ -204,6 +204,9 @@ logger_store(csv_logger_cfg, name=shared_config_names.experiment)
 chkpt_store = store(group=group_names.checkpoints)
 chkpt_store(max_checkpt_cfg, name=shared_config_names.experiment)
 
+counts_prepper_store = store(group=group_names.counts_prepper)
+counts_prepper_store(counts_prepper_cfg, name=shared_config_names.experiment)
+
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1, # TODO: Make new seed per run as param to overrides not here 
@@ -227,6 +230,8 @@ ExperimentConfig = make_config(
         {group_names.loggers: shared_config_names.experiment},
 
         {group_names.checkpoints: shared_config_names.experiment},
+
+        {group_names.counts_prepper: shared_config_names.experiment},
 
         '_self_'
     ]
