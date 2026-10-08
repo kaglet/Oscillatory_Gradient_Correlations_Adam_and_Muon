@@ -212,17 +212,28 @@ if __name__ == "__main__":
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
         test_transforms=base_transforms,
-        metadata_dir=str(Path(__file__).parent), 
+        metadata_dir=f"{str(Path(__file__).parent)}/", 
         labels=labels
     ) 
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+    log_file = Path(__file__).parent / "cls_imb_logs.log"
+    logging.basicConfig(filename=log_file, level=logging.DEBUG)
+
+    logging.debug("---- TRAIN DATALOADER NEXT --- \n")
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
-        viz_img(torch.as_tensor(img), label=targets[0])
+        # viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
-        if i == 10: 
-            break
+        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
+
+    logging.debug("---- VAL DATALOADER NEXT --- \n")
+
+    for inputs, targets in dmodule.val_dataloader():
+        img = convert_img_axes(inputs[0])
+        # viz_img(torch.as_tensor(img), label=targets[0])
+        i += 1
+        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))

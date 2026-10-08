@@ -10,7 +10,6 @@ import torchvision.transforms as transforms
 import torch
 from src.base.datamodule.components.my_dataset import MyDataset
 from src.class_imbalance_ratios.datamodule.components.custom_subset import TupledSubset
-from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 import torch.nn as nn
 
 class ClassImbalancer():
