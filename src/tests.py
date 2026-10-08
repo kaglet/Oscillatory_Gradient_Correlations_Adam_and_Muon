@@ -76,6 +76,8 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 # non_scalar_a(3)
 # multi_step()
 # metric_collection()
+logging.basicConfig(filename=f"{Path(__file__).parent.resolve()}/metric_tests.log", level=logging.DEBUG)
+
 def analyse_metrics():
     count_each = dict(gc=0, rgc=0, train_acc=0, val_acc=0, train_loss=0, val_loss=0)
 
@@ -104,21 +106,25 @@ def analyse_metrics():
                 base_acc.load_state_dict(metric)
                 result = base_acc.compute()
                 count_each["val_acc"] += 1
+                logging.debug("Metric val_acc: {}".format(result))
             elif "val_loss" in path and count_each["val_loss"] < 1:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
                 result = base_loss.compute()
                 count_each["val_loss"] += 1
+                logging.debug("Metric val_loss: {}".format(result))
             if "train_acc" in path and count_each["train_acc"] < 1:
                 base_acc = MyMultiClassAccuracy(cif10_labels)
                 base_acc.load_state_dict(metric)
                 result = base_acc.compute()
                 count_each["train_acc"] += 1
+                logging.debug("Metric train_acc: {}".format(result))
             elif "train_loss" in path and count_each["train_loss"] < 1:
                 base_loss = MyLoss()
                 base_loss.load_state_dict(metric)
                 result = base_loss.compute()
                 count_each["train_loss"] += 1
+                logging.debug("Metric train_loss: {}".format(result))
         else: 
             header = list(metric.keys())
 
@@ -127,16 +133,13 @@ def analyse_metrics():
                 metric_gch.load_state_dict(metric)
                 result = metric_gch.compute()
                 count_each["gc"] += 1
+                logging.debug("Metric gc: {}".format(result))
             elif "rgc" in path and count_each["rgc"] < 1: 
                 metric_gch = RGCH_Metric(header=header, name="")
                 metric_gch.load_state_dict(metric)
                 result = metric_gch.compute()         
                 count_each["rgc"] += 1
-
-        
-        logging.basicConfig(filename=f"{Path(__file__).parent.resolve()}/metric_tests_{idx}.log", level=logging.DEBUG)
-
-        logging.debug("Metric unknown: {}".format(result))
+                logging.debug("Metric rgc: {}".format(result))
 
 analyse_metrics()
 
