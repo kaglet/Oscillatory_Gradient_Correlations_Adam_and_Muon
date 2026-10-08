@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 class CountsPrepperFromRatio():
-    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int, slice_random: bool = False) -> None:
+    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int, slice_random: bool = True) -> None:
         train_map = train_map
         train_counts = np.asarray(list(train_map.values()))
         train_labels = np.asarray(list(train_map.keys()))

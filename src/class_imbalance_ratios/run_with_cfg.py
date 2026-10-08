@@ -35,6 +35,7 @@ from src.base.lit_module.components.per_optim_params.resnet_params.get_params im
 from src.base.lit_module.components.simple_net import SimpleCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.class_imbalance_ratios.artificial_overrides_padder import ArtificialOverridesPadder
+from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio, ReshuffleCountMap
 from src.class_imbalance_ratios.group_names import shared_config_names
 from src.class_imbalance_ratios.override_strings import adam_overrides, muon_overrides, autofill_exceptions
 from src.train_and_val import train_and_val
@@ -142,8 +143,24 @@ class_labels = [
     "truck"
 ]
 
+labels = list(range(cls_imb_s_num_classes))
+
+train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
+train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
+
+train_map = {k:v for k,v in zip(labels, train_class_counts)}
+
+val_class_counts = [1000 for _ in range(cls_imb_s_num_classes)]
+val_map = {k:v for k,v in zip(labels, val_class_counts)}
+
+test_class_counts = [500 for _ in range(cls_imb_s_num_classes)]
+test_map = {k:v for k,v in zip(labels, test_class_counts)}
+
+prepper = CountsPrepperFromRatio(downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+
 run_dir = "outputs/${hydra.job.name}/multijob/R_${datamodule.downsampler_ratio}"
 user_access_to_run_dir = "run_${run_idx}/"
+
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     train_transforms = cls_imb_s_transforms,
@@ -153,6 +170,9 @@ cls_imb_datamdl_s_cfg = builds(
     num_workers = 0,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
+    train_counts_map=prepper.train_map,
+    val_counts_map=prepper.val_map,
+    test_counts_map=prepper.test_map
 )
 
 lit_module_store = store(group=group_names.lightning_module)
