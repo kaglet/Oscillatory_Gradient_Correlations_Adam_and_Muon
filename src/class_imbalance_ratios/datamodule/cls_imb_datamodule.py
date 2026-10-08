@@ -24,7 +24,6 @@ from src.base.datamodule.components.cifar_10_helper import CIFAR10Helper
 from src.base.datamodule.components.convert_ax import convert_img_axes
 from src.base.datamodule.components.img_viz import viz_img
 from src.base.datamodule.components.my_dataset import MyDataset
-from src.class_imbalance_ratios.datamodule.components.deterministic_u_sampler import DeterministicUnderSampler
 
 from PIL import Image
 
