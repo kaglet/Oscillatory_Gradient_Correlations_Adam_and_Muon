@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import logging
 from pathlib import Path
+from typing import Any
 
 import torchmetrics
 from torchmetrics import Accuracy, Metric
@@ -78,22 +79,19 @@ def metric_collection(epochs = 3, num_updates=3, title="This is a nice plot", pa
 # metric_collection()
 logging.basicConfig(filename=f"{Path(__file__).parent.resolve()}/metric_tests.log", level=logging.DEBUG)
 
-def analyse_metrics():
-    count_each = dict(gc=0, rgc=0, train_acc=0, val_acc=0, train_loss=0, val_loss=0)
-
-    outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
-    print(outputs_dir.exists())
-    all_metrics = sorted(outputs_dir.rglob("*.pt"))
+def store_metrics_per_optim(outputs_dir: Path, count_each: dict[str, int]):
     cif10_labels = ["airplane",
-            "automobile",
-            "bird",
-            "cat",
-            "deer",
-            "dog",
-            "frog",
-            "horse",
-            "ship",
-            "truck"]
+                "automobile",
+                "bird",
+                "cat",
+                "deer",
+                "dog",
+                "frog",
+                "horse",
+                "ship",
+                "truck"]
+    all_metrics = sorted(outputs_dir.rglob("*.pt"))
+
     for idx, path in enumerate(all_metrics):
         # Step numbers are correct for acc vs GC (1 behind)
         metric = torch.load(path)
@@ -140,6 +138,21 @@ def analyse_metrics():
                 result = metric_gch.compute()         
                 count_each["rgc"] += 1
                 logging.debug("Metric rgc: {}".format(result))
+
+def analyse_metrics():
+    outputs_dir = Path(__file__).resolve().parent.parent / "outputs"
+
+    count_each = dict(gc=0, rgc=0, train_acc=0, val_acc=0, train_loss=0, val_loss=0)
+    muon_outputs_dir = outputs_dir/ "muon_class_imbalance_ratios"
+
+    logging.debug("----- STORING MUON METRICS -----")
+    store_metrics_per_optim(muon_outputs_dir, count_each)
+
+    count_each = dict(gc=0, rgc=0, train_acc=0, val_acc=0, train_loss=0, val_loss=0)
+    adam_outputs_dir = outputs_dir/ "adam_class_imbalance_ratios"
+
+    logging.debug("----- STORING ADAM METRICS -----")
+    store_metrics_per_optim(adam_outputs_dir, count_each)
 
 analyse_metrics()
 
