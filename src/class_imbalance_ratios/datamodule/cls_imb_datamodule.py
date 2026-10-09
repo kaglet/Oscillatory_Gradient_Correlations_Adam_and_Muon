@@ -82,8 +82,8 @@ class ClsImbDataModule(CIFARDataModule):
             """
             Desired map is from formatted labels. Actual shows what is stored in reality. 
             """
-            print(f"Desired counts map:\n {desired_counts_map}")
-            print(f"Actual counts map:\n {actual_counts_map}")
+            # print(f"Desired counts map:\n {desired_counts_map}")
+            # print(f"Actual counts map:\n {actual_counts_map}")
             os.makedirs(self._metadata_dir, exist_ok=True)
             torch.save(desired_counts_map, self._metadata_dir + f"{stage}_desired_class_counts.pt")
             torch.save(actual_counts_map, self._metadata_dir + f"{stage}_actual_class_counts.pt")

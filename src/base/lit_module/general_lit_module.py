@@ -194,8 +194,8 @@ class DualOptLitModule(pl.LightningModule):
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
     def _update_standard_metrics(self, loss_store: MyLoss, acc_store: MyMultiClassAccuracy, stage: str, metrics: Dict[str,torch.Tensor]):
-        loss_store.update(metrics["loss"], self.trainer.global_step, self.trainer.current_epoch)
-        acc_store.update(metrics["preds"], metrics["targets"], self.trainer.global_step, self.trainer.current_epoch)
+        loss_store.update(loss = metrics["loss"], step= self.trainer.global_step, epoch= self.trainer.current_epoch)
+        acc_store.update(targets = metrics["targets"], preds=metrics["preds"], step= self.trainer.global_step, epoch=self.trainer.current_epoch)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
