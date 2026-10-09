@@ -100,22 +100,22 @@ class DualOptLitModule(pl.LightningModule):
         self.metric_train_acc.reset()
         self.metric_train_loss.reset()
 
-    def on_train_start(self) -> None:
-        """Lightning hook that is called when training begins."""
-        # By default lightning executes validation step sanity checks before training starts,
-        # So it's worth to make sure validation metrics don't store results from these checks
-        self.metric_train_acc.reset()
-        self.metric_train_loss.reset()
+    # def on_train_start(self) -> None:
+    #     """Lightning hook that is called when training begins."""
+    #     # By default lightning executes validation step sanity checks before training starts,
+    #     # So it's worth to make sure validation metrics don't store results from these checks
+    #     self.metric_train_acc.reset()
+    #     self.metric_train_loss.reset()
 
-        self._reset_gch_stores()
+    #     self._reset_gch_stores()
 
-    def on_validation_start(self) -> None:
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
+    # def on_validation_start(self) -> None:
+    #     self.metric_val_acc.reset()
+    #     self.metric_val_loss.reset()
 
-    def on_test_start(self) -> None:
-        self.metric_test_acc.reset()
-        self.metric_test_loss.reset()
+    # def on_test_start(self) -> None:
+    #     self.metric_test_acc.reset()
+    #     self.metric_test_loss.reset()
     
     def forward(self, input):
         return self.model(input)
@@ -143,17 +143,12 @@ class DualOptLitModule(pl.LightningModule):
         logits = self.forward(inputs)
         loss = self.criterion(logits, targets)
 
-        grad_accum = self._get_current_grad_accum()
-
-        should_step = (batch_idx + 1) % grad_accum == 0
-
-        if should_step:
-            preds = torch.argmax(logits, dim=1)
-            metrics = dict(loss=loss, preds=preds, targets=targets)
-            if stage == "val":
-                self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
-            elif stage == "test": 
-                self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
+        preds = torch.argmax(logits, dim=1)
+        metrics = dict(loss=loss, preds=preds, targets=targets)
+        if stage == "val":
+            self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
+        elif stage == "test": 
+            self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
 
         return loss
 
@@ -169,13 +164,13 @@ class DualOptLitModule(pl.LightningModule):
         scaled_loss = loss / grad_accum
         self.manual_backward(loss=scaled_loss)
 
+        preds = torch.argmax(logits, dim=1)
+        metrics = dict(loss=loss, preds=preds, targets=targets)
+        self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
+
         should_step = (batch_idx + 1) % grad_accum == 0
 
         if should_step:
-            preds = torch.argmax(logits, dim=1)
-            metrics = dict(loss=loss, preds=preds, targets=targets)
-            self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
-
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
             schdlrs = self.lr_schedulers()
@@ -317,11 +312,11 @@ class DualOptLitModule(pl.LightningModule):
         self._save_train_metrics()
         self._save_val_metrics()
 
-    def on_train_end(self) -> None:
-        self._save_train_metrics()
+    # def on_train_end(self) -> None:
+    #     self._save_train_metrics()
 
-    def on_validation_end(self) -> None:
-        self._save_val_metrics()
+    # def on_validation_end(self) -> None:
+    #     self._save_val_metrics()
 
     def on_test_end(self) -> None:
         self._save_test_metrics()
