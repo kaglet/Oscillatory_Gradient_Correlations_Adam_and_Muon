@@ -41,7 +41,7 @@ class ClsImbDataModule(CIFARDataModule):
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         counts_prepper: CountsPrepperFromRatio,
         dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, 
-        data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4,
+        data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
     ):
         """
         * For the experiment set a ratio of R, where R % num_cifar_classes = 0
@@ -106,6 +106,10 @@ class ClsImbDataModule(CIFARDataModule):
                  targets, 
                  self._train_counts_map
             )
+            # Randomly shuffle once and once only
+            idxs = torch.randperm(train_data.shape[0])
+            train_data = train_data[idxs]
+            train_targets = train_targets[idxs]
             self._train = MyDataset(train_data, train_targets, self.train_transforms, None)
 
             # Create val dataset 
@@ -114,6 +118,10 @@ class ClsImbDataModule(CIFARDataModule):
                  leftover_targets, 
                  self._val_counts_map
             )
+            # Randomly shuffle once and once only
+            idxs = torch.randperm(val_data.shape[0])
+            val_data = val_data[idxs]
+            val_targets = val_targets[idxs]
             self._val = MyDataset(val_data, val_targets, self.val_transforms, None)
 
             # Apply custom normalization from train distribution
