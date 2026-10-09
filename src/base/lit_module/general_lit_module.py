@@ -33,7 +33,7 @@ class DualOptLitModule(pl.LightningModule):
         model: nn.Module,
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
+        schedulers: list[LRScheduler],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
@@ -53,25 +53,30 @@ class DualOptLitModule(pl.LightningModule):
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
 
-        self.metric_train_acc = MyMultiClassAccuracy(labels=labels)
+        self.metric_train_acc = MyMultiClassAccuracy(labels=labels, name="train/acc")
         self.metric_train_acc.persistent(mode=True)
-        self.metric_val_acc = MyMultiClassAccuracy(labels=labels)
+
+        self.metric_val_acc = MyMultiClassAccuracy(labels=labels, name="val/acc")
         self.metric_val_acc.persistent(mode=True)
-        self.metric_test_acc = MyMultiClassAccuracy(labels=labels)
+
+        self.metric_test_acc = MyMultiClassAccuracy(labels=labels, name="test/acc")
         self.metric_test_acc.persistent(mode=True)
 
-        self.metric_train_loss = MyLoss()
+        self.metric_train_loss = MyLoss("train/loss")
         self.metric_train_loss.persistent(mode=True)
-        self.metric_val_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
-        self.metric_test_loss = MyLoss()
-        self.metric_train_loss.persistent(mode=True)
+
+        self.metric_val_loss = MyLoss("val/loss")
+        self.metric_val_loss.persistent(mode=True)
+
+        self.metric_test_loss = MyLoss("test/loss")
+        self.metric_test_loss.persistent(mode=True)
 
         self.model = model
         self._grad_accum_schedule = grad_accum_schedule
 
         self.optims = optims
         self.params = params
+        self.my_lr_schdlrs = schedulers
         self.automatic_optimization = False 
         # Begin dual opt fixes/implementation from @shivvor2
         self._optimizer_step_count = 0
@@ -88,21 +93,12 @@ class DualOptLitModule(pl.LightningModule):
         self.metric_gch.reset()
         return True
 
-    def on_train_start(self) -> None:
-        """Lightning hook that is called when training begins."""
-        # By default lightning executes validation step sanity checks before training starts,
-        # So it's worth to make sure validation metrics don't store results from these checks
+    def on_fit_start(self) -> None:
+        self.metric_val_acc.reset()
+        self.metric_val_loss.reset()
+
         self.metric_train_acc.reset()
         self.metric_train_loss.reset()
-
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
-
-        self._reset_gch_stores()
-
-    def on_validation_start(self) -> None:
-        self.metric_val_acc.reset()
-        self.metric_val_loss.reset()
 
     def on_test_start(self) -> None:
         self.metric_test_acc.reset()
@@ -111,10 +107,10 @@ class DualOptLitModule(pl.LightningModule):
     def forward(self, input):
         return self.model(input)
 
-    def configure_optimizers(self) -> list[Optimizer]:
+    def configure_optimizers(self):
         # TODO: Add configured learning rate scheduler as in Lhydra template, or check how MuonWithAuxAdam package implements it, or from @shivvor2
-
-        return self.optims
+        
+        return self.optims, self.my_lr_schdlrs
     
     def _get_current_grad_accum(self) -> int:
         """Get current gradient accumulation factor.
@@ -134,17 +130,12 @@ class DualOptLitModule(pl.LightningModule):
         logits = self.forward(inputs)
         loss = self.criterion(logits, targets)
 
-        grad_accum = self._get_current_grad_accum()
-
-        should_step = (batch_idx + 1) % grad_accum == 0
-
-        if should_step:
-            preds = torch.argmax(logits, dim=1)
-            metrics = dict(loss=loss, preds=preds, targets=targets)
-            if stage == "val":
-                self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
-            elif stage == "test": 
-                self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
+        preds = torch.argmax(logits, dim=1)
+        metrics = dict(loss=loss, preds=preds, targets=targets)
+        if stage == "val":
+            self._update_standard_metrics(self.metric_val_loss, self.metric_val_acc, stage, metrics)
+        elif stage == "test": 
+            self._update_standard_metrics(self.metric_test_loss, self.metric_test_acc, stage, metrics)
 
         return loss
 
@@ -160,23 +151,29 @@ class DualOptLitModule(pl.LightningModule):
         scaled_loss = loss / grad_accum
         self.manual_backward(loss=scaled_loss)
 
+        preds = torch.argmax(logits, dim=1)
+        metrics = dict(loss=loss, preds=preds, targets=targets)
+        self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
+
         should_step = (batch_idx + 1) % grad_accum == 0
 
         if should_step:
-            preds = torch.argmax(logits, dim=1)
-            metrics = dict(loss=loss, preds=preds, targets=targets)
-            self._update_standard_metrics(self.metric_train_loss, self.metric_train_acc, stage, metrics)
-
             optims = self.optimizers()
             optims = optims if isinstance(optims, list) else [optims]
+            schdlrs = self.lr_schedulers()
+            schdlrs = schdlrs if isinstance(schdlrs, list) else [schdlrs]
 
-            for i, opt in enumerate(optims):
+            for i, (opt, lr_schdlr) in enumerate(zip(optims, schdlrs)):
+                # Only this needs check where type changes to set type | None, unlike optims
+                assert lr_schdlr is not None, "LR Scheduler, is None" 
                 # Call global opt step only at the end to help hooks
                 if i == len(optims) - 1:
                     opt.step()  # This increments global_step # TODO: Check if this has been fixed in update of PL
+                    lr_schdlr.step(self.current_epoch)
                 else:
                     # Access underlying optimizer directly to avoid double-counting
                     opt.optimizer.step()
+                    lr_schdlr.step(self.current_epoch)
 
                 # Before this, GCH callback will run
                 opt.zero_grad()
@@ -197,8 +194,8 @@ class DualOptLitModule(pl.LightningModule):
         print("Lengths of groups for Adam, Muon, and total", len_ad, len_mu, len_ad+len_mu)
 
     def _update_standard_metrics(self, loss_store: MyLoss, acc_store: MyMultiClassAccuracy, stage: str, metrics: Dict[str,torch.Tensor]):
-        loss_store.update(metrics["loss"], self.trainer.global_step, self.trainer.current_epoch)
-        acc_store.update(metrics["preds"], metrics["targets"], self.trainer.global_step, self.trainer.current_epoch)
+        loss_store.update(loss = metrics["loss"], step= self.trainer.global_step, epoch= self.trainer.current_epoch)
+        acc_store.update(targets = metrics["targets"], preds=metrics["preds"], step= self.trainer.global_step, epoch=self.trainer.current_epoch)
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set."""
@@ -302,39 +299,6 @@ class DualOptLitModule(pl.LightningModule):
         self._save_train_metrics()
         self._save_val_metrics()
 
-    def on_train_end(self) -> None:
-        self._save_train_metrics()
-
-    def on_validation_end(self) -> None:
-        # self._save_val_metrics()
-        pass
-
     def on_test_end(self) -> None:
-        # self._save_test_metrics()
-        pass
+        self._save_test_metrics()
 
-class SingleOptLitModule(DualOptLitModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        num_classes: int = 10,
-    ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)
-
-class DistOptLitModule(DualOptLitModule):
-    def __init__(
-        self,
-        model: nn.Module,
-        params: list[list[dict[str, Any]]],
-        optims: list[Optimizer],
-        schdlrs: Optional[list[LRScheduler]] = None,
-        grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
-        # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
-        num_classes: int = 10,
-    ):
-        super().__init__(model, params, optims, schdlrs, grad_accum_schedule, num_classes)

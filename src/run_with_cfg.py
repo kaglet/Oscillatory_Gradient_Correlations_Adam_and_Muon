@@ -27,7 +27,7 @@ from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
 from src.base.lit_module.components.simple_net import SimpleCNN
-from src.base.lit_module.general_lit_module import DualOptLitModule, SingleOptLitModule
+from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
@@ -86,30 +86,29 @@ grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 16})
 lr_sch_pcfg = [pbuilds(LRScheduler), pbuilds(LRScheduler)]
 
 dual_lit_module_cfg = pbuilds(DualOptLitModule)
-single_lit_module_cfg = pbuilds(SingleOptLitModule)
 
 # Lighning Module variations (for groups mainly for swap in and out, TODO: Defer, ideas below)
 # Top level DualOptLit module cannot be changed, the top can be registered or even try dictionary keys to unpack as keyword arguments
 cls_imb_s_module_cfg = pbuilds(
-    SingleOptLitModule,
+    DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_s_num_classes
 )
 
 cls_imb_l_module_cfg = pbuilds(
-    SingleOptLitModule, 
+    DualOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes
 )
 
 sp_pix_module_cfg = pbuilds(
-    SingleOptLitModule, 
+    DualOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sp_pix_num_classes
 )
 
 sbg_rob_module_cfg = pbuilds(
-    SingleOptLitModule, 
+    DualOptLitModule, 
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = sbg_rob_num_classes
 )
@@ -259,7 +258,6 @@ dual_lbl = "dual"
 # Create groups: Key value pairs (At current granularity level desired to register options per group)
 lit_module_store = store(group="lit_module")
 lit_module_store(dual_lit_module_cfg, name=dual_lbl)
-lit_module_store(single_lit_module_cfg, name=mu_aux_ad_lbl)
 
 trainer_store = store(group="trainer")
 trainer_store(trainer_cfg, name=default_lbl)

@@ -14,6 +14,7 @@ from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 from hydra_zen.typing import Partial
 from hydra_zen import ZenStore, store
 from tqdm import tqdm
+import lightning.pytorch as pl
 
 from src.base.configs.experiment_data import Experiment_Data
 __all__ = ["train_and_val"]
@@ -25,18 +26,18 @@ def train_and_val(
     model_cache: nn.Module, # as built class instance
     params_cache: Callable, # as getter method instance
     optims_cache: list[Partial[Optimizer]],
-    schdlrs_cache: list[Partial[LRScheduler]], 
-    experiment_info: Partial[Experiment_Data], # TODO: Remove, not needed
+    schdlrs_cache: Partial[LRScheduler], 
     logger_cache: Any,
     chkpt_cache: Any,
-    run_idx: int
+    run_idx: int,
+    seed: int
 ):
     torch.set_float32_matmul_precision(precision="high")
     print(f"Executing run {run_idx}") 
     params = params_cache(model=model_cache)
     optims = [optim(params) for optim, params in zip(optims_cache, params)]
-    # schdlrs = [sch(optimizer=optims[0]) for sch in schdlrs_cache]
-    lit_module_built = lit_module(model=model_cache, params=params, optims=optims)
+    schdlrs = [schdlrs_cache(optimizer=optims[0]) for _ in optims]
+    lit_module_built = lit_module(model=model_cache, params=params, optims=optims, schedulers=schdlrs)
 
     path_all = Path(os.getcwd(), f"run_{run_idx}") # 
     trainer_built = trainer(default_root_dir=path_all)

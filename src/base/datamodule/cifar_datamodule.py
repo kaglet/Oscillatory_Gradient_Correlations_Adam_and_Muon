@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Any, Callable, Literal, Optional, Type
 
 import torch
@@ -53,16 +54,16 @@ class CIFARDataModule(L.LightningDataModule):
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self._train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
+        return DataLoader(self._train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
+        return DataLoader(self._val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
+        return DataLoader(self._test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self._predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False)
+        return DataLoader(self._predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
     
 class CIFAR10DataModule(CIFARDataModule):
     """ 
@@ -103,13 +104,23 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+    log_file = Path(__file__).parent / "cls_imb_logs.log"
+    logging.basicConfig(filename=log_file, level=logging.DEBUG)
+
+    logging.debug("---- TRAIN DATALOADER NEXT --- \n")
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
-        viz_img(img, label=targets[0])
+        # viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
-        if i == 10: 
-            break
+        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
 
-# Todo: Perform this as experiments via config, use of ratio and other settings, move ImageNet norm to other datasets not this one. 
+    logging.debug("---- VAL DATALOADER NEXT --- \n")
+
+    j = 0
+    for inputs, targets in dmodule.val_dataloader():
+        img = convert_img_axes(inputs[0])
+        # viz_img(torch.as_tensor(img), label=targets[0])
+        j += 1
+        logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))
