@@ -41,7 +41,7 @@ class ClsImbDataModule(CIFARDataModule):
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         counts_prepper: CountsPrepperFromRatio,
         dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, 
-        data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
+        data_dir: str = "/data", batch_size: int = 2048, num_workers: int = 4,
     ):
         """
         * For the experiment set a ratio of R, where R % num_cifar_classes = 0
