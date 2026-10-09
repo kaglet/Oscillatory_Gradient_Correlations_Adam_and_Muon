@@ -237,7 +237,8 @@ ExperimentConfig = make_config(
     ]
 )
 
-task_function = zen(train_and_val) # Remove seeding here caught as input to config
+pre_seed = zen(lambda seed: pl.seed_everything(seed))
+task_function = zen(train_and_val, pre_call=pre_seed) # Remove seeding here caught as input to config
 
 store(
     HydraConf(
@@ -261,15 +262,20 @@ if __name__ == "__main__":
     """ 
     
     """
-    injected_run = 1
-    injected_slice = 1
+    injected_run = 0
+    injected_slice = 0
+    injected_seed = 0
+
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
     muon_overrides_map.overwrite(
         "run_idx", 
         [f"{injected_run}" for _ in list(range(4))]
     )
+    muon_overrides_map.overwrite(
+        "seed",
+        [f"{injected_seed}" for _ in list(range(4))]
+    )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
-
     # print(curr_vals)
     job = launch(
         ExperimentConfig,
@@ -282,6 +288,14 @@ if __name__ == "__main__":
 
     adam_overrides_map = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4).overrides_map_as_store
     curr_vals = adam_overrides_map.get_map_slice(injected_slice)
+    adam_overrides_map.overwrite(
+        "run_idx", 
+        [f"{injected_run}" for _ in list(range(4))]
+    )
+    adam_overrides_map.overwrite(
+        "seed",
+        [f"{injected_seed}" for _ in list(range(4))]
+    )
 
     print(curr_vals)
     job = launch(
