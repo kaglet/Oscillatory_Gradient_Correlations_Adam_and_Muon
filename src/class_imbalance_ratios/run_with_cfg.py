@@ -281,7 +281,7 @@ if __name__ == "__main__":
     )
 
     adam_overrides_map = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4).overrides_map_as_store
-    curr_vals = adam_overrides_map.get_map_slice(0)
+    curr_vals = adam_overrides_map.get_map_slice(injected_slice)
 
     print(curr_vals)
     job = launch(
