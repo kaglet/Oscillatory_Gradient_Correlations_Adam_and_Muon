@@ -231,9 +231,9 @@ if __name__ == "__main__":
         logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
 
     logging.debug("---- VAL DATALOADER NEXT --- \n")
-
+    j = 0
     for inputs, targets in dmodule.val_dataloader():
         img = convert_img_axes(inputs[0])
         # viz_img(torch.as_tensor(img), label=targets[0])
-        i += 1
-        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
+        j += 1
+        logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))
