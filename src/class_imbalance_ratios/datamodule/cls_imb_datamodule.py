@@ -106,7 +106,7 @@ class ClsImbDataModule(CIFARDataModule):
                  targets, 
                  self._train_counts_map
             )
-            # Randomly shuffle once and once only
+            # Randomly shuffle: Violates first idea to shuffle once, as this shuffle post mask gives variety to dataloader else targets repeat across batches somehow
             idxs = torch.randperm(train_data.shape[0])
             train_data = train_data[idxs]
             train_targets = train_targets[idxs]
@@ -118,7 +118,7 @@ class ClsImbDataModule(CIFARDataModule):
                  leftover_targets, 
                  self._val_counts_map
             )
-            # Randomly shuffle once and once only
+            # Randomly shuffle: Violates first idea to shuffle once, as this shuffle post mask gives variety to dataloader else targets repeat across batches somehow
             idxs = torch.randperm(val_data.shape[0])
             val_data = val_data[idxs]
             val_targets = val_targets[idxs]
