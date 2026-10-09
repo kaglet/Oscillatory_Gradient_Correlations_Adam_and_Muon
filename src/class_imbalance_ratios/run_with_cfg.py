@@ -66,7 +66,7 @@ cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 1})
 
 # LR Scheduler
 adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
@@ -171,8 +171,8 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 0,
+    batch_size = 1024, # From batch size set grad_accum to get new effective batch size
+    num_workers = 8,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
     counts_prepper=counts_prepper_cfg,
