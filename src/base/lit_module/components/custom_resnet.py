@@ -15,7 +15,7 @@ def create_resnet_model(net: Any = resnet18, num_classes: int = 10, num_in: int=
     stride_n = stride[0], stride[1]
     padding_n = padding[0], padding[1]
 
-    model = net(weights=weights)
+    model = net()
     model.conv1 = nn.Conv2d(num_in, num_out, kernel_size=kern_size_n, stride=stride_n, padding=padding_n, bias=bias)
     model.maxpool = nn.Identity()
     fc_num_in = model.fc.in_features 
