@@ -66,7 +66,7 @@ cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 1})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
 # LR Scheduler
 adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
@@ -160,7 +160,6 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-
 run_dir = str(root_dir) + "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
 user_access_to_run_dir = "./run_${run_idx}/" # This path is relative to cwd e.g. set by Hydra during program run :: See usage by accessing @user_access_to_run_dir
 
@@ -172,7 +171,7 @@ cls_imb_datamdl_s_cfg = builds(
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 1024, # From batch size set grad_accum to get new effective batch size
+    batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 8,
     metadata_dir = user_access_to_run_dir,
     labels=class_labels,
