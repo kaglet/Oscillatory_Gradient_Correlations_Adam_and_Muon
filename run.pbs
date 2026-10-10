@@ -25,4 +25,4 @@ echo "Starting Pixi Test..."
 echo "Starting Pixi Run..."
 
 # 2. Execute experiment run using the absolute path to Pixi
-~/.pixi/bin/pixi run cls_imb
+~/.pixi/bin/pixi run experiment
