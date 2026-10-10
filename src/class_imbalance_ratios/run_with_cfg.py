@@ -38,7 +38,7 @@ from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_We
 from hydra_zen.third_party.pydantic import validates_with_pydantic
 # from pl_bolts.transforms.dataset_normalizations import cifar10_normalization, imagenet_normalization
 
-builds = make_custom_builds_fn(populate_full_signature=True)
+builds = make_custom_builds_fn(populate_full_signature=True) 
 pbuilds = make_custom_builds_fn(
     zen_partial=True, 
     populate_full_signature=True
