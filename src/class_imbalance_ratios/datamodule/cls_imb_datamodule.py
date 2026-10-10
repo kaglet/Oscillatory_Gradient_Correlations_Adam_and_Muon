@@ -41,7 +41,7 @@ class ClsImbDataModule(CIFARDataModule):
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         counts_prepper: CountsPrepperFromRatio,
         dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, 
-        data_dir: str = "/data", batch_size: int = 64, num_workers: int = 4,
+        data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
     ):
         """
         * For the experiment set a ratio of R, where R % num_cifar_classes = 0
@@ -91,7 +91,7 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            dset = self.ds("/data", train=True,transform=self.train_transforms, target_transform=None, download=True)
+            dset = self.ds("./data", train=True,transform=self.train_transforms, target_transform=None, download=True)
             targets = torch.as_tensor(dset.targets) # targets from CIFAR10 is list[Unknown] unfortunately, force into Tensor
             data = torch.as_tensor(dset.data)  
             

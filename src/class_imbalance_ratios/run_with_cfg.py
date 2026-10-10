@@ -105,7 +105,7 @@ csv_logger_cfg = [
 trainer_cfg = pbuilds(
     pl.Trainer, 
     num_sanity_val_steps = 0,
-    max_epochs=200,
+    max_epochs=20,
     deterministic=True,
     accelerator="gpu", # TODO: Change gpu use to allow cpus
     benchmark=False,
@@ -160,8 +160,9 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-run_dir = "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
-user_access_to_run_dir = "run_${run_idx}/"
+
+run_dir = str(root_dir) + "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
+user_access_to_run_dir = "./run_${run_idx}/" # This path is relative to cwd e.g. set by Hydra during program run :: See usage by accessing @user_access_to_run_dir
 
 data_dir = Path(root_dir / "data")
 # print("data_dir set to: ", data_dir)
