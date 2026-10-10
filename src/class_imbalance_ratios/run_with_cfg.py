@@ -18,23 +18,18 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import instantiate, to_yaml, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
-from torch.optim import Muon, Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
-from src.base.configs.experiment_data import Experiment_Data
-from src.base.datamodule.cifar_datamodule import CIFARDataModule
 from src.base.group_name_store import group_names
 from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
-from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
-from src.base.lit_module.components.simple_net import SimpleCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.class_imbalance_ratios.artificial_overrides_padder import ArtificialOverridesPadder
-from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio, ReshuffleCountMap
+from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.group_names import shared_config_names
 from src.class_imbalance_ratios.override_strings import adam_overrides, muon_overrides, autofill_exceptions
 from src.train_and_val import train_and_val
