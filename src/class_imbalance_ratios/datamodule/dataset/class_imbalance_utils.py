@@ -132,7 +132,7 @@ if __name__ == "__main__":
         transforms.ToTensor()
     ])
     og_ds = CIFAR10("/data", train=True,transform=my_transforms, target_transform=None, download=True)
-    print(len(og_ds))
+    # print(len(og_ds))
     data = torch.as_tensor(og_ds.data)
     targets = torch.as_tensor(og_ds.targets).reshape(-1,1)
     class_counts = [200 for _ in range(10)]

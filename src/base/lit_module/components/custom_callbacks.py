@@ -68,7 +68,8 @@ class StoreAllGCH(Callback):
 
 class DebugCallback(Callback):
     def on_train_start(self, trainer, pl_module):
-        print("\n=== CALLBACK IS ACTIVE ===\n")
+        pass
+        # print("\n=== CALLBACK IS ACTIVE ===\n")
 
 # Credit to @HaukurPall from pytorch-lightning GH discussions
 class TimerCallback(Callback):

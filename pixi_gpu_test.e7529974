@@ -1,15 +1,15 @@
 ✨ Pixi task (cls_imb): python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule
-/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/utilities/imports.py:22: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
   from pkg_resources import DistributionNotFound, get_distribution
 Traceback (most recent call last):
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2589, in __getattr__
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2589, in __getattr__
     module = self._get_module(self._class_to_module[name])
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2820, in _get_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2820, in _get_module
     raise e
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2818, in _get_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2818, in _get_module
     return importlib.import_module("." + module_name, self.__name__)
            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/importlib/__init__.py", line 88, in import_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/importlib/__init__.py", line 88, in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
@@ -18,32 +18,32 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 48, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 48, in <module>
     from ..masking_utils import create_masks_for_generate
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/masking_utils.py", line 32, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/masking_utils.py", line 32, in <module>
     if is_torch_flex_attn_available():
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 766, in is_torch_flex_attn_available
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 766, in is_torch_flex_attn_available
     and get_device_type() != "tpu"
         ~~~~~~~~~~~~~~~^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 339, in get_device_type
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 339, in get_device_type
     device = torch.accelerator.current_accelerator() or torch.device("cpu")
              ^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torch/__init__.py", line 2562, in __getattr__
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torch/__init__.py", line 2562, in __getattr__
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 AttributeError: module 'torch' has no attribute 'accelerator'
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2589, in __getattr__
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2589, in __getattr__
     module = self._get_module(self._class_to_module[name])
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2820, in _get_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2820, in _get_module
     raise e
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2818, in _get_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2818, in _get_module
     return importlib.import_module("." + module_name, self.__name__)
            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/importlib/__init__.py", line 88, in import_module
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/importlib/__init__.py", line 88, in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
@@ -52,13 +52,13 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/models/auto/modeling_auto.py", line 21, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/models/auto/modeling_auto.py", line 21, in <module>
     from .auto_factory import (
     ...<4 lines>...
     )
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/models/auto/auto_factory.py", line 41, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/models/auto/auto_factory.py", line 41, in <module>
     from ...generation import GenerationMixin
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2677, in __getattr__
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2677, in __getattr__
     raise ModuleNotFoundError(import_error_message) from e
 ModuleNotFoundError: Could not import module 'GenerationMixin'. Are this object's requirements defined correctly? Set the logging verbosity to DEBUG for the original import error.
 
@@ -67,36 +67,36 @@ The above exception was the direct cause of the following exception:
 Traceback (most recent call last):
   File "<frozen runpy>", line 203, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/src/class_imbalance_ratios/datamodule/cls_imb_datamodule.py", line 11, in <module>
+  File "/mnt/lustre/users/user/proj_name/src/class_imbalance_ratios/datamodule/cls_imb_datamodule.py", line 11, in <module>
     import lightning as L
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/__init__.py", line 20, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/__init__.py", line 20, in <module>
     from lightning.pytorch.callbacks import Callback  # noqa: E402
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/__init__.py", line 27, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/__init__.py", line 27, in <module>
     from lightning.pytorch.callbacks import Callback  # noqa: E402
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/__init__.py", line 14, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/__init__.py", line 14, in <module>
     from lightning.pytorch.callbacks.batch_size_finder import BatchSizeFinder
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/batch_size_finder.py", line 26, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/batch_size_finder.py", line 26, in <module>
     from lightning.pytorch.callbacks.callback import Callback
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/callback.py", line 22, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/callbacks/callback.py", line 22, in <module>
     from lightning.pytorch.utilities.types import STEP_OUTPUT
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/utilities/types.py", line 36, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/lightning/pytorch/utilities/types.py", line 36, in <module>
     from torchmetrics import Metric
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/__init__.py", line 14, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/__init__.py", line 14, in <module>
     from torchmetrics import functional  # noqa: E402
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/__init__.py", line 88, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/__init__.py", line 88, in <module>
     from torchmetrics.functional.text.rouge import rouge_score
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/__init__.py", line 30, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/__init__.py", line 30, in <module>
     from torchmetrics.functional.text.bert import bert_score  # noqa: F401
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/bert.py", line 24, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/bert.py", line 24, in <module>
     from torchmetrics.functional.text.helper_embedding_metric import (
     ...<7 lines>...
     )
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/helper_embedding_metric.py", line 26, in <module>
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/torchmetrics/functional/text/helper_embedding_metric.py", line 26, in <module>
     from transformers import AutoModelForMaskedLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizerBase
-  File "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2677, in __getattr__
+  File "/mnt/lustre/users/user/proj_name/.pixi/envs/default/lib/python3.13/site-packages/transformers/utils/import_utils.py", line 2677, in __getattr__
     raise ModuleNotFoundError(import_error_message) from e
 ModuleNotFoundError: Could not import module 'AutoModelForMaskedLM'. Are this object's requirements defined correctly? Set the logging verbosity to DEBUG for the original import error.

@@ -164,7 +164,7 @@ run_dir = "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_rat
 user_access_to_run_dir = "run_${run_idx}/"
 
 data_dir = Path(root_dir / "data")
-print("data_dir set to: ", data_dir)
+# print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
     data_dir = str(data_dir.resolve()),
@@ -261,7 +261,7 @@ def pyaml(x):
     # for pretty printing configs
     print(to_yaml(x))
 
-pyaml(store["hydra", "config"])
+# pyaml(store["hydra", "config"])
 
 if __name__ == "__main__":
     """ 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
         [f"{injected_seed}" for _ in list(range(4))]
     )
 
-    print(curr_vals)
+    # print(curr_vals)
     job = launch(
         ExperimentConfig,
         task_function,
