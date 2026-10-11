@@ -207,23 +207,6 @@ chkpt_store(max_checkpt_cfg, name=shared_config_names.experiment)
 counts_prepper_store = store(group=group_names.counts_prepper)
 counts_prepper_store(counts_prepper_cfg, name=shared_config_names.experiment)
 
-root_path = "C:/Users/motlh/coder_life/COS700/src/"
-chpc_root_raw = "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/"
-local_root_raw = root_path
-
-def get_root_as_str(root: str):
-    # Get predefined options of a literal
-    # This is similar to old getter of possibilities of options e.g. of list primitive of callbacks etc. 
-    # This is simply to make string options configurable 
-    return root 
-
-chpc_root_cfg = builds(get_root_as_str, root=chpc_root_raw)
-local_root_cfg = builds(get_root_as_str, root=local_root_raw)
-
-root_dir_store = store(group=group_names.my_root_dir)
-root_dir_store(chpc_root_cfg, name=shared_config_names.chpc)
-root_dir_store(local_root_cfg, name=shared_config_names.local)
-
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1, # TODO: Make new seed per run as param to overrides not here 
@@ -249,8 +232,6 @@ ExperimentConfig = make_config(
         {group_names.checkpoints: shared_config_names.experiment},
 
         {group_names.counts_prepper: shared_config_names.experiment},
-
-        {group_names.my_root_dir: shared_config_names.local},
 
         '_self_'
     ]

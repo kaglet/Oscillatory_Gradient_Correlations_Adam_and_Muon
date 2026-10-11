@@ -92,7 +92,7 @@ class ClsImbDataModule(CIFARDataModule):
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            dset = self.ds(self.data_dir, train=True,transform=self.train_transforms, target_transform=None, download=False)
+            dset = self.ds(self.data_dir, train=True,transform=self.train_transforms, target_transform=None, download=self.download)
             targets = torch.as_tensor(dset.targets) # targets from CIFAR10 is list[Unknown] unfortunately, force into Tensor
             data = torch.as_tensor(dset.data)  
             

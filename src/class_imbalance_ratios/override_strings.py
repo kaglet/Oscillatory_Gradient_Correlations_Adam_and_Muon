@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.base.group_name_store import group_names
 from src.class_imbalance_ratios.group_names import shared_config_names
 
@@ -7,10 +9,14 @@ cfg_key_downsampler = f"++{group_names.counts_prepper}.downsampler_ratio"
 autofill_exceptions = [cfg_key_downsampler]
 run_idx = "run_idx"
 seed = "seed"
+relative_root_raw = str(Path(__file__).parent.parent.parent)
+chpc_root_raw = "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon"
+my_root_dir = "my_root_dir"
 
 adam_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
+    f"++{my_root_dir}": relative_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -21,7 +27,6 @@ adam_overrides = {
     f"{group_names.trainer}": shared_config_names.experiment,
     f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
     f"{group_names.schedulers}": shared_config_names.adam,
-    f"{group_names.my_root_dir}": shared_config_names.local,
 
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-3,
@@ -40,12 +45,13 @@ adam_overrides = {
     f"++{group_names.trainer}.max_epochs": 2,
 
     f"++{group_names.datamodule}.num_workers": 0, 
-    f"++{group_names.datamodule}.persistent_workers": "False",
+    f"++{group_names.datamodule}.persistent_workers": "False", 
 }
 
 muon_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
+    f"++{my_root_dir}": relative_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -56,7 +62,6 @@ muon_overrides = {
     f"{group_names.trainer}": shared_config_names.experiment,
     f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
     f"{group_names.schedulers}": shared_config_names.muon,
-    f"{group_names.my_root_dir}": shared_config_names.local,
 
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-3, # Not given

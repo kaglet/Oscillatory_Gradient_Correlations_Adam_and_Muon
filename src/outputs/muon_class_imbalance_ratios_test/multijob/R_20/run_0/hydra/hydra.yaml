@@ -1,0 +1,188 @@
+hydra:
+  run:
+    dir: ${my_root_dir}/outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  launcher:
+    _target_: hydra._internal.core_plugins.basic_launcher.BasicLauncher
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    max_batch_size: null
+    params: null
+  help:
+    app_name: ${hydra.job.name}
+    header: '${hydra.help.app_name} is powered by Hydra.
+
+      '
+    footer: 'Powered by Hydra (https://hydra.cc)
+
+      Use --hydra-help to view Hydra specific help
+
+      '
+    template: '${hydra.help.header}
+
+      == Configuration groups ==
+
+      Compose your configuration from those groups (group=option)
+
+
+      $APP_CONFIG_GROUPS
+
+
+      == Config ==
+
+      Override anything in the config (foo.bar=value)
+
+
+      $CONFIG
+
+
+      ${hydra.help.footer}
+
+      '
+  hydra_help:
+    template: 'Hydra (${hydra.runtime.version})
+
+      See https://hydra.cc for more info.
+
+
+      == Flags ==
+
+      $FLAGS_HELP
+
+
+      == Configuration groups ==
+
+      Compose your configuration from those groups (For example, append hydra/job_logging=disabled
+      to command line)
+
+
+      $HYDRA_CONFIG_GROUPS
+
+
+      Use ''--cfg hydra'' to Show the Hydra config.
+
+      '
+    hydra_help: ???
+  hydra_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '[%(asctime)s][HYDRA] %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+    root:
+      level: INFO
+      handlers:
+      - console
+    loggers:
+      logging_example:
+        level: DEBUG
+    disable_existing_loggers: false
+  job_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+      file:
+        class: logging.FileHandler
+        formatter: simple
+        filename: ${hydra.runtime.output_dir}/${hydra.job.name}.log
+    root:
+      level: INFO
+      handlers:
+      - console
+      - file
+    disable_existing_loggers: false
+  env: {}
+  mode: null
+  searchpath: []
+  callbacks: {}
+  output_subdir: run_${run_idx}/hydra
+  overrides:
+    hydra: []
+    task:
+    - ++run_idx=0
+    - ++seed=0
+    - ++my_root_dir=C:/Users/motlh/coder_life/COS700/src
+    - model_cache=cls_imb_cif10
+    - datamodule=cls_imb_cif10
+    - params_cache=cls_imb_cif10
+    - optims_cache=cls_imb_cif10
+    - lit_module=cls_imb_cif10
+    - chkpt_cache=cls_imb_cif10
+    - trainer=cls_imb_cif10
+    - grad_accum_schedule=cls_imb_cif10
+    - schdlrs_cache=muon
+    - ++params_cache.lr_muon=0.1
+    - ++params_cache.lr_adam=0.001
+    - ++params_cache.use_muon=True
+    - ++params_cache.momentum_muon=0.9
+    - ++params_cache.beta_1_adam=0.9
+    - ++params_cache.beta_2_adam=0.999
+    - ++params_cache.nesterov=False
+    - ++params_cache.use_layer_recs=False
+    - ++params_cache.eps=1e-10
+    - ++trainer.limit_train_batches=10
+    - ++trainer.limit_val_batches=3
+    - ++trainer.max_epochs=2
+    - ++datamodule.num_workers=0
+    - ++datamodule.persistent_workers=False
+    - ++counts_prepper.downsampler_ratio=20
+  job:
+    name: muon_class_imbalance_ratios_test
+    chdir: true
+    override_dirname: ++counts_prepper.downsampler_ratio=20,++datamodule.num_workers=0,++datamodule.persistent_workers=False,++my_root_dir=C:/Users/motlh/coder_life/COS700/src,++params_cache.beta_1_adam=0.9,++params_cache.beta_2_adam=0.999,++params_cache.eps=1e-10,++params_cache.lr_adam=0.001,++params_cache.lr_muon=0.1,++params_cache.momentum_muon=0.9,++params_cache.nesterov=False,++params_cache.use_layer_recs=False,++params_cache.use_muon=True,++run_idx=0,++seed=0,++trainer.limit_train_batches=10,++trainer.limit_val_batches=3,++trainer.max_epochs=2,chkpt_cache=cls_imb_cif10,datamodule=cls_imb_cif10,grad_accum_schedule=cls_imb_cif10,lit_module=cls_imb_cif10,model_cache=cls_imb_cif10,optims_cache=cls_imb_cif10,params_cache=cls_imb_cif10,schdlrs_cache=muon,trainer=cls_imb_cif10
+    id: ???
+    num: ???
+    config_name: muon_class_imbalance_ratios
+    env_set: {}
+    env_copy: []
+    config:
+      override_dirname:
+        kv_sep: '='
+        item_sep: ','
+        exclude_keys: []
+  runtime:
+    version: 1.3.7
+    version_base: '1.3'
+    cwd: C:\Users\motlh\coder_life\COS700
+    config_sources:
+    - path: hydra.conf
+      schema: pkg
+      provider: hydra
+    - path: ''
+      schema: structured
+      provider: schema
+    output_dir: C:\Users\motlh\coder_life\COS700\src\outputs\muon_class_imbalance_ratios_test\multijob\R_20
+    choices:
+      counts_prepper: cls_imb_cif10
+      chkpt_cache: cls_imb_cif10
+      logger_cache: cls_imb_cif10
+      grad_accum_schedule: cls_imb_cif10
+      schdlrs_cache: muon
+      optims_cache: cls_imb_cif10
+      trainer: cls_imb_cif10
+      datamodule: cls_imb_cif10
+      model_cache: cls_imb_cif10
+      params_cache: cls_imb_cif10
+      lit_module: cls_imb_cif10
+      hydra/env: default
+      hydra/callbacks: null
+      hydra/job_logging: default
+      hydra/hydra_logging: default
+      hydra/hydra_help: default
+      hydra/help: default
+      hydra/sweeper: basic
+      hydra/launcher: basic
+      hydra/output: default
+  verbose: false
