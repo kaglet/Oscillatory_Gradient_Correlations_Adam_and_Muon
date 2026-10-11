@@ -76,7 +76,7 @@ cls_imb_s_module_cfg = pbuilds(
 )
 
 # ---- TRAINER CONFIGS START ---- #
-root_dir = Path(__file__).parent.parent.parent
+root_dir = Path("/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/")
 trainer_dir = Path(root_dir)
 
 # TODO: Change val accuracy to be the best on on a subgroup not overall
@@ -155,8 +155,8 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-runtime_experim_dir = str(root_dir) + "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
-runtime_run_dir = "./run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run
+runtime_experim_dir = Path(root_dir / "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}")
+runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
 
 data_dir = str(Path(root_dir / "data/").resolve())
 # print("data_dir set to: ", data_dir)
@@ -168,7 +168,7 @@ cls_imb_datamdl_s_cfg = builds(
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 8,
-    metadata_dir = runtime_run_dir,
+    metadata_dir = runtime_run_subdir,
     labels=class_labels,
     counts_prepper=counts_prepper_cfg,
 )
@@ -243,7 +243,7 @@ task_function = zen(train_and_val, pre_call=pre_seed) # Remove seeding here caug
 store(
     HydraConf(
         job=JobConf(chdir=True), 
-        run=RunDir(runtime_experim_dir),
+        run=RunDir(str(runtime_experim_dir)),
         output_subdir="run_${run_idx}/hydra",  # TODO: Ensure run_idx is interpolated right with new override structure
     ),
     group="hydra",
