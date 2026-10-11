@@ -23,5 +23,6 @@ class GroupNameStore:
     loggers = "logger_cache"
     checkpoints = "chkpt_cache"  
     counts_prepper = "counts_prepper"
+    root_dirs = "root_dirs"
 
 group_names = GroupNameStore()

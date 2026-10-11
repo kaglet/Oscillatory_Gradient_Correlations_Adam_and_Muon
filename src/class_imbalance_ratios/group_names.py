@@ -41,5 +41,7 @@ class SharedConfigIDs:
     adam = "adam"
     experiment = "cls_imb_cif10" 
     muon = "muon"
+    chpc = "chpc"
+    local = "local"
 
 shared_config_names = SharedConfigIDs()

@@ -76,8 +76,7 @@ cls_imb_s_module_cfg = pbuilds(
 )
 
 # ---- TRAINER CONFIGS START ---- #
-root_dir = Path("/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/")
-trainer_dir = Path(root_dir)
+trainer_dir = Path("${root_dir}")
 
 # TODO: Change val accuracy to be the best on on a subgroup not overall
 max_checkpt_cfg = pbuilds(
@@ -155,10 +154,10 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-runtime_experim_dir = Path(root_dir / "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}")
+runtime_experim_dir = Path("${root_dir}/outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}")
 runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
 
-data_dir = str(Path(root_dir / "data/").resolve())
+data_dir = str(Path("${root_dir}/data/").resolve())
 # print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
@@ -208,6 +207,14 @@ chkpt_store(max_checkpt_cfg, name=shared_config_names.experiment)
 counts_prepper_store = store(group=group_names.counts_prepper)
 counts_prepper_store(counts_prepper_cfg, name=shared_config_names.experiment)
 
+root_path = str(Path(__file__).parent.parent)
+chpc_root_cfg = builds(Path, "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/")
+local_root_cfg = builds(Path, root_path)
+
+root_dir_store = store(group=group_names.root_dirs)
+root_dir_store(chpc_root_cfg, name=shared_config_names.chpc)
+root_dir_store(chpc_root_cfg, name=shared_config_names.local)
+
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
     seed=1, # TODO: Make new seed per run as param to overrides not here 
@@ -233,6 +240,8 @@ ExperimentConfig = make_config(
         {group_names.checkpoints: shared_config_names.experiment},
 
         {group_names.counts_prepper: shared_config_names.experiment},
+
+        {group_names.root_dirs: shared_config_names.chpc},
 
         '_self_'
     ]

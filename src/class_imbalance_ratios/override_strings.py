@@ -21,6 +21,7 @@ adam_overrides = {
     f"{group_names.trainer}": shared_config_names.experiment,
     f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
     f"{group_names.schedulers}": shared_config_names.adam,
+    f"{group_names.root_dirs}": shared_config_names.chpc,
 
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-3,
@@ -39,7 +40,7 @@ adam_overrides = {
     f"++{group_names.trainer}.max_epochs": 2,
 
     f"++{group_names.datamodule}.num_workers": 0, 
-    f"++{group_names.datamodule}.persistent_workers": "False", 
+    f"++{group_names.datamodule}.persistent_workers": "False",
 }
 
 muon_overrides = {
@@ -55,6 +56,7 @@ muon_overrides = {
     f"{group_names.trainer}": shared_config_names.experiment,
     f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
     f"{group_names.schedulers}": shared_config_names.muon,
+    f"{group_names.root_dirs}": shared_config_names.chpc,
 
     f"++{group_names.parameters_set}.lr_muon": 1e-1,
     f"++{group_names.parameters_set}.lr_adam": 1e-3, # Not given
