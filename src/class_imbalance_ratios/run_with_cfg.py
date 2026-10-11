@@ -211,9 +211,9 @@ root_path = str(Path(__file__).parent.parent)
 chpc_root_cfg = builds(Path, "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/")
 local_root_cfg = builds(Path, root_path)
 
-root_dir_store = store(group=group_names.root_dirs)
+root_dir_store = store(group=group_names.root_dir)
 root_dir_store(chpc_root_cfg, name=shared_config_names.chpc)
-root_dir_store(chpc_root_cfg, name=shared_config_names.local)
+root_dir_store(local_root_cfg, name=shared_config_names.local)
 
 # Make a pure dict object like a class, but immediately configurable
 ExperimentConfig = make_config(
@@ -241,7 +241,7 @@ ExperimentConfig = make_config(
 
         {group_names.counts_prepper: shared_config_names.experiment},
 
-        {group_names.root_dirs: shared_config_names.local},
+        {group_names.root_dir: shared_config_names.local},
 
         '_self_'
     ]
