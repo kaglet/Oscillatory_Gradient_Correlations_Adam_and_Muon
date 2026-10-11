@@ -12,6 +12,7 @@ platforms = [
 tests = "python -m src.tests"
 experiment = "python -m src.class_imbalance_ratios.run_with_cfg"
 cls_imb = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
+test_dir_path = "python -m src.class_imbalance_ratios.tests"
 
 [dependencies]
 setuptools = "<81"

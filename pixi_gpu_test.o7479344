@@ -1,9 +1,0 @@
-
-Wed Sep 23 16:52:15 SAST 2026: executing CUDA job on host gpu4003
-Available GPU devices: 2
-
-Starting Pixi Test...
-Starting Pixi Run...
-[2026-09-23 17:00:26,329][HYDRA] Launching 2 jobs locally
-[2026-09-23 17:00:26,329][HYDRA] 	#0 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.use_muon=False ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=20
-[2026-09-23 17:08:56,946][HYDRA] 	#1 : model_cache=cif10 datamodule=cif10 params_cache=mu_aux_ad optims_cache=mu_aux_ad lit_module=cif10 ++params_cache.lr_muon=0.1 ++params_cache.lr_adam=0.1 ++params_cache.use_muon=False ++params_cache.momentum_muon=0.9 ++params_cache.beta_1_adam=0.95 ++params_cache.beta_2_adam=0.999 ++params_cache.nesterov=False ++params_cache.use_layer_recs=False ++params_cache.eps=1e-08 ++datamodule.downsampler_ratio=1
