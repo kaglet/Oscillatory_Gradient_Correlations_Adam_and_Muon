@@ -208,8 +208,17 @@ counts_prepper_store = store(group=group_names.counts_prepper)
 counts_prepper_store(counts_prepper_cfg, name=shared_config_names.experiment)
 
 root_path = str(Path(__file__).parent.parent)
-chpc_root_cfg = builds(Path, "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/")
-local_root_cfg = builds(Path, root_path)
+chpc_root_raw = "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon/"
+local_root_raw = root_path
+
+def get_root_as_str(root: str):
+    # Get predefined options of a literal
+    # This is similar to old getter of possibilities of options e.g. of list primitive of callbacks etc. 
+    # This is simply to make string options configurable 
+    return root 
+
+chpc_root_cfg = builds(get_root_as_str, chpc_root_raw)
+local_root_cfg = builds(get_root_as_str, local_root_raw)
 
 root_dir_store = store(group=group_names.root_dir)
 root_dir_store(chpc_root_cfg, name=shared_config_names.chpc)
