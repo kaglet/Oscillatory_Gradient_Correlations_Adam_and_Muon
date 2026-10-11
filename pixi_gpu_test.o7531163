@@ -1,0 +1,32 @@
+
+Sat Oct 10 22:24:32 SAST 2026: executing CUDA job on host gpu4001
+Available GPU devices: 3
+
+Starting Pixi Test...
+Starting Pixi Run...
+Executing run 0
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+┏━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃   ┃ Name              ┃ Type                 ┃ Params ┃ Mode  ┃ FLOPs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ 0 │ criterion         │ CrossEntropyLoss     │      0 │ train │     0 │
+│ 1 │ metric_train_acc  │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 2 │ metric_val_acc    │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 3 │ metric_test_acc   │ MyMultiClassAccuracy │      0 │ train │     0 │
+│ 4 │ metric_train_loss │ MyLoss               │      0 │ train │     0 │
+│ 5 │ metric_val_loss   │ MyLoss               │      0 │ train │     0 │
+│ 6 │ metric_test_loss  │ MyLoss               │      0 │ train │     0 │
+│ 7 │ model             │ ResNet               │ 11.2 M │ train │     0 │
+│ 8 │ metric_rgch       │ RGCH_Metric          │      0 │ train │     0 │
+│ 9 │ metric_gch        │ GCH_Metric           │      0 │ train │     0 │
+└───┴───────────────────┴──────────────────────┴────────┴───────┴───────┘
+Trainable params: 11.2 M                                                        
+Non-trainable params: 0                                                         
+Total params: 11.2 M                                                            
+Total estimated model params size (MB): 44.899                                  
+Modules in train mode: 82                                                       
+Modules in eval mode: 0                                                         
+Total FLOPs: 0                                                                  
+Epoch 188/199 ━━━━━╸             95/287 0:00:08 • 0:00:11 18.71it/s v_num: 3.000
