@@ -9,7 +9,7 @@ if __name__ == "__main__":
   runtime_experim_dir = Path(root_dir / "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}")
   runtime_run_dir = "./run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
   log_file = Path(root_dir / "src/class_imbalance_ratios/tests.log")
-  os.makedirs(log_file, exist_ok=True)
+  os.makedirs(str(log_file), exist_ok=True)
 
   data_dir = Path(root_dir / "data/")  
   logging.basicConfig(filename=log_file, level=logging.DEBUG)
