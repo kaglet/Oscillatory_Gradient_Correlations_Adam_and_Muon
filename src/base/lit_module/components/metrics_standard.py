@@ -53,7 +53,7 @@ class MyMultiClassAccuracy(Metric):
                 curr_list = getattr(self, self._labels[i])
                 assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-                curr_list.append(torch.as_tensor(100))
+                curr_list.append(torch.as_tensor(float('nan')))
                 setattr(self, self._labels[i], curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"
