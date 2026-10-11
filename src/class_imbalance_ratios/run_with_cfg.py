@@ -3,6 +3,7 @@
 Anything configurable or static in a configurable aspect is defined here and assembled later.
 """
 
+import argparse
 from dataclasses import dataclass
 import math
 import os
@@ -260,11 +261,23 @@ def pyaml(x):
 
 if __name__ == "__main__":
     """ 
-    
+    Via CLI. 
+    Fix and pair run/seed (same value for ease) 
+    Then slice through the current experiment matches. 
+    Here there are 4 experiment ratios to test. 
     """
-    injected_run = 0
-    injected_slice = 0
-    injected_seed = 0
+
+    parser = argparse.ArgumentParser(
+        description="Script that adds 3 numbers from CMD"
+    )
+    parser.add_argument("--run", required=True, type=int, default=1)
+    parser.add_argument("--seed", required=True, type=int, default=4)
+    parser.add_argument("--slice", required=True, type=int, default=6, help="Enter third numbe")
+    args = parser.parse_args()
+
+    injected_run = args.run
+    injected_seed = args.seed
+    injected_slice = args.slice
 
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
     muon_overrides_map.overwrite(

@@ -9,8 +9,21 @@ platforms = [
 ]
 
 [tasks]
-tests = "python -m src.tests"
-experiment = "python -m src.class_imbalance_ratios.run_with_cfg"
+tests = "python -m src.tests --num1=1 --num2=2 --num3=5"
+000 = "python -m src.class_imbalance_ratios.run_with_cfg --run=0 --seed=0 --slice=0"
+001 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=1"
+002 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=2"
+003 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=3"
+100 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=1 --seed=1 --slice=0"
+101 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=1 --seed=1 --slice=1"
+102 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=1 --seed=1 --slice=2"
+103 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=1 --seed=1 --slice=3"
+200 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=2 --seed=2 --slice=0"
+201 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=2 --seed=2 --slice=1"
+202 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=2 --seed=2 --slice=2"
+203 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=2 --seed=2 --slice=3"
+
+
 cls_imb = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 test_dir_path = "python -m src.class_imbalance_ratios.tests"
 
