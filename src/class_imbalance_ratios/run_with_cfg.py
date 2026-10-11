@@ -155,20 +155,20 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-run_dir = str(root_dir) + "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
-user_access_to_run_dir = "./run_${run_idx}/" # This path is relative to cwd e.g. set by Hydra during program run :: See usage by accessing @user_access_to_run_dir
+runtime_experim_dir = str(root_dir) + "outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
+runtime_run_dir = "./run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run
 
-data_dir = Path(root_dir / "data")
+data_dir = str(Path(root_dir / "data/").resolve())
 # print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
-    data_dir = str(data_dir.resolve()),
+    data_dir = data_dir,
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
     batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 8,
-    metadata_dir = user_access_to_run_dir,
+    metadata_dir = runtime_run_dir,
     labels=class_labels,
     counts_prepper=counts_prepper_cfg,
 )
@@ -243,7 +243,7 @@ task_function = zen(train_and_val, pre_call=pre_seed) # Remove seeding here caug
 store(
     HydraConf(
         job=JobConf(chdir=True), 
-        run=RunDir(run_dir),
+        run=RunDir(runtime_experim_dir),
         output_subdir="run_${run_idx}/hydra",  # TODO: Ensure run_idx is interpolated right with new override structure
     ),
     group="hydra",
@@ -281,7 +281,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="muon_class_imbalance_ratios",
-        job_name="muon_class_imbalance_ratios",
+        job_name="muon_class_imbalance_ratios_test",
         version_base="1.3",
         overrides=curr_vals
     )
