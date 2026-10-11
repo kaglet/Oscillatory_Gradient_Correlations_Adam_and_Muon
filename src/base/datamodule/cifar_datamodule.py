@@ -19,11 +19,12 @@ __all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
-    def __init__(self, train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 8) -> None:
+    def __init__(self, train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 8, persistent_workers=False) -> None:
         super().__init__()
         self.data_dir = data_dir
         # TODO: Resize images smaller and train on subset for efficiency and MVP.
 
+        self._persistent_workers = persistent_workers
         self.train_transforms = train_transforms 
         self.val_transforms = val_transforms 
         self.test_transforms = test_transforms
@@ -54,16 +55,16 @@ class CIFARDataModule(L.LightningDataModule):
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self._train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
+        return DataLoader(self._train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
+        return DataLoader(self._val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
+        return DataLoader(self._test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self._predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=False, drop_last=True, shuffle=True)
+        return DataLoader(self._predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
     
 class CIFAR10DataModule(CIFARDataModule):
     """ 

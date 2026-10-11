@@ -162,6 +162,7 @@ data_dir = str(Path(root_dir / "data/").resolve())
 # print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
     ClsImbDataModule, 
+    persistent_workers=True,
     data_dir = data_dir,
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,

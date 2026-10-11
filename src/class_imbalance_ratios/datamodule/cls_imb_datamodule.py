@@ -36,6 +36,7 @@ class ClsImbDataModule(CIFARDataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
+        persistent_workers: bool,
         metadata_dir: str,
         labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
@@ -50,7 +51,7 @@ class ClsImbDataModule(CIFARDataModule):
         * - downsampler_ratio: int, accepts a positive number, to apply strict logic of random 50% of classes chosen as dataset for 1 run of training (usage of this datamodule instance)
         * Exclusively one of the above two must be set, if both are set, dict input is discarded by convention. 
         """
-        super().__init__(data_dir=data_dir, dataset=dataset ,train_transforms=train_transforms, val_transforms=val_transforms, test_transforms=test_transforms, batch_size=batch_size, num_workers=num_workers)
+        super().__init__(persistent_workers=persistent_workers, data_dir=data_dir, dataset=dataset ,train_transforms=train_transforms, val_transforms=val_transforms, test_transforms=test_transforms, batch_size=batch_size, num_workers=num_workers)
         self._train_counts_map = counts_prepper.train_map
         self._val_counts_map = counts_prepper.val_map 
         self._test_counts_map = counts_prepper.test_map
@@ -215,7 +216,8 @@ if __name__ == "__main__":
         slice_random=True
     )
     dmodule = ClsImbDataModule(
-        num_workers=8, 
+        persistent_workers=True,
+        num_workers=0, 
         counts_prepper=counts_prepper,    
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
