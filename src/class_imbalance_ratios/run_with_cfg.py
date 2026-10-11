@@ -241,7 +241,7 @@ ExperimentConfig = make_config(
 
         {group_names.counts_prepper: shared_config_names.experiment},
 
-        {group_names.root_dirs: shared_config_names.chpc},
+        {group_names.root_dirs: shared_config_names.local},
 
         '_self_'
     ]
