@@ -292,8 +292,6 @@ if __name__ == "__main__":
         [f"{injected_seed}" for _ in list(range(4))]
     )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
-    logging.debug("Slice is: {} \n".format(curr_vals))
-    logging.debug("Parsed args are: {} - run, {} - seed, {} - slice \n".format(injected_run, injected_seed, injected_slice))
 
     job = launch(
         ExperimentConfig,
@@ -316,9 +314,7 @@ if __name__ == "__main__":
     )
 
     curr_vals = adam_overrides_map.get_map_slice(injected_slice)
-    print("Current values", curr_vals)
 
-    # print(curr_vals)
     job = launch(
         ExperimentConfig,
         task_function,
