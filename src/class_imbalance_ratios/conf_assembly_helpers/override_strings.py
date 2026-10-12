@@ -16,7 +16,7 @@ my_root_dir = "my_root_dir"
 adam_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
-    f"++{my_root_dir}": relative_root_raw,
+    f"++{my_root_dir}": chpc_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -51,7 +51,7 @@ adam_overrides = {
 muon_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
-    f"++{my_root_dir}": relative_root_raw,
+    f"++{my_root_dir}": chpc_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
