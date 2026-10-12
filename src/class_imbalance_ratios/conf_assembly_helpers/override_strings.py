@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from src.base.group_name_store import group_names
-from src.class_imbalance_ratios.group_names import shared_config_names
+from src.class_imbalance_ratios.conf_assembly.group_names import shared_config_names
 
 __all__ = ["adam_overrides", "muon_overrides", "autofill_exceptions"]
 
@@ -82,3 +82,7 @@ muon_overrides = {
     f"++{group_names.datamodule}.num_workers": 8, 
     f"++{group_names.datamodule}.persistent_workers": "True", 
 }
+
+if __name__ == "__main__":
+    # Most important check
+    print(f"Relative root is: {relative_root_raw}")

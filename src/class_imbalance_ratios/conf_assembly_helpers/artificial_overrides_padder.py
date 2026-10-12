@@ -1,6 +1,6 @@
 __all__ = ["ArtificialOverridesPadder"]
 
-from src.class_imbalance_ratios.conf_map_store import ConfMapStore
+from src.class_imbalance_ratios.conf_assembly_helpers.conf_map_store import ConfMapStore
 
 
 class ArtificialOverridesPadder():
