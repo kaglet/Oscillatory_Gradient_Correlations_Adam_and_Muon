@@ -3,7 +3,7 @@
 #PBS -q gpu_1
 #PBS -l select=1:ncpus=9:ngpus=1
 #PBS -P CSCI1166
-#PBS -l walltime=03:30:00
+#PBS -l walltime=00:15:00
 #PBS -m abe -M u25735056@tuks.co.za
 
 # Navigate to the folder where job is submitted (project folder)
@@ -25,4 +25,4 @@ echo "Starting Pixi Test..."
 echo "Starting Pixi Run..."
 
 # 2. Execute experiment run using the absolute path to Pixi
-~/.pixi/bin/pixi run experiment
+~/.pixi/bin/pixi run 202
