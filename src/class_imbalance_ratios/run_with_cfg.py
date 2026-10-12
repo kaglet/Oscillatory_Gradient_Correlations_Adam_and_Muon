@@ -5,6 +5,7 @@ Anything configurable or static in a configurable aspect is defined here and ass
 
 import argparse
 from dataclasses import dataclass
+import logging
 import math
 import os
 import multiprocessing
@@ -266,13 +267,15 @@ if __name__ == "__main__":
     Then slice through the current experiment matches. 
     Here there are 4 experiment ratios to test. 
     """
+    log_file = Path(__file__).parent / "logs_run_with_cfg.log"
+    logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
     )
-    parser.add_argument("--run", required=True, type=int, default=1)
-    parser.add_argument("--seed", required=True, type=int, default=4)
-    parser.add_argument("--slice", required=True, type=int, default=6, help="Enter third numbe")
+    parser.add_argument("--run", required=False, nargs="?", type=int, default=1)
+    parser.add_argument("--seed", required=False, nargs="?", type=int, default=0)
+    parser.add_argument("--slice", required=False, nargs="?", type=int, default=3)
     args = parser.parse_args()
 
     injected_run = args.run
@@ -281,15 +284,17 @@ if __name__ == "__main__":
 
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
     muon_overrides_map.overwrite(
-        "run_idx", 
+        "++run_idx", 
         [f"{injected_run}" for _ in list(range(4))]
     )
     muon_overrides_map.overwrite(
-        "seed",
+        "++seed",
         [f"{injected_seed}" for _ in list(range(4))]
     )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
-    # print(curr_vals)
+    logging.debug("Slice is: {} \n".format(curr_vals))
+    logging.debug("Parsed args are: {} - run, {} - seed, {} - slice \n".format(injected_run, injected_seed, injected_slice))
+
     job = launch(
         ExperimentConfig,
         task_function,
@@ -300,7 +305,7 @@ if __name__ == "__main__":
     )
 
     adam_overrides_map = ArtificialOverridesPadder(adam_overrides, autofill_exceptions, 4).overrides_map_as_store
-    curr_vals = adam_overrides_map.get_map_slice(injected_slice)
+
     adam_overrides_map.overwrite(
         "run_idx", 
         [f"{injected_run}" for _ in list(range(4))]
@@ -309,6 +314,9 @@ if __name__ == "__main__":
         "seed",
         [f"{injected_seed}" for _ in list(range(4))]
     )
+
+    curr_vals = adam_overrides_map.get_map_slice(injected_slice)
+    print("Current values", curr_vals)
 
     # print(curr_vals)
     job = launch(

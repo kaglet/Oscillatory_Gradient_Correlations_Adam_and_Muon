@@ -19,8 +19,9 @@ class ConfMapStore():
         """
         assert len(remap_vals) == self._consistent_len, f"Length of remap values of {len(remap_vals)} must match the length assured in map of {self._consistent_len}"
 
+        print("Key:\n", self._overrides_map, "\nvals:\t", remap_vals, "\nkey:\t", key)
         try:
-            setattr(self._overrides_map, key, remap_vals) 
+            self._overrides_map[f"{key}"] = remap_vals
         except:
             ValueError(f"{key} not found in current overrides map")
 
