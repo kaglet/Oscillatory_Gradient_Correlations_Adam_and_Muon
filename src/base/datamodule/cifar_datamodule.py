@@ -15,7 +15,7 @@ from torchvision.transforms import ToTensor
 from src.base.datamodule.components.convert_ax import convert_img_axes
 from src.base.datamodule.components.img_viz import viz_img
 
-__all__ = ["CIFAR10DataModule", "CIFAR100DataModule", "CIFARDataModule"]
+__all__ = ["CIFAR10DataModule", "CIFAR100DataModule"]
 
 class CIFARDataModule(L.LightningDataModule):
     # TODO" Unify the data directory from env see old template
@@ -72,16 +72,31 @@ class CIFAR10DataModule(CIFARDataModule):
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(*args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, dataset: Type[CIFAR10] = CIFAR10, *args: Any, **kwargs: Any) -> None:
+        super().__init__(dataset=dataset, *args, **kwargs)
 
 class CIFAR100DataModule(CIFARDataModule):
     """ 
     Convenience class. This could be configured via hydra-zen. 
     This is in case different functionality is added not only for configuration runtime, for method overrides. 
     """
-    def __init__(*args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, dataset: Type[CIFAR100] = CIFAR100, *args: Any, **kwargs: Any) -> None:
+        super().__init__(dataset=dataset,*args, **kwargs)
+
+    def setup(self, stage: str)  -> None:
+        # Assign train/val datasets for use in dataloaders
+        if stage == "fit":
+            cifar_full = self.ds(self.data_dir, train=True, transform=self.train_transforms)
+            self._train, self._val = random_split(
+                cifar_full, [0.8, 0.2]
+            )
+
+        # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
+        if stage == "test":
+            self._test = self.ds(self.data_dir, train=False, transform=self.test_transforms)
+
+        if stage == "predict":
+            self._predict = self.ds(self.data_dir, train=False, transform=self.test_transforms)
 
 if __name__ == "__main__":
     """
@@ -97,32 +112,33 @@ if __name__ == "__main__":
         normalize
     ])
 
-    dmodule = CIFARDataModule(
-        num_workers=1, 
+    cif100_dmodule = CIFAR100DataModule(
+        num_workers=0, 
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
-        test_transforms=base_transforms
+        test_transforms=base_transforms,
+        download=False
     ) 
-    dmodule.prepare_data()
-    dmodule.setup("fit")
-    print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+    cif100_dmodule.prepare_data()
+    cif100_dmodule.setup("fit")
+    print(f"Train dataloader length: {len(cif100_dmodule.train_dataloader())}")
     log_file = Path(__file__).parent / "cls_imb_logs.log"
     logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
     logging.debug("---- TRAIN DATALOADER NEXT --- \n")
 
     i = 0
-    for inputs, targets in dmodule.train_dataloader():
+    for inputs, targets in cif100_dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
 
     logging.debug("---- VAL DATALOADER NEXT --- \n")
 
     j = 0
-    for inputs, targets in dmodule.val_dataloader():
+    for inputs, targets in cif100_dmodule.val_dataloader():
         img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        viz_img(torch.as_tensor(img), label=targets[0])
         j += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))

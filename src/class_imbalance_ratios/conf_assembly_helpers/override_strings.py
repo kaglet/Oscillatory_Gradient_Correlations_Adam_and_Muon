@@ -9,7 +9,7 @@ cfg_key_downsampler = f"++{group_names.counts_prepper}.downsampler_ratio"
 autofill_exceptions = [cfg_key_downsampler]
 run_idx = "run_idx"
 seed = "seed"
-relative_root_raw = str(Path(__file__).parent.parent.parent)
+relative_root_raw = str(Path(__file__).parent.parent.parent.parent)
 chpc_root_raw = "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon"
 my_root_dir = "my_root_dir"
 
