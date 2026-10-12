@@ -112,22 +112,23 @@ if __name__ == "__main__":
         normalize
     ])
 
-    cif10_dmodule = CIFAR10DataModule(
+    cif100_dmodule = CIFAR100DataModule(
         num_workers=0, 
         train_transforms=base_transforms, 
         val_transforms=base_transforms, 
-        test_transforms=base_transforms
+        test_transforms=base_transforms,
+        download=False
     ) 
-    cif10_dmodule.prepare_data()
-    cif10_dmodule.setup("fit")
-    print(f"Train dataloader length: {len(cif10_dmodule.train_dataloader())}")
+    cif100_dmodule.prepare_data()
+    cif100_dmodule.setup("fit")
+    print(f"Train dataloader length: {len(cif100_dmodule.train_dataloader())}")
     log_file = Path(__file__).parent / "cls_imb_logs.log"
     logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
     logging.debug("---- TRAIN DATALOADER NEXT --- \n")
 
     i = 0
-    for inputs, targets in cif10_dmodule.train_dataloader():
+    for inputs, targets in cif100_dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
         # viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
@@ -136,8 +137,8 @@ if __name__ == "__main__":
     logging.debug("---- VAL DATALOADER NEXT --- \n")
 
     j = 0
-    for inputs, targets in cif10_dmodule.val_dataloader():
+    for inputs, targets in cif100_dmodule.val_dataloader():
         img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        viz_img(torch.as_tensor(img), label=targets[0])
         j += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))
