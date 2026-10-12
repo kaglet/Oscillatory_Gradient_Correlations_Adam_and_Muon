@@ -32,7 +32,7 @@ def run_pbs_many(root_dir: Path, max_run_idx: int, max_slice_idx: int):
 if __name__ == "__main__":
   root_dir = Path(__file__).parent.parent.parent
   print(str(root_dir))
-  run_pbs_many(root_dir=root_dir, max_run_idx = 3, max_slice_idx = 3)
+  run_pbs_many(root_dir=root_dir, max_run_idx = 2, max_slice_idx = 3)
 
 
 
