@@ -10,7 +10,7 @@ platforms = [
 
 [tasks]
 tests = "python -m src.src_tests --num1=1 --num2=2 --num3=5"
-000 = "python -m src.class_imbalance_ratios.run_with_cfg --run=0 --seed=0 --slice=0"
+000 = "python -m src.class_imbalance_ratios.run_with_cfg"
 001 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=1"
 002 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=2"
 003 = "python -m src.class_imbalance_ratios.run_with_cfg  --run=0 --seed=0 --slice=3"

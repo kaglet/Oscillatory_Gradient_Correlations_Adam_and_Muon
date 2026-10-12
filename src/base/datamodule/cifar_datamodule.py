@@ -130,7 +130,7 @@ if __name__ == "__main__":
     i = 0
     for inputs, targets in cif100_dmodule.train_dataloader():
         img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
 
