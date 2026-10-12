@@ -228,7 +228,7 @@ if __name__ == "__main__":
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
-    log_file = Path(__file__).parent / "cls_imb_logs.log"
+    log_file = Path(__file__).parent / "logs/cls_imb_logs.log"
     logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
     logging.debug("---- TRAIN DATALOADER NEXT --- \n")

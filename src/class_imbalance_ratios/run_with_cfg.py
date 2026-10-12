@@ -30,10 +30,10 @@ from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
 from src.base.lit_module.general_lit_module import DualOptLitModule
-from src.class_imbalance_ratios.conf_assembly.artificial_overrides_padder import ArtificialOverridesPadder
+from src.class_imbalance_ratios.conf_assembly_helpers.artificial_overrides_padder import ArtificialOverridesPadder
 from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
-from src.class_imbalance_ratios.conf_assembly.group_names import shared_config_names
-from src.class_imbalance_ratios.conf_assembly.override_strings import adam_overrides, muon_overrides, autofill_exceptions
+from src.class_imbalance_ratios.conf_assembly_helpers.group_names import shared_config_names
+from src.class_imbalance_ratios.conf_assembly_helpers.override_strings import adam_overrides, muon_overrides, autofill_exceptions
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
