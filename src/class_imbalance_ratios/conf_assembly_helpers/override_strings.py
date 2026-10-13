@@ -36,16 +36,16 @@ adam_overrides = {
     f"++{group_names.parameters_set}.beta_2_adam": 0.999,
     f"++{group_names.parameters_set}.nesterov": "False",
     f"++{group_names.parameters_set}.use_layer_recs": "False",
-    f"++{group_names.parameters_set}.eps": 1e-10, # Not given
+    f"++{group_names.parameters_set}.eps": 1e-8, # Not given
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1], # Part of map blueprint given
     
-    f"++{group_names.trainer}.limit_train_batches": 2048,
-    f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 2,
+    # f"++{group_names.trainer}.limit_train_batches": 2048,
+    # f"++{group_names.trainer}.limit_val_batches": 2048,
+    f"++{group_names.trainer}.max_epochs": 50,
 
-    f"++{group_names.datamodule}.num_workers": 0, 
-    f"++{group_names.datamodule}.persistent_workers": "False", 
+    f"++{group_names.datamodule}.num_workers": 8, 
+    f"++{group_names.datamodule}.persistent_workers": "True", 
 }
 
 muon_overrides = {
@@ -63,24 +63,24 @@ muon_overrides = {
     f"{group_names.gradient_accumulator_schedule}": shared_config_names.experiment,
     f"{group_names.schedulers}": shared_config_names.muon,
 
-    f"++{group_names.parameters_set}.lr_muon": 1e-1,
-    f"++{group_names.parameters_set}.lr_adam": 1e-3, # Not given
+    f"++{group_names.parameters_set}.lr_muon": 1e-1, # Use research value
+    f"++{group_names.parameters_set}.lr_adam": 3e-4, # Not given - Use default MuonWithAuxAdam rec
     f"++{group_names.parameters_set}.use_muon": "True",
     f"++{group_names.parameters_set}.momentum_muon": 0.9,
     f"++{group_names.parameters_set}.beta_1_adam": 0.9,
-    f"++{group_names.parameters_set}.beta_2_adam": 0.999,
+    f"++{group_names.parameters_set}.beta_2_adam": 0.95,
     f"++{group_names.parameters_set}.nesterov": "False",
     f"++{group_names.parameters_set}.use_layer_recs": "False",
-    f"++{group_names.parameters_set}.eps": 1e-10, # Not given
+    f"++{group_names.parameters_set}.eps": 1e-8, # Not given - Use default MuonWithAuxAdam
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1],
 
-    f"++{group_names.trainer}.limit_train_batches": 2048,
-    f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 2,
+    # f"++{group_names.trainer}.limit_train_batches": 2048,
+    # f"++{group_names.trainer}.limit_val_batches": 2048,
+    f"++{group_names.trainer}.max_epochs": 50,
 
-    f"++{group_names.datamodule}.num_workers": 0, 
-    f"++{group_names.datamodule}.persistent_workers": "False", 
+    f"++{group_names.datamodule}.num_workers": 8, 
+    f"++{group_names.datamodule}.persistent_workers": "True", 
 }
 
 if __name__ == "__main__":
