@@ -60,10 +60,14 @@ def analyse_gc(outputs_dir: Path, corr_store_names: dict[str, str] = dict(normed
         version_dirs = sorted(experim_dir.glob("multijob/R*"))
 
         for v_dir in version_dirs:
+            print("Per layer normalized gradient correlation run metrics for", v_dir)
+
             # Get all csv file path matches to custom name for both cs metrics
             gcs_paths = sorted(v_dir.rglob(f"run*/train_{corr_store_names["normed"]}.pt", case_sensitive=False))
             if len(gcs_paths) > 0:
                 summarize_runs_gc(gcs_paths, "gcs", GCH_Metric)
+
+            print("Per layer unnormalized gradient correlation run metrics for", v_dir)
 
             rgcs_paths = sorted(v_dir.rglob(f"run*/train_{corr_store_names["raw"]}.pt", case_sensitive=False))
             if len(rgcs_paths) > 0:
