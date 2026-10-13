@@ -16,7 +16,7 @@ my_root_dir = "my_root_dir"
 adam_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
-    f"++{my_root_dir}": chpc_root_raw,
+    f"++{my_root_dir}": relative_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -42,16 +42,16 @@ adam_overrides = {
     
     f"++{group_names.trainer}.limit_train_batches": 2048,
     f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 75,
+    f"++{group_names.trainer}.max_epochs": 2,
 
-    f"++{group_names.datamodule}.num_workers": 8, 
-    f"++{group_names.datamodule}.persistent_workers": "True", 
+    f"++{group_names.datamodule}.num_workers": 0, 
+    f"++{group_names.datamodule}.persistent_workers": "False", 
 }
 
 muon_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
-    f"++{my_root_dir}": chpc_root_raw,
+    f"++{my_root_dir}": relative_root_raw,
 
     f"{group_names.models}": shared_config_names.experiment, 
     f"{group_names.datamodule}": shared_config_names.experiment, 
@@ -77,10 +77,10 @@ muon_overrides = {
 
     f"++{group_names.trainer}.limit_train_batches": 2048,
     f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 50,
+    f"++{group_names.trainer}.max_epochs": 2,
 
-    f"++{group_names.datamodule}.num_workers": 8, 
-    f"++{group_names.datamodule}.persistent_workers": "True", 
+    f"++{group_names.datamodule}.num_workers": 0, 
+    f"++{group_names.datamodule}.persistent_workers": "False", 
 }
 
 if __name__ == "__main__":
