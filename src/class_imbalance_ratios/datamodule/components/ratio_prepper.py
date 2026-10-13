@@ -3,14 +3,17 @@ import numpy as np
 import torch
 
 class CountsPrepperFromRatio():
-    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int, slice_random: bool = True) -> None:
+    def __init__(self, train_map: dict[int, int], val_map: dict[int, int], test_map: dict[int, int], downsampler_ratio: int, ratio_seed: int, slice_random: bool = False) -> None:
         train_map = train_map
         train_counts = np.asarray(list(train_map.values()))
         train_labels = np.asarray(list(train_map.keys()))
-        if slice_random:
-            downsample_idxs = np.random.choice(np.arange(train_counts.size), size=math.floor(train_counts.size / 2), replace=False)
+
+        if slice_random: 
+            rng = np.random.default_rng()
+            downsample_idxs = rng.choice(np.arange(train_counts.size), size=math.floor(train_counts.size / 2), replace=False)
         else:
-            downsample_idxs = np.arange(train_counts.size)[:5]
+            rng = np.random.default_rng(seed=ratio_seed)
+            downsample_idxs = rng.choice(np.arange(train_counts.size), size=math.floor(train_counts.size / 2), replace=False)
 
         train_counts[downsample_idxs] = train_counts[downsample_idxs] / downsampler_ratio
 
@@ -54,6 +57,6 @@ if __name__ == "__main__":
     test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
     ReshuffleCountMap(train_map)
-    prepper = CountsPrepperFromRatio(downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+    prepper = CountsPrepperFromRatio(ratio_seed=10,downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
     print(prepper.train_map)
 

@@ -154,7 +154,7 @@ val_map = {k:v for k,v in zip(labels, val_class_counts)}
 test_class_counts = [500 for _ in range(cls_imb_s_num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
-counts_prepper_cfg = builds(CountsPrepperFromRatio, downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
 runtime_experim_dir = "${my_root_dir}/outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
 runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
@@ -273,14 +273,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
     )
-    parser.add_argument("--run", required=False, nargs="?", type=int, default=1)
-    parser.add_argument("--seed", required=False, nargs="?", type=int, default=0)
-    parser.add_argument("--slice", required=False, nargs="?", type=int, default=3)
+    parser.add_argument("--run", required=False, nargs="?", type=int)
+    parser.add_argument("--seed", required=False, nargs="?", type=int)
+    parser.add_argument("--slice", required=False, nargs="?", type=int)
+    parser.add_argument("run_seed", required=False, nargs="?", type=int)
+
     args = parser.parse_args()
 
     injected_run = args.run
     injected_seed = args.seed
     injected_slice = args.slice
+    injected_ratio_seed = args.ratio_seed
 
     muon_overrides_map = ArtificialOverridesPadder(muon_overrides, autofill_exceptions, 4).overrides_map_as_store
     muon_overrides_map.overwrite(
@@ -290,6 +293,10 @@ if __name__ == "__main__":
     muon_overrides_map.overwrite(
         "++seed",
         [f"{injected_seed}" for _ in list(range(4))]
+    )
+    muon_overrides_map.overwrite(
+        "++ratio_seed",
+        [f"{injected_ratio_seed}" for _ in list(range(4))]
     )
     curr_vals = muon_overrides_map.get_map_slice(injected_slice)
 
@@ -312,7 +319,10 @@ if __name__ == "__main__":
         "seed",
         [f"{injected_seed}" for _ in list(range(4))]
     )
-
+    adam_overrides_map.overwrite(
+        "++ratio_seed",
+        [f"{injected_ratio_seed}" for _ in list(range(4))]
+    )
     curr_vals = adam_overrides_map.get_map_slice(injected_slice)
 
     job = launch(

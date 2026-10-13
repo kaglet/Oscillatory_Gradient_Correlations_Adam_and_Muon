@@ -20,4 +20,4 @@ module load chpc/cuda/12.0/12.0
 echo "Starting Experiment Run via Pixi..."
 
 # 2. Execute current experiment (cls_imb_s) run using the absolute path to Pixi
-~/.pixi/bin/pixi run cls_imb_s --run={{run}} --seed={{seed}} --slice={{slice}}
+~/.pixi/bin/pixi run cls_imb_s --run={{run}} --seed={{seed}} --slice={{slice}} --ratio_seed={{ratio_seed}}

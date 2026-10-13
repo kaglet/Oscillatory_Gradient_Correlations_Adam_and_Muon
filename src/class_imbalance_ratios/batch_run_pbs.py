@@ -17,8 +17,9 @@ def run_pbs_many(root_dir: Path, run_interval: list[int], slice_interval: list[i
         for slice in slice_interval:
             print(f"Generating and submitting job for run={run}, slice={slice}")
 
-            job_script = template_content.replace("{{run}}", str(run)).replace("{{seed}}", str(run)).replace("{{slice}}", str(slice))
-
+            job_script = template_content
+            job_script.replace("{{run}}", str(run)).replace("{{seed}}", str(run))
+            job_script.replace("{{slice}}", str(slice)).replace("{{ratio_seed}}", str(slice))
             temp_filename = "temp_generated_run.pbs"
             with open(temp_filename, "w") as f:
                 f.write(job_script)
@@ -26,7 +27,7 @@ def run_pbs_many(root_dir: Path, run_interval: list[int], slice_interval: list[i
             logging.debug("=== LOGGING PBS SCRIPT ===")
             logging.debug(job_script)
 
-            # Launch the PBS script via cluster commands
+            # Launch PBS script
             subprocess.run(["qsub", temp_filename])
 
 if __name__ == "__main__":
