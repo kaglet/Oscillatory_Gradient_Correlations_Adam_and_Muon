@@ -11,6 +11,7 @@ platforms = [
 [tasks]
 tests = "python -m src.src_tests --num1=1 --num2=2 --num3=5"
 cls_imb_s = "python -m src.class_imbalance_ratios.run_with_cfg"
+batch_experim = "python -m src.class_imbalance_ratios.edit_run_pbs"
 
 cls_imb_datamodule = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 test_dir_path = "python -m src.class_imbalance_ratios.tests"
