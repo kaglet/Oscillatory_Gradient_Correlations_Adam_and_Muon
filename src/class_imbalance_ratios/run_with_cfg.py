@@ -66,6 +66,7 @@ mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
 # LR Scheduler
+# Hover over @CosineAnnealingWarmRestarts to see that eta_max is starting lr. If it is set to == eta_min, there will be no change according to formula. 
 adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
 muon_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_adam}")
 
