@@ -100,7 +100,7 @@ def viz_all_col_unsized(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path
     ax.legend()
     plt.show()
 
-def viz_all_col_sized(metric_df: pd.DataFrame, metadata_df: pd.DataFrame, unified_name: str = "Train Accuracy") -> None:
+def viz_all_col_sized(metric_df: pd.DataFrame, metadata_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy") -> None:
     """
     For a metric object instance, visualize all col of `values` with its associated string in `header`.
     Internal output is figure with 1 plot for all column , labelled by col name in Index.
@@ -112,13 +112,13 @@ def viz_all_col_sized(metric_df: pd.DataFrame, metadata_df: pd.DataFrame, unifie
     for col in metric_df.columns:
         line, = ax.plot(list(metric_df.index.to_numpy(dtype=np.int32)), list(metric_df.loc[:, col].values))
         line.set_label(col)
-    ax.set_title(f"{unified_name} Plot", fontsize=200)
+    ax.set_title(f"{path_down_prefix} Plot", fontsize=200)
 
     ax.tick_params(axis='x', labelsize=70)
     ax.tick_params(axis='y', labelsize=70)
 
-    ax.set_ylabel(unified_name, fontsize=120)
-    ax.set_ylabel(unified_name, fontsize=120)
+    ax.set_ylabel(path_down_prefix, fontsize=120)
+    ax.set_ylabel(path_down_prefix, fontsize=120)
 
     ax.legend(fontsize=50, title_fontsize=90)
     plt.show()
@@ -146,4 +146,5 @@ if __name__ == "__main__":
             "col18": np.random.random(100),
         }
     )
-    viz_each_col_unsized(metric_df=metric_df, metadata_df=metric_df)
+    # viz_each_col_unsized(metric_df=metric_df, metadata_df=metric_df)
+    viz_each_col_sized(metric_df=metric_df, metadata_df=metric_df)
