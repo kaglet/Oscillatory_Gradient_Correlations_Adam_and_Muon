@@ -47,7 +47,7 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
     sum_sq_df: pd.DataFrame = pd.DataFrame(np.arange(1))
     idx: int = 0
     agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    
+    run_dfs: list[pd.DataFrame] = []
     for idx, train_metrics_path in enumerated_metrics:
         metric = torch.load(train_metrics_path.resolve(), map_location="cpu")
 
@@ -88,6 +88,7 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
             else: 
                 raise ValueError(f"{summary_mode} is not one of options")
 
+            run_dfs.append(data_df)
             sum_df = pd.DataFrame(data=np.zeros(agg_df.shape), index=agg_df.index, columns=agg_df.columns)
             sum_sq_df = pd.DataFrame(data=np.zeros(agg_df.shape), index=agg_df.index, columns=agg_df.columns)
         
