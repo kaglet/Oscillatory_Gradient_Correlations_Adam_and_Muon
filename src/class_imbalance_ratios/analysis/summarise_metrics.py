@@ -24,15 +24,35 @@ class MetricMetadata(TypedDict):
     epochs: np.ndarray
     steps: np.ndarray
 
-def agg_per_epoch(data_df: pd.DataFrame) -> pd.DataFrame:
-    agg_df = data_df.groupby(level="epochs").mean(numeric_only=True)
-    return agg_df
+def mean_epochs(data_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Get 
+    """
+    # TODO: Find out if other index in multi-index collapses
+    mean_df = data_df.groupby(level="epochs").mean(numeric_only=True) # for some reason if non-numeric added in future
+    return mean_df
 
-def agg_global_avg(data_df: pd.DataFrame) -> pd.DataFrame:
-    agg_df = data_df.mean(axis=1).to_frame() # transpose replaces lack of axes
-    agg_df.reset_index(drop=True, inplace=True) # strip the multi-index required mainly for per_epoch method but carried over here
-    agg_df.columns.name = "global_avg"
-    return agg_df
+def mean_cols(data_df: pd.DataFrame, pooled_name: str) -> pd.DataFrame:
+    mean_df = data_df.mean(axis=1).to_frame().rename(columns={0: pooled_name}) # transpose replaces lack of axes
+    return mean_df
+
+def get_next_agg(option: str, data_df: pd.DataFrame):
+    if option == "epochs":
+
+agg_col_grps # If I need to subset cols 
+
+# TODO: Do coupled Muon, Adam rather, could plot in same, for now it is fine, for all. Specify options, but may use same.
+# If created agg skip over. 
+def combined_mean(data_df: pd.DataFrame, options: dict;str, bool):
+    for key, chosen in options.items():
+        if chosen:
+            get_next_agg(option=key, data_df=data_df)
+
+def mean_classes(data_df: pd.DataFrame) -> pd.DataFrame:
+    return mean_cols(data_df=data_df, pooled_name="pooled_classes")
+
+def mean_layers(data_df: pd.DataFrame) -> pd.DataFrame:
+    return mean_cols(data_df=data_df, pooled_name="pooled_layers")
 
 def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"], run_metrics_paths: list[Path], prefix:str, custom_metric: Type[MyMultiClassAccuracy]):
     """ 
@@ -82,31 +102,25 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
             data_df.columns.name = "classes"
             # Across epoch aggregate - Get mean average per class 
             if summary_mode == "per_epoch":
-                agg_df = agg_per_epoch(data_df=data_df)  
+                agg_df = mean_epochs(data_df=data_df)  
             elif summary_mode == "global_avg" :
-                agg_df = agg_global_avg(data_df=data_df)
+                agg_df = agg_classes(data_df=data_df)
             else: 
                 raise ValueError(f"{summary_mode} is not one of options")
 
-            run_dfs.append(data_df)
-            sum_df = pd.DataFrame(data=np.zeros(agg_df.shape), index=agg_df.index, columns=agg_df.columns)
-            sum_sq_df = pd.DataFrame(data=np.zeros(agg_df.shape), index=agg_df.index, columns=agg_df.columns)
-        
-        sum_df = sum_df + agg_df 
-        sum_sq_df = sum_sq_df + (agg_df ** 2) 
+            run_dfs.append(agg_df)
 
-    num_metrics = idx + 1 
-    global_mean_df = sum_df / (idx + 1) 
-    global_std_df = (sum_sq_df / num_metrics) - (global_mean_df ** 2) 
-
+    df_all = pd.concat(run_dfs)
+    runs_mean_df = df_all.groupby(level=0).mean()
+    runs_std_df = df_all.groupby(level=0).std()
     viz_loss_unsized(
         metadata_df=metadata_df,
-        metric_df=global_mean_df, 
+        metric_df=runs_mean_df, 
         path_down_prefix=f"{prefix} mean"
     )    
     viz_loss_unsized(
         metadata_df=metadata_df,
-        metric_df=global_std_df, 
+        metric_df=runs_std_df, 
         path_down_prefix=f"{prefix} standard deviation"
     )
 
