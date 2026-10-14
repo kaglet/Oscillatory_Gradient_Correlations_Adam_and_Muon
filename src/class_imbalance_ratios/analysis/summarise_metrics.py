@@ -87,37 +87,35 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
 
         computed = base_metric.compute()
 
-        data_df = pd.DataFrame(computed)
-        data_df.replace(100, np.nan, inplace=True)
-        data_df.replace(float('nan'), np.nan, inplace=True)
-        data_df = data_df.map(lambda val: val.item() if isinstance(val, torch.Tensor) else val)
+        data_df = pd.DataFrame(computed).replace(float('nan'), np.nan)
+        data_df = data_df.replace(100, np.nan)
+        data_df = data_df.map(lambda value: value.item() if isinstance(value, torch.Tensor) else value)
         
-        if idx == 0:
-            path_info = f"Showing run summary results in {train_metrics_path.resolve()}"
-            
-            # Convert tensors not addressed by `.compute()`
-            clean_epochs = np.asarray(base_metric.metric_state["epochs"]) 
-            clean_steps = np.asarray(base_metric.metric_state["steps"]) 
+        path_info = f"Showing run summary results in {train_metrics_path.resolve()}"
+        
+        # Convert tensors not addressed by `.compute()`
+        clean_epochs = np.asarray(base_metric.metric_state["epochs"]) 
+        clean_steps = np.asarray(base_metric.metric_state["steps"]) 
 
-            metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
-            multiindex = pd.MultiIndex.from_arrays(
-                [
-                    list(metadata["epochs"]), 
-                    list(metadata["steps"]) # list of lists format required
-                ],
-                names=["epochs", "steps"]
-            )
-            data_df.index = multiindex
-            data_df.columns.name = "classes"
+        metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
+        multiindex = pd.MultiIndex.from_arrays(
+            [
+                list(metadata["epochs"]), 
+                list(metadata["steps"]) # list of lists format required
+            ],
+            names=["epochs", "steps"]
+        )
+        data_df.index = multiindex
+        data_df.columns.name = "classes"
             # Across epoch aggregate - Get mean average per class 
-            if summary_mode == "per_epoch":
-                agg_df = mean_epochs(data_df=data_df)  
-            elif summary_mode == "global_avg" :
-                agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
-            else: 
-                raise ValueError(f"{summary_mode} is not one of options")
+        if summary_mode == "per_epoch":
+            agg_df = mean_epochs(data_df=data_df)  
+        elif summary_mode == "global_avg" :
+            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
+        else: 
+            raise ValueError(f"{summary_mode} is not one of options")
 
-            run_dfs.append(agg_df)
+        run_dfs.append(agg_df)
 
     df_all = pd.concat(run_dfs)
     runs_mean_df = df_all.groupby(level=0).mean()

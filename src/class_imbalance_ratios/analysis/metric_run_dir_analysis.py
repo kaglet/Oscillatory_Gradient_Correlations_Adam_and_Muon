@@ -3,6 +3,7 @@ Main entry point for acc analysis.
 """
 
 from pathlib import Path
+from IPython.display import display
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
@@ -29,10 +30,12 @@ def analyse_loss(outputs_dir: Path) -> None:
             if len(val_loss_paths) > 0:
                 summarize_runs_loss(run_metrics_paths= val_loss_paths, prefix=val_loss_paths[0].stem, custom_metric=MyLoss)
 
-def analyse_acc(outputs_dir: Path) -> None:
+def analyse_acc(outputs_dir: Path, limit: int | None = 1) -> None:
     """ 
     Main entry point for acc analysis. 
     """
+    limit = 0 if limit is None else limit 
+    
     for experim_dir in sorted(outputs_dir.iterdir()):
         version_dirs = sorted(experim_dir.glob("multijob/R*"))
 
@@ -51,6 +54,10 @@ def analyse_acc(outputs_dir: Path) -> None:
             if len(val_acc_paths) > 0:
                 summarize_runs_acc(summary_mode="per_epoch", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
                 summarize_runs_acc(summary_mode="global_avg", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+
+            limit -= 1
+            if limit is None and limit == 0:
+                display(f"Limit reached floor of {limit}, analysis complete")
 
 def analyse_gc(outputs_dir: Path, corr_store_names: dict[str, str] = dict(normed="GCH", raw="RGCH")) -> None:
     """ 
