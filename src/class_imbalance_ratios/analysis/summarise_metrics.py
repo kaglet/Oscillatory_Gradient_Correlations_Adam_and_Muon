@@ -36,17 +36,26 @@ def mean_cols(data_df: pd.DataFrame, pooled_name: str) -> pd.DataFrame:
     mean_df = data_df.mean(axis=1).to_frame().rename(columns={0: pooled_name}) # transpose replaces lack of axes
     return mean_df
 
-def get_next_agg(option: str, data_df: pd.DataFrame):
+def get_next_mean_type(option: str, data_df: pd.DataFrame) -> pd.DataFrame:
+    mean_df = pd.DataFrame(np.arange(0))
     if option == "epochs":
+        mean_df = mean_epochs(data_df=data_df)
+    elif option == "cols":
+        mean_df = mean_cols(data_df=data_df, pooled_name="Filler")
 
-agg_col_grps # If I need to subset cols 
+    return mean_df
+
+# TODO: agg_col_grps # If I need to subset cols 
 
 # TODO: Do coupled Muon, Adam rather, could plot in same, for now it is fine, for all. Specify options, but may use same.
 # If created agg skip over. 
-def combined_mean(data_df: pd.DataFrame, options: dict;str, bool):
+def combined_mean(data_df: pd.DataFrame, options: dict[str, bool]) -> pd.DataFrame:
+    mean_df = data_df
     for key, chosen in options.items():
         if chosen:
-            get_next_agg(option=key, data_df=data_df)
+            mean_df = get_next_mean_type(option=key, data_df=mean_df)
+
+    return mean_df
 
 def mean_classes(data_df: pd.DataFrame) -> pd.DataFrame:
     return mean_cols(data_df=data_df, pooled_name="pooled_classes")
@@ -104,7 +113,7 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
             if summary_mode == "per_epoch":
                 agg_df = mean_epochs(data_df=data_df)  
             elif summary_mode == "global_avg" :
-                agg_df = agg_classes(data_df=data_df)
+                agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
             else: 
                 raise ValueError(f"{summary_mode} is not one of options")
 
