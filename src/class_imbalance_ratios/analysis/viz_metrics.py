@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np 
 
-def viz_each_col_sized(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy", grid_cols_num: int = 4) -> None:
+def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy", grid_cols_num: int = 4) -> None:
     """
     For a metric object instance, visualize all col of `values` with its associated string in `header`.
     Internal output is figure with 1 plot for all column , labelled by col name in Index.
@@ -210,4 +210,4 @@ if __name__ == "__main__":
         }
     )
     # viz_each_col_unsized(metric_df=metric_df, metadata_df=metric_df)
-    viz_each_col_sized(metric_df=metric_df, metadata_df=metric_df)
+    viz_gc_in_grid(metric_df=metric_df, metadata_df=metric_df)

@@ -14,7 +14,7 @@ from torchmetrics import Metric
 
 from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
-from src.class_imbalance_ratios.analysis.viz_metrics import viz_all_col_sized, viz_all_col_unsized, viz_each_col_sized, viz_each_col_unsized, viz_loss_unsized
+from src.class_imbalance_ratios.analysis.viz_metrics import viz_all_col_sized, viz_all_col_unsized, viz_gc_in_grid, viz_each_col_unsized, viz_loss_unsized
 
 class MetricMetadata(TypedDict):
     """
@@ -216,22 +216,16 @@ def summarize_runs_gc(run_metrics_paths: list[Path], prefix:str, custom_metric: 
     global_mean_df = sum_df / (idx + 1) 
     global_std_df = (sum_sq_df / num_metrics) - (global_mean_df ** 2) 
 
-    # viz_all_col_sized(
-    #     metadata_df=metadata_df,
-    #     metric_df=global_mean_df, 
-    #     path_down_prefix=f"{prefix} mean"
-    # )    
-    # viz_all_col_sized(
-    #     metadata_df=metadata_df,
-    #     metric_df=global_std_df, 
-    #     path_down_prefix=f"{prefix} standard deviation"
-    # )
-    viz_each_col_sized(
+    parent_dir = str(run_metrics_paths[0].parent.resolve())
+    global_mean_df.to_parquet(f"{parent_dir}/global_mean_GC")
+    global_std_df.to_parquet(f"{parent_dir}/global_std_GC")
+
+    viz_gc_in_grid(
         metadata_df=metadata_df,
         metric_df=global_mean_df, 
         path_down_prefix=f"{prefix} mean"
     )
-    viz_each_col_sized(
+    viz_gc_in_grid(
         metadata_df=metadata_df,
         metric_df=global_std_df, 
         path_down_prefix=f"{prefix} standard deviation"
