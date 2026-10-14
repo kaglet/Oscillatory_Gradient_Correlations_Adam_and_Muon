@@ -63,7 +63,7 @@ def mean_classes(data_df: pd.DataFrame) -> pd.DataFrame:
 def mean_layers(data_df: pd.DataFrame) -> pd.DataFrame:
     return mean_cols(data_df=data_df, pooled_name="pooled_layers")
 
-def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"], run_metrics_paths: list[Path], prefix:str, custom_metric: Type[MyMultiClassAccuracy]):
+def summarize_runs_acc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str, custom_metric: Type[MyMultiClassAccuracy]):
     """ 
     This summarises accuracy metrics across a run.
     TODO: Output is in the parent directory of the current path.  
@@ -78,7 +78,7 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
     agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
     run_dfs: list[pd.DataFrame] = []
     for idx, train_metrics_path in enumerated_metrics:
-        metric = torch.load(train_metrics_path.resolve(), map_location="cpu")
+        metric = torch.load(train_metrics_path.resolve(), map_location="cpu", weights_only=True, mmap=True)
 
         data_cols = [k for k in list(metric.keys()) if k != "epochs" and k != "steps"] # Do not add epochs, steps back into classes, they get merged into expected keys, and their state is reloaded when seen as part of labels, as key names, then again as metadata frmo load state dict method
 
@@ -108,12 +108,12 @@ def summarize_runs_acc(summary_mode: Literal["per_epoch"] | Literal["global_avg"
         data_df.index = multiindex
         data_df.columns.name = "classes"
             # Across epoch aggregate - Get mean average per class 
-        if summary_mode == "per_epoch":
+        if summary_mode == "epochs":
             agg_df = mean_epochs(data_df=data_df)  
-        elif summary_mode == "global_avg" :
+        elif summary_mode == "cols" :
             agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
-        else: 
-            raise ValueError(f"{summary_mode} is not one of options")
+        elif summary_mode == "both": 
+            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
 
         run_dfs.append(agg_df)
 

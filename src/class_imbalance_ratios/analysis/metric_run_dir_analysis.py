@@ -45,18 +45,20 @@ def analyse_acc(outputs_dir: Path, limit: int | None = 1) -> None:
             # Get all csv file path matches to default logger file name for standard metrics
             train_acc_paths = sorted(v_dir.rglob("run*/train_acc.pt", case_sensitive=False))
             if len(train_acc_paths) > 0:
-                summarize_runs_acc(summary_mode="per_epoch", run_metrics_paths= train_acc_paths, prefix=train_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
-                summarize_runs_acc(summary_mode="global_avg", run_metrics_paths= train_acc_paths, prefix=train_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                # summarize_runs_acc(summary_mode="epochs", run_metrics_paths= train_acc_paths, prefix=train_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                # summarize_runs_acc(summary_mode="cols", run_metrics_paths= train_acc_paths, prefix=train_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                summarize_runs_acc(summary_mode="both", run_metrics_paths= train_acc_paths, prefix=train_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
 
             print("Val accuracy run metrics for", v_dir)
 
             val_acc_paths = sorted(v_dir.rglob("run*/val_acc.pt", case_sensitive=False))
             if len(val_acc_paths) > 0:
-                summarize_runs_acc(summary_mode="per_epoch", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
-                summarize_runs_acc(summary_mode="global_avg", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                # summarize_runs_acc(summary_mode="epochs", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                # summarize_runs_acc(summary_mode="cols", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
+                summarize_runs_acc(summary_mode="both", run_metrics_paths= val_acc_paths, prefix=val_acc_paths[0].stem, custom_metric=MyMultiClassAccuracy)
 
             limit -= 1
-            if limit is None and limit == 0:
+            if limit == 0:
                 display(f"Limit reached floor of {limit}, analysis complete")
 
 def analyse_gc(outputs_dir: Path, corr_store_names: dict[str, str] = dict(normed="GCH", raw="RGCH")) -> None:
