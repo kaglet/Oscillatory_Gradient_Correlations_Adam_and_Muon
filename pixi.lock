@@ -78,6 +78,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/imbalanced-learn-0.14.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/importlib-metadata-8.7.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipykernel-7.4.0-pyhe2676ad_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/ipympl-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipython-9.17.1-pyhe2676ad_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipython_pygments_lexers-1.1.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipywidgets-8.1.9-pyhd8ed1ab_0.conda
@@ -694,6 +695,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/imbalanced-learn-0.14.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/importlib-metadata-8.7.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipykernel-7.4.0-pyh4a3486f_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/ipympl-0.10.0-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipython-9.17.1-pyh53cf698_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipython_pygments_lexers-1.1.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/ipywidgets-8.1.9-pyhd8ed1ab_0.conda
@@ -5902,6 +5904,25 @@ packages:
   run_exports: {}
   size: 143085
   timestamp: 1790707935317
+- conda: https://prefix.dev/conda-forge/noarch/ipympl-0.10.0-pyhcf101f3_0.conda
+  sha256: 5cb435e0fe1238b0ec4baa13d52faf4490b76bb62202e5fd5bf004e95f2cf425
+  md5: abb099ef4a8ab45d4b713f2d4277f727
+  depends:
+  - ipython <10
+  - ipywidgets >=7.6.0,<9
+  - matplotlib-base >=3.5.0,<4
+  - numpy
+  - pillow
+  - python >=3.10
+  - traitlets <6
+  - python
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/ipympl?source=hash-mapping
+  run_exports: {}
+  size: 244162
+  timestamp: 1769263121500
 - conda: https://prefix.dev/conda-forge/noarch/ipython-9.17.1-pyh53cf698_0.conda
   sha256: 0fb38e0685e5065064ac007cf8317ee24b329373c9f80c31eb74c1bfcb0cfe24
   md5: 0e28933e51c1d05c179bfd595ead8aee

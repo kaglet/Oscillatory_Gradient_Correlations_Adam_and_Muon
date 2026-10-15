@@ -24,7 +24,7 @@ def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down
         sharex=True, 
         sharey=True
     )
-    fig.suptitle(f'{path_down_prefix}', fontsize=200, y=1.0)
+    fig.suptitle(f'{path_down_prefix.upper()}', fontsize=200, y=1.0)
     cols_limit_counter = 0
     for grid_row in range(grid_cols_num):
         for grid_col in range(grid_rows_num):
@@ -41,7 +41,7 @@ def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down
 
             axs[grid_row, grid_col].set_ylabel('Gradient correlation') 
             axs[grid_row, grid_col].set_xlabel('Steps')           
-            axs[grid_row, grid_col].set_title(f"{col}")
+            axs[grid_row, grid_col].set_title(f"{col.upper()}")
 
             axs[grid_row, grid_col].tick_params(axis='x')
             axs[grid_row, grid_col].tick_params(axis='y')
