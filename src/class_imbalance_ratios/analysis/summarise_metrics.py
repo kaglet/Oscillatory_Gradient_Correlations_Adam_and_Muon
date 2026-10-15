@@ -14,7 +14,7 @@ from torchmetrics import Metric
 
 from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
-from src.class_imbalance_ratios.analysis.viz_metrics import viz_all_col_sized, viz_all_col_unsized, viz_gc_in_grid, viz_each_col_unsized, viz_loss_unsized
+from src.class_imbalance_ratios.analysis.viz_metrics import viz_cols_in_one, viz_cols_in_grid
 
 class MetricMetadata(TypedDict):
     """
@@ -57,109 +57,33 @@ def combined_mean(data_df: pd.DataFrame, options: dict[str, bool]) -> pd.DataFra
 
     return mean_df
 
-def mean_classes(data_df: pd.DataFrame) -> pd.DataFrame:
-    return mean_cols(data_df=data_df, pooled_name="pooled_classes")
-
-def mean_layers(data_df: pd.DataFrame) -> pd.DataFrame:
-    return mean_cols(data_df=data_df, pooled_name="pooled_layers")
-
-def summarize_runs_acc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
-    """ 
-    This summarises accuracy metrics across a run.
-    TODO: Output is in the parent directory of the current path.  
-    """
-
-    metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    run_dfs: list[pd.DataFrame] = []
-    for train_metrics_path in run_metrics_paths:
-        data_df = pd.read_parquet(train_metrics_path)
-        data_df.columns.name = "classes"
-            # Across epoch aggregate - Get mean average per class 
-        if summary_mode == "epochs":
-            agg_df = mean_epochs(data_df=data_df)  
-        elif summary_mode == "cols" :
-            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
-        elif summary_mode == "both": 
-            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
-
-        run_dfs.append(agg_df)
-
-    df_all = pd.concat(run_dfs)
-    runs_mean_df = df_all.groupby(level=0).mean()
-    runs_std_df = df_all.groupby(level=0).std()
-    viz_loss_unsized(
-        metadata_df=metadata_df,
-        metric_df=runs_mean_df, 
-        path_down_prefix=f"{prefix} mean"
-    )    
-    viz_loss_unsized(
-        metadata_df=metadata_df,
-        metric_df=runs_std_df, 
-        path_down_prefix=f"{prefix} standard deviation"
-    )
-
-""" 
-Loss analysis helpers. 
-"""
-def summarize_runs_loss(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
-    """ 
-    This summarises GC metrics across a run.
-    Output is in the parent directory of the current path.  
-    """
-    metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    run_dfs: list[pd.DataFrame] = []
-    for train_metrics_path in run_metrics_paths:
-        data_df = pd.read_parquet(train_metrics_path)
-        data_df.columns.name = "classes"
-            # Across epoch aggregate - Get mean average per class 
-        if summary_mode == "epochs":
-            agg_df = mean_epochs(data_df=data_df)  
-        elif summary_mode == "cols" :
-            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
-        elif summary_mode == "both": 
-            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
-
-        run_dfs.append(agg_df)
-
-    df_all = pd.concat(run_dfs)
-    runs_mean_df = df_all.groupby(level=0).mean()
-    runs_std_df = df_all.groupby(level=0).std()
-
-    viz_loss_unsized(
-        metadata_df=metadata_df,
-        metric_df=runs_mean_df, 
-        path_down_prefix=f"{prefix} mean"
-    )    
-    viz_loss_unsized(
-        metadata_df=metadata_df,
-        metric_df=runs_std_df, 
-        path_down_prefix=f"{prefix} standard deviation"
-    )
-
 """ 
 GCS analysis helpers. 
 """
-def summarize_runs_gc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
+def summarize_runs_metric(summary_mode_extras: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
     """ 
-    This summarises GC metrics across a run.
-    Output is in the parent directory of the current path.  
-    """    
-    metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
+    This summarises any metrics across runs. 
+    Regular summary is mean and std. 
+    Pandas grouping is used for extremely fast computation, no bottleneck.
+    "Extras" can be attached to the summary. I.e. methods of compressing further. 
+    Ensure relevance otherwise nonsensical outputs may result. 
+    Output is stored in the parent directory of the current path.  
+
+    TODO: Pass in "none" option, to have no aggregation, like before. Allow subgrouping for grouping option (see pandas book). See TODO's way above in this file. 
+    """     
     run_dfs: list[pd.DataFrame] = []
     for train_metrics_path in run_metrics_paths:
+        agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
         data_df = pd.read_parquet(train_metrics_path)
         data_df.columns.name = "classes"
             # Across epoch aggregate - Get mean average per class 
-        if summary_mode == "epochs":
+        if summary_mode_extras == "epochs":
             agg_df = mean_epochs(data_df=data_df)  
-        elif summary_mode == "cols" :
-            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
-        elif summary_mode == "both": 
+        elif summary_mode_extras == "cols" :
+            agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
+        elif summary_mode_extras == "both": 
             agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
-
+        # TODO: Add "none" option
         run_dfs.append(agg_df)
 
     df_all = pd.concat(run_dfs)
@@ -167,20 +91,8 @@ def summarize_runs_gc(summary_mode: Literal["epochs"] | Literal["cols"] | Litera
     runs_std_df = df_all.groupby(level=0).std()
 
     parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
-    runs_mean_df.to_parquet(f"{parent_dir}/runs_mean_{prefix}")
-    runs_std_df.to_parquet(f"{parent_dir}/runs_std_{prefix}")
-
-    viz_gc_in_grid(
-        metadata_df=metadata_df,
-        metric_df=runs_mean_df, 
-        path_down_prefix=f"{prefix} mean"
-    )
-
-    viz_gc_in_grid(
-        metadata_df=metadata_df,
-        metric_df=runs_std_df, 
-        path_down_prefix=f"{prefix} standard deviation"
-    )
+    runs_mean_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras}_mean_{prefix}")
+    runs_std_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras}_std_{prefix}")
 
 if __name__ == "__main__":
     pass
