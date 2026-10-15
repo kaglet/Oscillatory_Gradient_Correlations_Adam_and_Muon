@@ -48,6 +48,7 @@ def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down
             axs[grid_row, grid_col].legend()
     
     plt.show()
+    plt.close(fig)
 
 def viz_each_col_unsized(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy") -> None:
     """

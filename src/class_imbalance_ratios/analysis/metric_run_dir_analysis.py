@@ -82,13 +82,13 @@ def analyse_gc(outputs_dir: Path, limit: int | None = 1, corr_store_names: dict[
             # Get all csv file path matches to custom name for both cs metrics
             gcs_paths = sorted(v_dir.rglob(f"run*/train_{corr_store_names["normed"]}.parquet", case_sensitive=False))
             if len(gcs_paths) > 0:
-                summarize_runs_gc(summary_mode="both", run_metrics_paths=gcs_paths, prefix="gcs")
+                summarize_runs_gc(summary_mode="epochs", run_metrics_paths=gcs_paths, prefix="gcs")
 
             print("Per layer unnormalized gradient correlation run metrics for", v_dir)
 
             rgcs_paths = sorted(v_dir.rglob(f"run*/train_{corr_store_names["raw"]}.parquet", case_sensitive=False))
             if len(rgcs_paths) > 0:
-                summarize_runs_gc(summary_mode="both", run_metrics_paths=gcs_paths, prefix="rgcs")
+                summarize_runs_gc(summary_mode="epochs", run_metrics_paths=gcs_paths, prefix="rgcs")
 
             limit -= 1
             if limit == 0:
