@@ -157,7 +157,7 @@ test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
 
-runtime_experim_dir = "${my_root_dir}/outputs/${hydra.job.name}/multijob/R_${counts_prepper.downsampler_ratio}"
+runtime_experim_dir = "${my_root_dir}/outputs/${hydra.job.name}/${hydra.job.config_name}/multijob/R_${counts_prepper.downsampler_ratio}"
 runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
 
 data_dir = "${my_root_dir}/data/"
@@ -305,7 +305,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="muon_class_imbalance_ratios",
-        job_name="muon_class_imbalance_ratios_test",
+        job_name="cls_imb_s",
         version_base="1.3",
         overrides=curr_vals
     )
@@ -330,7 +330,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_class_imbalance_ratios",
-        job_name="adam_class_imbalance_ratios",
+        job_name="cls_imb_s",
         version_base="1.3",
         overrides=curr_vals
     )
