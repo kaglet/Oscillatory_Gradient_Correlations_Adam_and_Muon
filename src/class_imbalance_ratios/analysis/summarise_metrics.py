@@ -57,10 +57,7 @@ def combined_mean(data_df: pd.DataFrame, options: dict[str, bool]) -> pd.DataFra
 
     return mean_df
 
-""" 
-GCS analysis helpers. 
-"""
-def summarize_runs_metric(summary_mode_extras: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
+def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"]], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises any metrics across runs. 
     Regular summary is mean and std. 
@@ -69,30 +66,38 @@ def summarize_runs_metric(summary_mode_extras: Literal["epochs"] | Literal["cols
     Ensure relevance otherwise nonsensical outputs may result. 
     Output is stored in the parent directory of the current path.  
 
-    TODO: Pass in "none" option, to have no aggregation, like before. Allow subgrouping for grouping option (see pandas book). See TODO's way above in this file. 
+    TODO: Allow subgrouping for grouping separately (do NOT convolute this streamlined logic with highly custom logic). See TODO's way above in this file. 
     """     
-    run_dfs: list[pd.DataFrame] = []
+    per_aggregator_store: list[list[Any]] = [list() for _ in summary_mode_extras]
     for train_metrics_path in run_metrics_paths:
         agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
         data_df = pd.read_parquet(train_metrics_path)
         data_df.columns.name = "classes"
-            # Across epoch aggregate - Get mean average per class 
-        if summary_mode_extras == "epochs":
-            agg_df = mean_epochs(data_df=data_df)  
-        elif summary_mode_extras == "cols" :
-            agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
-        elif summary_mode_extras == "both": 
-            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
-        # TODO: Add "none" option
-        run_dfs.append(agg_df)
+        
+        for extra in summary_mode_extras:
+            if extra == "epochs":
+                agg_df = mean_epochs(data_df=data_df)  
+                per_aggregator_store[0].append(agg_df)
+            elif extra == "cols" :
+                agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
+                per_aggregator_store[1].append(agg_df)
+            elif extra == "both": 
+                agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
+                per_aggregator_store[2].append(agg_df)
+            elif extra == "none": 
+                agg_df = data_df # no change
+                per_aggregator_store[3].append(agg_df)
 
-    df_all = pd.concat(run_dfs)
-    runs_mean_df = df_all.groupby(level=0).mean()
-    runs_std_df = df_all.groupby(level=0).std()
+        # TODO: Test code will reach when it gets here
+        for i, dfs_list in enumerate(per_aggregator_store):
+            df_all = pd.concat(dfs_list)
+            assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} could not be aggregated into pd.Dataframe"
+            runs_mean_df = df_all.groupby(level=0).mean()
+            runs_std_df = df_all.groupby(level=0).std()
 
-    parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
-    runs_mean_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras}_mean_{prefix}")
-    runs_std_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras}_std_{prefix}")
+            parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
+            runs_mean_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras[i]}_mean_{prefix}") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(f"{parent_dir}/runs_extras::{summary_mode_extras[i]}_std_{prefix}")
 
 if __name__ == "__main__":
     pass
