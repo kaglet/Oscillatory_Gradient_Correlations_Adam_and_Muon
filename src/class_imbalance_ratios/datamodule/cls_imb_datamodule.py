@@ -209,7 +209,8 @@ if __name__ == "__main__":
         ]
 
     counts_prepper = CountsPrepperFromRatio(
-         val_map=val_map,         
+        ratio_seed=0,
+        val_map=val_map,         
         train_map=train_map, 
         test_map=test_map, 
         downsampler_ratio=20, 

@@ -63,49 +63,17 @@ def mean_classes(data_df: pd.DataFrame) -> pd.DataFrame:
 def mean_layers(data_df: pd.DataFrame) -> pd.DataFrame:
     return mean_cols(data_df=data_df, pooled_name="pooled_layers")
 
-def summarize_runs_acc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str, custom_metric: Type[MyMultiClassAccuracy]):
+def summarize_runs_acc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises accuracy metrics across a run.
     TODO: Output is in the parent directory of the current path.  
     """
-    enumerated_metrics = enumerate(run_metrics_paths)
 
-    sum_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    metadata: MetricMetadata = MetricMetadata(epochs=np.arange(1), steps=np.arange(1))
     metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    sum_sq_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    idx: int = 0
     agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
     run_dfs: list[pd.DataFrame] = []
-    for idx, train_metrics_path in enumerated_metrics:
-        metric = torch.load(train_metrics_path.resolve(), map_location="cpu", weights_only=True, mmap=True)
-
-        data_cols = [k for k in list(metric.keys()) if k != "epochs" and k != "steps"] # Do not add epochs, steps back into classes, they get merged into expected keys, and their state is reloaded when seen as part of labels, as key names, then again as metadata frmo load state dict method
-
-        base_metric = custom_metric(data_cols) 
-        base_metric.load_state_dict(metric)
-
-        computed = base_metric.compute()
-
-        data_df = pd.DataFrame(computed).replace(float('nan'), np.nan)
-        data_df = data_df.replace(100, np.nan)
-        data_df = data_df.map(lambda value: value.item() if isinstance(value, torch.Tensor) else value)
-        
-        path_info = f"Showing run summary results in {train_metrics_path.resolve()}"
-        
-        # Convert tensors not addressed by `.compute()`
-        clean_epochs = np.asarray(base_metric.metric_state["epochs"]) 
-        clean_steps = np.asarray(base_metric.metric_state["steps"]) 
-
-        metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
-        multiindex = pd.MultiIndex.from_arrays(
-            [
-                list(metadata["epochs"]), 
-                list(metadata["steps"]) # list of lists format required
-            ],
-            names=["epochs", "steps"]
-        )
-        data_df.index = multiindex
+    for train_metrics_path in run_metrics_paths:
+        data_df = pd.read_parquet(train_metrics_path)
         data_df.columns.name = "classes"
             # Across epoch aggregate - Get mean average per class 
         if summary_mode == "epochs":
@@ -134,122 +102,83 @@ def summarize_runs_acc(summary_mode: Literal["epochs"] | Literal["cols"] | Liter
 """ 
 Loss analysis helpers. 
 """
-def summarize_runs_loss(run_metrics_paths: list[Path], prefix:str, custom_metric: Type[MyLoss]):
+def summarize_runs_loss(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises GC metrics across a run.
     Output is in the parent directory of the current path.  
     """
-    enumerated_metrics = enumerate(run_metrics_paths)
-
-    sum_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    metadata: MetricMetadata = MetricMetadata(epochs=np.arange(1), steps=np.arange(1))
     metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    sum_sq_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    idx: int = 0
-    
-    for idx, train_metrics_path in enumerated_metrics:
-        metric = torch.load(train_metrics_path.resolve(), map_location="cpu")
+    agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
+    run_dfs: list[pd.DataFrame] = []
+    for train_metrics_path in run_metrics_paths:
+        data_df = pd.read_parquet(train_metrics_path)
+        data_df.columns.name = "classes"
+            # Across epoch aggregate - Get mean average per class 
+        if summary_mode == "epochs":
+            agg_df = mean_epochs(data_df=data_df)  
+        elif summary_mode == "cols" :
+            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
+        elif summary_mode == "both": 
+            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
 
-        base_metric = custom_metric() 
-        base_metric.load_state_dict(metric)
+        run_dfs.append(agg_df)
 
-        computed = base_metric.compute()
-
-        data_df = pd.DataFrame(computed).map(lambda val: val.item() if isinstance(val, torch.Tensor) else val)
-        
-        if idx == 0:
-            path_info = f"Showing run summary results in {train_metrics_path.resolve()}"
-            
-            # Convert tensors not addressed by `.compute()`
-            clean_epochs = np.asarray(base_metric.metric_state["epochs"]) 
-            clean_steps = np.asarray(base_metric.metric_state["steps"]) 
-
-            metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
-            metadata_df = pd.DataFrame(metadata)
-            
-            sum_df = pd.DataFrame(data=np.zeros(data_df.shape), index=data_df.index, columns=data_df.columns)
-            sum_sq_df = pd.DataFrame(data=np.zeros(data_df.shape), index=data_df.index, columns=data_df.columns)
-        
-        sum_df = sum_df + data_df 
-        sum_sq_df = sum_sq_df + (data_df ** 2) 
-
-    num_metrics = idx + 1 
-    global_mean_df = sum_df / (idx + 1) 
-    global_std_df = (sum_sq_df / num_metrics) - (global_mean_df ** 2) 
+    df_all = pd.concat(run_dfs)
+    runs_mean_df = df_all.groupby(level=0).mean()
+    runs_std_df = df_all.groupby(level=0).std()
 
     viz_loss_unsized(
         metadata_df=metadata_df,
-        metric_df=global_mean_df, 
+        metric_df=runs_mean_df, 
         path_down_prefix=f"{prefix} mean"
     )    
     viz_loss_unsized(
         metadata_df=metadata_df,
-        metric_df=global_std_df, 
+        metric_df=runs_std_df, 
         path_down_prefix=f"{prefix} standard deviation"
     )
 
 """ 
 GCS analysis helpers. 
 """
-def summarize_runs_gc(run_metrics_paths: list[Path], prefix:str, custom_metric: Type[GCH_Metric] | Type[RGCH_Metric]):
+def summarize_runs_gc(summary_mode: Literal["epochs"] | Literal["cols"] | Literal["both"], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises GC metrics across a run.
     Output is in the parent directory of the current path.  
-    """
-    enumerated_metrics = enumerate(run_metrics_paths)
-
-    sum_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    metadata: MetricMetadata = MetricMetadata(epochs=np.arange(1), steps=np.arange(1))
+    """    
     metadata_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    sum_sq_df: pd.DataFrame = pd.DataFrame(np.arange(1))
-    idx: int = 0
-    
-    for idx, train_metrics_path in enumerated_metrics:
-        metric = torch.load(train_metrics_path.resolve(), map_location="cpu")
+    agg_df: pd.DataFrame = pd.DataFrame(np.arange(1))
+    run_dfs: list[pd.DataFrame] = []
+    for train_metrics_path in run_metrics_paths:
+        data_df = pd.read_parquet(train_metrics_path)
+        data_df.columns.name = "classes"
+            # Across epoch aggregate - Get mean average per class 
+        if summary_mode == "epochs":
+            agg_df = mean_epochs(data_df=data_df)  
+        elif summary_mode == "cols" :
+            agg_df = mean_cols(data_df=data_df, pooled_name="Class Avg")
+        elif summary_mode == "both": 
+            agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
 
-        data_cols = [k for k in list(metric.keys()) if k != "epochs" and k != "steps"] # Do not add epochs, steps back into classes, they get merged into expected keys, and their state is reloaded when seen as part of labels, as key names, then again as metadata frmo load state dict method
+        run_dfs.append(agg_df)
 
-        base_metric = custom_metric(data_cols) 
-        base_metric.load_state_dict(metric)
+    df_all = pd.concat(run_dfs)
+    runs_mean_df = df_all.groupby(level=0).mean()
+    runs_std_df = df_all.groupby(level=0).std()
 
-        computed = base_metric.compute()
-
-        data_df = pd.DataFrame(computed)
-        data_df.replace(100, np.nan, inplace=True)
-        data_df.replace(float('nan'), np.nan, inplace=True)
-        data_df = data_df.map(lambda val: val.item() if isinstance(val, torch.Tensor) else val)
-        
-        if idx == 0:
-            path_info = f"Showing run summary results in {train_metrics_path.resolve()}"
-            
-            # Convert tensors not addressed by `.compute()`
-            clean_epochs = np.asarray(base_metric.metric_state["epochs"]) 
-            clean_steps = np.asarray(base_metric.metric_state["steps"]) 
-
-            metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
-            metadata_df = pd.DataFrame(metadata)
-            sum_df = pd.DataFrame(data=np.zeros(data_df.shape), index=data_df.index, columns=data_df.columns)
-            sum_sq_df = pd.DataFrame(data=np.zeros(data_df.shape), index=data_df.index, columns=data_df.columns)
-        
-        sum_df = sum_df + data_df 
-        sum_sq_df = sum_sq_df + (data_df ** 2) 
-
-    num_metrics = idx + 1 
-    global_mean_df = sum_df / (idx + 1) 
-    global_std_df = (sum_sq_df / num_metrics) - (global_mean_df ** 2) 
-
-    parent_dir = str(run_metrics_paths[0].parent.resolve())
-    global_mean_df.to_parquet(f"{parent_dir}/global_mean_GC")
-    global_std_df.to_parquet(f"{parent_dir}/global_std_GC")
+    parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
+    runs_mean_df.to_parquet(f"{parent_dir}/runs_mean_{prefix}")
+    runs_std_df.to_parquet(f"{parent_dir}/runs_std_{prefix}")
 
     viz_gc_in_grid(
         metadata_df=metadata_df,
-        metric_df=global_mean_df, 
+        metric_df=runs_mean_df, 
         path_down_prefix=f"{prefix} mean"
     )
+
     viz_gc_in_grid(
         metadata_df=metadata_df,
-        metric_df=global_std_df, 
+        metric_df=runs_std_df, 
         path_down_prefix=f"{prefix} standard deviation"
     )
 
