@@ -3,6 +3,7 @@ import math
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np 
+import gc
 
 def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy", grid_cols_num: int = 4) -> None:
     """
@@ -45,10 +46,11 @@ def viz_gc_in_grid(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down
             axs[grid_row, grid_col].tick_params(axis='x')
             axs[grid_row, grid_col].tick_params(axis='y')
 
-            axs[grid_row, grid_col].legend()
+            axs[grid_row, grid_col].legend(loc="upper right")
     
     plt.show()
     plt.close(fig)
+    gc.collect()
 
 def viz_each_col_unsized(metadata_df: pd.DataFrame, metric_df: pd.DataFrame, path_down_prefix: str = "Train Accuracy") -> None:
     """
