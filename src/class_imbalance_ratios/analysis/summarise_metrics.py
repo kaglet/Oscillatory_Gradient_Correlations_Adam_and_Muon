@@ -59,6 +59,62 @@ def combined_mean(data_df: pd.DataFrame, options: dict[str, bool]) -> pd.DataFra
 
     return mean_df
 
+def summarize_runs_acc_subgroup(subgroups: dict[str, list[str]], summary_mode_extras: list[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"]], run_metrics_paths: list[Path], prefix:str):
+    """ 
+    This summarises any metrics across runs. 
+    Regular summary is mean and std. 
+    Pandas grouping is used for extremely fast computation, no bottleneck.
+    "Extras" can be attached to the summary. I.e. methods of compressing a run's metrics further, 
+    aggregating them, and taking/storing only the aggregated result we are typically interested in compared to one particular run. 
+    Ensure relevance otherwise nonsensical outputs may result. 
+    Output is stored in the parent directory of the current path.  
+
+    TODO: Allow subgrouping for grouping separately (do NOT convolute this streamlined logic with highly custom logic). See TODO's way above in this file. 
+    """   
+    parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
+  
+    per_aggregator_store: dict[str, list[Any]] = {extra: list() for extra in summary_mode_extras}
+    for train_metrics_path in run_metrics_paths:
+        agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
+        data_df = pd.read_parquet(train_metrics_path)
+        for grouping, classes in subgroups.items():
+            data_df = data_df[classes]
+            data_df.columns.name = f"{grouping} classes"
+            
+            for extra in summary_mode_extras:
+                if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
+                    continue 
+                else: 
+                    display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
+                
+                if extra == "epochs":
+                    agg_df = mean_epochs(data_df=data_df) 
+                    per_aggregator_store["epochs"].append(agg_df)
+                elif extra == "cols" :
+                    agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
+                    per_aggregator_store["cols"].append(agg_df)
+                elif extra == "both": 
+                    agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
+                    per_aggregator_store["both"].append(agg_df)
+                elif extra == "none": 
+                    agg_df = data_df # no change
+                    per_aggregator_store["none"].append(agg_df)
+
+            # TODO: Test code will reach when it gets here
+            for extra, dfs_list in per_aggregator_store.items():
+                if len(dfs_list) == 0:
+                    # display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
+                    continue 
+
+                df_all = pd.concat(dfs_list)
+                assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
+                runs_mean_df = df_all.groupby(level=0).mean()
+                runs_std_df = df_all.groupby(level=0).std()
+
+                runs_mean_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+                runs_std_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_std_{prefix}.parquet")
+
+
 def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"]], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises any metrics across runs. 
