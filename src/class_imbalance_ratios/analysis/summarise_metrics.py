@@ -159,7 +159,7 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                 (agg_df, final_name) = get_next_mean_type(option=(extra, val), data_df=data_df)
                 (agg_df, final_name) = get_next_mean_type(option=(extra, val), data_df=agg_df) 
                 per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
-            elif extra == "subgroup": 
+            elif extra == "subgroup" and val is not None: 
                 single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
                 for final_name, agg_df in single_aggregated_store.items():
                     per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
