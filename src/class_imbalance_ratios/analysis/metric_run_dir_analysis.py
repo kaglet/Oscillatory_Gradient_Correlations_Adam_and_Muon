@@ -22,7 +22,7 @@ def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
         for v_dir in version_dirs:
             for info in run_paths_info:
             # Get all csv file path matches to custom name for both cs metrics
-                paths = sorted(v_dir.rglob(info["path"], case_sensitive=False))
+                paths = sorted(v_dir.rglob(info["paths"], case_sensitive=False))
                 if len(paths) > 0:
                     summarize_runs_metric(summary_mode_extras=info["summary_mode_extras"], run_metrics_paths=paths, prefix=info["prefix"])
                 else:
