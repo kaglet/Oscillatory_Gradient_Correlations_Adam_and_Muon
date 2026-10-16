@@ -34,16 +34,45 @@ def mean_epochs(data_df: pd.DataFrame) -> pd.DataFrame:
     mean_df = data_df.groupby(level="epochs").mean(numeric_only=True) # for some reason if non-numeric added in future
     return mean_df
 
+def mean_subgroups(data_df: pd.DataFrame, given_groups: list[list[str]]) -> pd.DataFrame:
+    """
+
+    Right here change type expectation of groups to bubble up, to be key items i.e. name of group then the list as value, not just the list, needs a name, to name the dataframe result. I could create custom type but won't. I will manually type it out by keyboard. 
+    """
+    col_dfs = []
+    for col_subset in given_groups:
+        mean_df = data_df[col_subset].mean(axis=1).to_frame() # for some reason if non-numeric added in future
+        col_dfs.append(mean_df)
+
+    grouped_df = pd.concat(col_dfs) 
+    return grouped_df
+
 def mean_cols(data_df: pd.DataFrame, pooled_name: str) -> pd.DataFrame:
     mean_df = data_df.mean(axis=1).to_frame().rename(columns={0: pooled_name}) # transpose replaces lack of axes
     return mean_df
 
-def get_next_mean_type(option: str, data_df: pd.DataFrame) -> pd.DataFrame:
+def get_next_mean_type(option: tuple[str, Any], data_df: pd.DataFrame) -> pd.DataFrame:
+    extra, val = option
     mean_df = pd.DataFrame(np.arange(0))
-    if option == "epochs":
+    if extra == "epochs" and val == True:
         mean_df = mean_epochs(data_df=data_df)
-    elif option == "cols":
+    elif extra == "cols" and val == True:
         mean_df = mean_cols(data_df=data_df, pooled_name="Filler")
+    elif extra == "subgroup":
+        assert type(val) is dict, f"Value attached to subgroup must be dict. Got {type(val)} instead."
+        assert getattr(val, "epochs") is not None, "Expected value of 'epochs' to be present for the subgroup extra dictionary."
+        assert type(val["epochs"]) is bool, f"Expected val of expected key 'epochs' to be boolean. Got {type(val["epochs"])} instead."
+
+        if val["epochs"] == True: 
+            if val == True:
+                mean_df = mean_epochs(data_df=data_df)
+            else: 
+                mean_df = data_df
+
+        assert type(val["given_groups"]) is list[list[str]], f"Groups given of {type(val["given_groups"])} are not of list[list[str]]"
+        assert len(val["given_groups"]) >= 2, f"Groups given of length {len(val["given_groups"])} must be at least 2."
+
+        mean_df = mean_subgroups(data_df=mean_df, given_groups=val["given_groups"])
 
     return mean_df
 
@@ -51,15 +80,7 @@ def get_next_mean_type(option: str, data_df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO: Do coupled Muon, Adam rather, could plot in same, for now it is fine, for all. Specify options, but may use same.
 # If created agg skip over. 
-def combined_mean(data_df: pd.DataFrame, options: dict[str, bool]) -> pd.DataFrame:
-    mean_df = data_df
-    for key, chosen in options.items():
-        if chosen:
-            mean_df = get_next_mean_type(option=key, data_df=mean_df)
-
-    return mean_df
-
-def summarize_runs_acc_subgroup(subgroups: dict[str, list[str]], summary_mode_extras: list[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"]], run_metrics_paths: list[Path], prefix:str):
+def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"], Any], run_metrics_paths: list[Path], prefix:str):
     """ 
     This summarises any metrics across runs. 
     Regular summary is mean and std. 
@@ -77,79 +98,34 @@ def summarize_runs_acc_subgroup(subgroups: dict[str, list[str]], summary_mode_ex
     for train_metrics_path in run_metrics_paths:
         agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
         data_df = pd.read_parquet(train_metrics_path)
-        for grouping, classes in subgroups.items():
-            data_df = data_df[classes]
-            data_df.columns.name = f"{grouping} classes"
-            
-            for extra in summary_mode_extras:
-                if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
-                    continue 
-                else: 
-                    display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
-                
-                if extra == "epochs":
-                    agg_df = mean_epochs(data_df=data_df) 
-                    per_aggregator_store["epochs"].append(agg_df)
-                elif extra == "cols" :
-                    agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
-                    per_aggregator_store["cols"].append(agg_df)
-                elif extra == "both": 
-                    agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
-                    per_aggregator_store["both"].append(agg_df)
-                elif extra == "none": 
-                    agg_df = data_df # no change
-                    per_aggregator_store["none"].append(agg_df)
-
-            # TODO: Test code will reach when it gets here
-            for extra, dfs_list in per_aggregator_store.items():
-                if len(dfs_list) == 0:
-                    # display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
-                    continue 
-
-                df_all = pd.concat(dfs_list)
-                assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
-                runs_mean_df = df_all.groupby(level=0).mean()
-                runs_std_df = df_all.groupby(level=0).std()
-
-                runs_mean_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-                runs_std_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_std_{prefix}.parquet")
-
-
-def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"]], run_metrics_paths: list[Path], prefix:str):
-    """ 
-    This summarises any metrics across runs. 
-    Regular summary is mean and std. 
-    Pandas grouping is used for extremely fast computation, no bottleneck.
-    "Extras" can be attached to the summary. I.e. methods of compressing a run's metrics further, 
-    aggregating them, and taking/storing only the aggregated result we are typically interested in compared to one particular run. 
-    Ensure relevance otherwise nonsensical outputs may result. 
-    Output is stored in the parent directory of the current path.  
-
-    TODO: Allow subgrouping for grouping separately (do NOT convolute this streamlined logic with highly custom logic). See TODO's way above in this file. 
-    """   
-    parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
-  
-    per_aggregator_store: dict[str, list[Any]] = {extra: list() for extra in summary_mode_extras}
-    for train_metrics_path in run_metrics_paths:
-        agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
-        data_df = pd.read_parquet(train_metrics_path)
-        data_df.columns.name = "classes"
+        data_df.columns.name = f"Classes"
         
-        for extra in summary_mode_extras:
+        for extra, val in summary_mode_extras.items():
             if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
                 continue 
             else: 
                 display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
-            
-            if extra == "epochs":
+
+            """
+            TODO: 
+            - For safety the subgrouping is applied first before these reductions are performed, 
+            or maybe they function differently simply.
+            # TODO: Convert fragile list to dict of keys with value to be considered
+            """
+            if extra == "epochs" and val == True:
                 agg_df = mean_epochs(data_df=data_df) 
                 per_aggregator_store["epochs"].append(agg_df)
-            elif extra == "cols" :
+            elif extra == "cols" and val == True:
                 agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
                 per_aggregator_store["cols"].append(agg_df)
-            elif extra == "both": 
-                agg_df = combined_mean(data_df=data_df, options={"epochs": True, "cols": True})
+            elif extra == "both" and val == True: 
+                agg_df = get_next_mean_type(option=(extra, val), data_df=data_df)
+                agg_df = get_next_mean_type(option=(extra, val), data_df=agg_df)
                 per_aggregator_store["both"].append(agg_df)
+            elif extra == "subgroup": 
+                # val is more complex to parse 
+                # how to parse it is left up to the method below. val can be of type Any but type expectations are coupled with the extra given.
+                agg_df = get_next_mean_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
             elif extra == "none": 
                 agg_df = data_df # no change
                 per_aggregator_store["none"].append(agg_df)
@@ -165,8 +141,8 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            runs_mean_df.to_parquet(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(f"{parent_dir}/runs_extra-{extra}_std_{prefix}.parquet")
+            runs_mean_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_std_{prefix}.parquet")
 
 if __name__ == "__main__":
     pass
