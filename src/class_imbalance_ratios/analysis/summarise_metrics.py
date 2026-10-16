@@ -101,9 +101,9 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
         # TODO: Test code will reach when it gets here
         for extra, dfs_list in per_aggregator_store.items():
             if len(dfs_list) == 0:
-                display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
+                # display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
                 continue 
-            
+
             df_all = pd.concat(dfs_list)
             assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
             runs_mean_df = df_all.groupby(level=0).mean()
