@@ -68,7 +68,9 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
     Output is stored in the parent directory of the current path.  
 
     TODO: Allow subgrouping for grouping separately (do NOT convolute this streamlined logic with highly custom logic). See TODO's way above in this file. 
-    """     
+    """   
+    parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
+  
     per_aggregator_store: dict[str, list[Any]] = {extra: list() for extra in summary_mode_extras}
     for train_metrics_path in run_metrics_paths:
         agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
@@ -76,8 +78,10 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
         data_df.columns.name = "classes"
         
         for extra in summary_mode_extras:
+            if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
+                continue 
             if extra == "epochs":
-                agg_df = mean_epochs(data_df=data_df)  
+                agg_df = mean_epochs(data_df=data_df) 
                 per_aggregator_store["epochs"].append(agg_df)
             elif extra == "cols" :
                 agg_df = mean_cols(data_df=data_df, pooled_name=f"Original Columns Avg - {prefix}")
@@ -96,9 +100,8 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
-            runs_mean_df.to_parquet(f"{parent_dir}/runs_extras::{extra}_mean_{prefix}") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(f"{parent_dir}/runs_extras::{extra}_std_{prefix}")
+            runs_mean_df.to_parquet(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(f"{parent_dir}/runs_extra-{extra}_std_{prefix}.parquet")
 
 if __name__ == "__main__":
     pass
