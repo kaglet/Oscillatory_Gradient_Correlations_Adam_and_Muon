@@ -11,12 +11,18 @@ import pandas as pd
 import numpy as np
 import torch
 
-def convert_pt_class_counts_to_parquet(path: Path) -> None: 
+def delete_all_pt_extension(outputs_dir: Path) -> None:
+    pt_file_paths = sorted(outputs_dir.rglob("*"))
+    for pt_path in pt_file_paths: 
+        if (pt_path.suffix == "pt") and (os.path.isfile(pt_path)): # do not try .is_file() of Pathlib
+            os.remove(pt_path)
+
+def convert_pt_class_counts_to_parquet(path: Path, save_path: Path) -> None: 
     class_counts = torch.load(path)
     assert type(class_counts) == dict, f"Class counts is not type dict. Got {type(class_counts)} instead."
     class_counts = {str(k) : [v] for k,v in class_counts.items()} # dict must be in form [str, array], int as key, scalar as value are not accepted
     data_df = pd.DataFrame(class_counts)
-    data_df.to_parquet(path.parent / path.stem)      
+    data_df.to_parquet(save_path)      
 
 def delete_all_non_extension(outputs_dir: Path) -> None:
     pt_file_paths = sorted(outputs_dir.rglob("*"))
@@ -25,23 +31,32 @@ def delete_all_non_extension(outputs_dir: Path) -> None:
             display(pt_path)
             os.remove(pt_path)
 
-def delete_all_pt_extension(outputs_dir: Path) -> None:
-    pt_file_paths = sorted(outputs_dir.rglob("*"))
-    for pt_path in pt_file_paths: 
-        if (pt_path.suffix == "pt") and (os.path.isfile(pt_path)): # do not try .is_file() of Pathlib
-            os.remove(pt_path)
-
 def convert_all_pt_metrics_to_parquet(outputs_dir: Path):
     pt_file_paths = sorted(outputs_dir.rglob("*.pt"))
-    existing_parquets = sorted(outputs_dir.rglob("*.parquet*"))
-    if len(pt_file_paths) == len(existing_parquets):
-        display(f"Lengths of pt to parquet files are equal: {len(pt_file_paths)} == {len(existing_parquets)}.\n Aborting conversion...")
+    existing_parquets = sorted(outputs_dir.rglob("*.parquet"))
+    summary_extra_parquets = sorted(outputs_dir.rglob("runs_extra*.parquet"))
+
     for pt_path in pt_file_paths:
+        # Check direct conversions, not of derived metrics
+        num_converted = len(existing_parquets) - len(summary_extra_parquets)
+        if len(pt_file_paths) == num_converted:
+            display(f"Lengths of original pt to parquet files are equal: {len(pt_file_paths)} == {num_converted}.\n Aborting conversion...")
+            break
+        else:
+            display(f"Lengths of original pt to parquet files are unequal: {len(pt_file_paths)} > {num_converted}.\n Proceeding with conversion...")
+
+        if Path(pt_path.parent / Path(pt_path.stem + ".parquet")).exists():
+            display("File already exists at: {}".format(pt_path))
+            continue
+        else: 
+            display("Matching parquet file does not exist at: {}. Converting...".format(pt_path))
+
+        save_path = pt_path.parent / Path(pt_path.stem + ".parquet")
         metric = torch.load(pt_path.resolve(), map_location="cpu", weights_only=True, mmap=True)
 
         data_cols = [k for k in list(metric.keys()) if k != "epochs" and k != "steps"] # Do not add epochs, steps back into classes, they get merged into expected keys, and their state is reloaded when seen as part of labels, as key names, then again as metadata frmo load state dict method
         if "class_counts" in str(pt_path):
-            convert_pt_class_counts_to_parquet(pt_path)
+            convert_pt_class_counts_to_parquet(pt_path, save_path)
             continue # Continue after handling this file caught in regex
 
         # Handle metrics discovered
@@ -76,7 +91,7 @@ def convert_all_pt_metrics_to_parquet(outputs_dir: Path):
         )
         data_df.index = multiindex
 
-        data_df.to_parquet(pt_path.parent / Path(pt_path.stem + ".parquet") )   # by default pandas does not append .parquet   
+        data_df.to_parquet(save_path)   # by default pandas does not append .parquet      
 
 if __name__ == "__main__":
     convert_all_pt_metrics_to_parquet(outputs_dir=cls_imb_outputs_dir)
