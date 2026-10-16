@@ -7,6 +7,8 @@ import torch
 import numpy as np
 from pathlib import Path
 
+from IPython.display import display
+
 from typing import Literal
 from pandas import Index
 from typing import Any, TypedDict, Type
@@ -80,6 +82,9 @@ def summarize_runs_metric(summary_mode_extras: list[Literal["epochs"] | Literal[
         for extra in summary_mode_extras:
             if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
                 continue 
+            else: 
+                display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
+            
             if extra == "epochs":
                 agg_df = mean_epochs(data_df=data_df) 
                 per_aggregator_store["epochs"].append(agg_df)
