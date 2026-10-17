@@ -54,6 +54,7 @@ def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
             limit -= 1
             if limit == 0:
                 display(f"Limit reached floor of {limit}, analysis complete")
+                break
 
 if __name__ == "__main__":
 
