@@ -131,8 +131,10 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
         data_df.columns.name = f"Classes"
         
         for extra, val in summary_mode_extras.items():
-            path_to_extra = f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet"
-            if Path(path_to_extra).exists():
+            path_to_extra_mean = f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet"
+            path_to_extra_std = f"{parent_dir}/runs_extra-{extra}_std_{prefix}.parquet"
+
+            if Path(path_to_extra_mean).exists() and Path(path_to_extra_std).exists():
                 continue 
             else: 
                 display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
@@ -191,8 +193,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            runs_mean_df.to_parquet(path_to_extra) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(path_to_extra)
+            runs_mean_df.to_parquet(path_to_extra_mean) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(path_to_extra_std)
 
 if __name__ == "__main__":
     pass
