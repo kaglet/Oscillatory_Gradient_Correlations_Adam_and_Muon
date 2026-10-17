@@ -167,11 +167,15 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     counts_series = counts_df.squeeze(axis=1)
                     assert type(counts_series) is pd.Series, f"Expected counts_series of {type(counts_series)} to be pd.Series."
                     min = counts_series.min()
+                    max = counts_series.max()
                     min_series = counts_series[counts_series == min] 
                     max_series = counts_series[counts_series != min]
                     min_list = [lbl for lbl, count in min_series.to_dict().items()]
                     max_list = [lbl for lbl, count in max_series.to_dict().items()]
                     val = [min_list, max_list]
+
+                    # Alter prefix to reflect extended title
+                    prefix += f"Majority count: {int(max)} :: Minority count: {int(min)}"
 
                 single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
                 for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
