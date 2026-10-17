@@ -57,11 +57,9 @@ def get_subgroup_type(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[st
 
     # Copious asserts, could be amended via a typed dict structure of Literal values expected, or a class of repeatable instances.
     assert type(val) is dict, f"Value attached to subgroup must be dict. Got {type(val)} instead."
-    assert getattr(val, "epochs") is not None, "Expected value of 'epochs' to be present for the subgroup extra dictionary."
     assert type(val["epochs"]) is bool, f"Expected val of expected key 'epochs' to be boolean. Got {type(val["epochs"])} instead."
 
-    assert getattr(val, "given_groups") is not None, "Expected value of 'given_groups' to be present for the subgroup extra dictionary."
-    assert type(val["given_groups"]) is dict[str, list[str]], f"Groups given of {type(val["given_groups"])} are not of list[list[str]]"
+    assert type(val["given_groups"]) is dict[str, dict[str, list[str]]], f"Groups given of {type(val["given_groups"])} are not of list[list[str]]"
     assert len(val["given_groups"]) >= 2, f"Groups given of length {len(val["given_groups"])} must be at least 2."
 
     single_aggregated_store: dict[str, pd.DataFrame] = {
