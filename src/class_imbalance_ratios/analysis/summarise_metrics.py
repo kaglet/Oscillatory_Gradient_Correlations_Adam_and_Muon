@@ -131,7 +131,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
         data_df.columns.name = f"Classes"
         
         for extra, val in summary_mode_extras.items():
-            if Path(f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet").exists():
+            path_to_extra = f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet"
+            if Path(path_to_extra).exists():
                 continue 
             else: 
                 display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
@@ -171,7 +172,7 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     val["given_groups"]["majority"] = max_list
 
                     # Alter prefix to reflect extended title
-                    prefix += f"-Majority-count-{int(max)}---Minority-count-{int(min)}"
+                    # prefix += f"-Majority-count-{int(max)}---Minority-count-{int(min)}"
 
                 single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
                 for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
@@ -190,8 +191,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            runs_mean_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_mean_{prefix}.parquet") # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(f"{parent_dir}/runs_{grouping}_extra-{extra}_std_{prefix}.parquet")
+            runs_mean_df.to_parquet(path_to_extra) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(path_to_extra)
 
 if __name__ == "__main__":
     pass
