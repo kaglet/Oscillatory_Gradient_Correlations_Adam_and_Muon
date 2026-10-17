@@ -167,8 +167,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     counts_series = counts_df.squeeze(axis=0)
                     assert type(counts_series) is pd.Series, f"Expected counts_series of {type(counts_series)} to be pd.Series."
                     min = counts_series.min()
-                    min_series = counts_series.mask(counts_series == min) 
-                    max_series = counts_series.mask(counts_series != min)
+                    min_series = counts_series[counts_series == min] 
+                    max_series = counts_series[counts_series != min]
                     min_list = [lbl for lbl, count in min_series.to_dict().items()]
                     max_list = [lbl for lbl, count in max_series.to_dict().items()]
                     val = [min_list, max_list]
