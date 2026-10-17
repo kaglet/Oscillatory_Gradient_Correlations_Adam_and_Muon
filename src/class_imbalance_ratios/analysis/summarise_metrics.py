@@ -16,7 +16,6 @@ from torchmetrics import Metric
 
 from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
-from src.class_imbalance_ratios.analysis.viz_metrics import viz_cols_in_one, viz_cols_in_grid
 
 class MetricMetadata(TypedDict):
     """
@@ -133,6 +132,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
     aggregating them, and taking/storing only the aggregated result we are typically interested in compared to one particular run. 
     Ensure relevance otherwise nonsensical outputs may result. 
     Output is stored in the parent directory of the current path.  
+
+    # TODO: If desired to touch this further: Decouple subgroup logic from other extras, a similar but ultimately different pipeline of checks is required, best to start this macro decoupling for best progress. 
     """   
     parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
   
