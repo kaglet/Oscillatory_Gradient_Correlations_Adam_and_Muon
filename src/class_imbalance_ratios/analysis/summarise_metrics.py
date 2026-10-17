@@ -51,7 +51,7 @@ def mean_cols(data_df: pd.DataFrame, pooled_name: str) -> pd.DataFrame:
     mean_df = data_df.mean(axis=1).to_frame().rename(columns={0: pooled_name}) # transpose replaces lack of axes
     return mean_df
 
-def get_subgroup_type(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+def get_agg_subgroup(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     extra, val = option
     mean_df = pd.DataFrame(np.arange(0))
 
@@ -110,6 +110,18 @@ def dynamic_append_to_dict(some_dict: dict[str, list[Any]], key:str, val: Any) -
 
     return some_dict
 
+def form_path_on_mode(root_dir: str, extra: str, prefix: str, main_mode: list[str] = ["mean", "std"]) -> list[str]:
+    paths = []
+    for mode in main_mode:
+        path_to_extra_mean = f"{root_dir}/runs_extra-{extra}_{mode}_{prefix}.parquet"
+        paths.append(path_to_extra_mean)
+
+    return paths
+
+def check_extra_exists(path:str):
+    exists = Path(path).exists()
+    return exists 
+
 # TODO: Do coupled Muon, Adam rather, could plot in same, for now it is fine, for all. Specify options, but may use same.
 # If created agg skip over. 
 def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal["cols"] | Literal["both"] | Literal["none"], Any], run_metrics_paths: list[Path], prefix:str):
@@ -125,28 +137,20 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
     parent_dir = str(run_metrics_paths[0].parent.parent.resolve())
   
     per_aggregator_store: dict[str, list[Any]] = {extra: list() for extra in summary_mode_extras}
-    for train_metrics_path in run_metrics_paths:
+    for metrics_path in run_metrics_paths:
         agg_df: pd.DataFrame = pd.DataFrame(np.arange(1)) # aggregated version
-        data_df = pd.read_parquet(train_metrics_path)
+        data_df = pd.read_parquet(metrics_path)
         data_df.columns.name = f"Classes"
         
         for extra, val in summary_mode_extras.items():
-            path_to_extra_mean = f"{parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet"
-            path_to_extra_std = f"{parent_dir}/runs_extra-{extra}_std_{prefix}.parquet"
-
-            if Path(path_to_extra_mean).exists() and Path(path_to_extra_std).exists():
+            epochs_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
+            all_mode_paths_exist = check_extra_exists(epochs_mode_paths[0]) and check_extra_exists(epochs_mode_paths[1])
+            
+            if extra != "subgroup" and all_mode_paths_exist:
                 continue 
             else: 
-                display(f"Extra does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
+                display(f"Extras of those known at compile time does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
 
-            """
-            TODO: 
-            # Dynamic append to dictionary if key does not exist. Allows dynamic setting beyond typical hierarchy struct can be better enforced. 
-            # Ensure knowledge of final aggregation metric e.g. name, is returned by the method forming the aggregation itself, not just the initial extra name in potential short form. 
-            # Subgrouping order is maintained with another dictionary setting of configuration of its value. 
-            # Converted fragile lists to dict of keys with value to be considered.
-            # Knowledge of values is deferred to functions that need them, and possibly with the key the value came with, instead of the entire val dictionary - assuming that is the value. 
-            """
             if extra == "epochs" and val == True:
                 agg_df = mean_epochs(data_df=data_df) 
                 per_aggregator_store["epochs"].append(agg_df)
@@ -157,10 +161,29 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                 (agg_df, final_name) = get_next_mean_type(option=(extra, val), data_df=data_df)
                 (agg_df, final_name) = get_next_mean_type(option=(extra, val), data_df=agg_df) 
                 per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
-            elif extra == "subgroup" and val is not None: 
-                if "Train-Accuracy" in prefix or "Validation-Accuracy" in prefix:
-                    counts_df = pd.read_parquet(train_metrics_path.parent / "train_actual_class_counts.parquet").T
-                    labelled_df = pd.read_parquet(train_metrics_path.parent / "train_desired_class_counts.parquet").T
+            elif extra == "none": 
+                agg_df = data_df # no change
+                per_aggregator_store[f"{extra}"].append(agg_df)
+
+            """ 
+            Subgroup extra requires own processing. 
+            Perform rudimentary check where if not both epochs and steps are present, 
+            rerun the same code to populate at least both (does not cover wasteful cases 
+            where one exists yet is requested again).
+            More is not done due to brittle nature of decided structure. 
+            """
+            epochs_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=f"{extra}_epochs", prefix=prefix)
+            steps_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=f"{extra}_steps", prefix=prefix)
+            both_epochs_exist = check_extra_exists(epochs_mode_paths[0]) and check_extra_exists(epochs_mode_paths[1])
+            both_steps_exist = check_extra_exists(steps_mode_paths[0]) and check_extra_exists(steps_mode_paths[1])
+
+            if both_epochs_exist and both_steps_exist:
+                continue 
+
+            if extra == "subgroup" and val is not None: 
+                def intercept_acc_grps():
+                    counts_df = pd.read_parquet(metrics_path.parent / "train_actual_class_counts.parquet").T
+                    labelled_df = pd.read_parquet(metrics_path.parent / "train_desired_class_counts.parquet").T
                     counts_df.index = labelled_df.index
                     counts_series = counts_df.squeeze(axis=1)
                     assert type(counts_series) is pd.Series, f"Expected counts_series of {type(counts_series)} to be pd.Series."
@@ -172,29 +195,32 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     max_list = [lbl for lbl, count in max_series.to_dict().items()]
                     val["given_groups"]["minority"] = min_list 
                     val["given_groups"]["majority"] = max_list
-
                     # Alter prefix to reflect extended title
                     # prefix += f"-Majority-count-{int(max)}---Minority-count-{int(min)}"
-
-                single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
+                
+                if "Train-Accuracy" in prefix or "Validation-Accuracy" in prefix:
+                    intercept_acc_grps()
+                else:
+                    raise NotImplementedError("Interceptions of subgroups beyond Accuracy is not implemented yet, aborting")
+                
+                single_aggregated_store = get_agg_subgroup(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
                 for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
                     per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
-            elif extra == "none": 
-                agg_df = data_df # no change
-                per_aggregator_store[f"{extra}"].append(agg_df)
 
         for extra, dfs_list in per_aggregator_store.items():
+            # TODO: Extras are not known except at dynamic write time to the key and just before calc
             if len(dfs_list) == 0:
                 # display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
                 continue 
+            final_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
 
             df_all = pd.concat(dfs_list)
             assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            runs_mean_df.to_parquet(path_to_extra_mean) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(path_to_extra_std)
+            runs_mean_df.to_parquet(final_mode_paths[0]) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_std_df.to_parquet(final_mode_paths[1])
 
 if __name__ == "__main__":
     pass
