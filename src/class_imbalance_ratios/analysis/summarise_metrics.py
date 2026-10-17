@@ -161,10 +161,10 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                 per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
             elif extra == "subgroup" and val is not None: 
                 if "Train-Accuracy" in prefix or "Validation-Accuracy" in prefix:
-                    counts_df = pd.read_parquet(train_metrics_path.parent / "train_actual_class_counts.parquet")
-                    labelled_df = pd.read_parquet(train_metrics_path.parent / "train_desired_class_counts.parquet")
+                    counts_df = pd.read_parquet(train_metrics_path.parent / "train_actual_class_counts.parquet").T
+                    labelled_df = pd.read_parquet(train_metrics_path.parent / "train_desired_class_counts.parquet").T
                     counts_df.index = labelled_df.index
-                    counts_series = counts_df.squeeze(axis=0)
+                    counts_series = counts_df.squeeze(axis=1)
                     assert type(counts_series) is pd.Series, f"Expected counts_series of {type(counts_series)} to be pd.Series."
                     min = counts_series.min()
                     min_series = counts_series[counts_series == min] 
