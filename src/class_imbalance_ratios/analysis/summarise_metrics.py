@@ -68,7 +68,7 @@ def get_subgroup_type(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[st
         f"{extra}_epochs": pd.DataFrame(np.arange(0)), 
         f"{extra}_steps": pd.DataFrame(np.arange(0))
     }
-    mean_df = data_df
+    mean_df = data_df 
 
     # Perform reduction then epochs if both are true
     if val["steps"] == True: 
@@ -160,8 +160,21 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                 (agg_df, final_name) = get_next_mean_type(option=(extra, val), data_df=agg_df) 
                 per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
             elif extra == "subgroup" and val is not None: 
+                if "Train-Accuracy" in prefix or "Validation-Accuracy" in prefix:
+                    counts_df = pd.read_parquet(train_metrics_path.parent / "train_actual_class_counts.parquet")
+                    labelled_df = pd.read_parquet(train_metrics_path.parent / "train_desired_class_counts.parquet")
+                    counts_df.index = labelled_df.index
+                    counts_series = counts_df.squeeze(axis=0)
+                    assert type(counts_series) is pd.Series, f"Expected counts_series of {type(counts_series)} to be pd.Series."
+                    min = counts_series.min()
+                    min_series = counts_series.mask(counts_series == min) 
+                    max_series = counts_series.mask(counts_series != min)
+                    min_list = [lbl for lbl, count in min_series.to_dict().items()]
+                    max_list = [lbl for lbl, count in max_series.to_dict().items()]
+                    val = [min_list, max_list]
+
                 single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
-                for final_name, agg_df in single_aggregated_store.items():
+                for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
                     per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
             elif extra == "none": 
                 agg_df = data_df # no change
