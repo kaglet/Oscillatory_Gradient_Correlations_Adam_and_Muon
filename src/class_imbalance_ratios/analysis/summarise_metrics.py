@@ -172,7 +172,8 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     max_series = counts_series[counts_series != min]
                     min_list = [lbl for lbl, count in min_series.to_dict().items()]
                     max_list = [lbl for lbl, count in max_series.to_dict().items()]
-                    val = {"minority": min_list, "majority":  max_list}
+                    val["given_groups"]["minority"] = min_list 
+                    val["given_groups"]["majority"] = max_list
 
                     # Alter prefix to reflect extended title
                     prefix += f"Majority count: {int(max)} :: Minority count: {int(min)}"
