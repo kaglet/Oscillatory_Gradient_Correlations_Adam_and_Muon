@@ -34,7 +34,7 @@ def mean_epochs(data_df: pd.DataFrame) -> pd.DataFrame:
     mean_df = data_df.groupby(level="epochs").mean(numeric_only=True) # for some reason if non-numeric added in future
     return mean_df
 
-def mean_subgroups(data_df: pd.DataFrame, given_groups: dict[str, list[str]]) -> pd.DataFrame:
+def mean_subgroups(data_df: pd.DataFrame, given_groups: dict) -> pd.DataFrame:
     """
 
     Right here change type expectation of groups to bubble up, to be key items i.e. name of group then the list as value, not just the list, needs a name, to name the dataframe result. I could create custom type but won't. I will manually type it out by keyboard. 
@@ -44,7 +44,7 @@ def mean_subgroups(data_df: pd.DataFrame, given_groups: dict[str, list[str]]) ->
         mean_df = data_df[col_subset].mean(axis=1).to_frame(name=name) # for some reason if non-numeric added in future
         col_dfs.append(mean_df)
 
-    grouped_df = pd.concat(col_dfs) 
+    grouped_df = pd.concat(col_dfs, axis=1) 
     return grouped_df
 
 def mean_cols(data_df: pd.DataFrame, pooled_name: str) -> pd.DataFrame:
@@ -59,7 +59,7 @@ def get_subgroup_type(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[st
     assert type(val) is dict, f"Value attached to subgroup must be dict. Got {type(val)} instead."
     assert type(val["epochs"]) is bool, f"Expected val of expected key 'epochs' to be boolean. Got {type(val["epochs"])} instead."
 
-    assert type(val["given_groups"]) is dict[str, dict[str, list[str]]], f"Groups given of {type(val["given_groups"])} are not of list[list[str]]"
+    assert type(val["given_groups"]) is dict, f"Groups given of {type(val["given_groups"])} are not of dict"
     assert len(val["given_groups"]) >= 2, f"Groups given of length {len(val["given_groups"])} must be at least 2."
 
     single_aggregated_store: dict[str, pd.DataFrame] = {
@@ -71,11 +71,11 @@ def get_subgroup_type(option: tuple[str, Any], data_df: pd.DataFrame) -> dict[st
     # Perform reduction then epochs if both are true
     if val["steps"] == True: 
         mean_df = mean_subgroups(data_df=mean_df, given_groups=val["given_groups"])
-        single_aggregated_store[f"{extra}_epochs"] = mean_df
+        single_aggregated_store[f"{extra}_steps"] = mean_df
     
     if val["epochs"] == True: 
         mean_df = mean_epochs(data_df=mean_df)
-        single_aggregated_store[f"{extra}_steps"] = mean_df
+        single_aggregated_store[f"{extra}_epochs"] = mean_df
 
     if val["steps"] == False and val["epochs"] == False:
         raise ValueError(
@@ -106,10 +106,7 @@ def get_next_mean_type(option: tuple[str, Any], data_df: pd.DataFrame) -> tuple[
 # TODO: agg_col_grps # If I need to subset cols 
 
 def dynamic_append_to_dict(some_dict: dict[str, list[Any]], key:str, val: Any) -> dict[str, Any]:
-    if getattr(some_dict, key) is None:
-        some_dict[key] = [val]
-    else:
-        some_dict[key].append(val)
+    some_dict.setdefault(key, []).append(val)
 
     return some_dict
 
@@ -174,7 +171,7 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                     val["given_groups"]["majority"] = max_list
 
                     # Alter prefix to reflect extended title
-                    prefix += f"Majority count: {int(max)} :: Minority count: {int(min)}"
+                    prefix += f"-Majority-count-{int(max)}---Minority-count-{int(min)}"
 
                 single_aggregated_store = get_subgroup_type(option=(extra, val), data_df=data_df) # Refactor to delegate key val checking to the function and usage of the subgroups for aggregation, type checking of Any happens for preset pairs by exclusion
                 for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
