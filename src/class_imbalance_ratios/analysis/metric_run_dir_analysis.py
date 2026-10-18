@@ -64,9 +64,9 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
+    figax_store: list = []
     for experim_dir in sorted(outputs_dir.iterdir()):
         version_dirs = sorted(experim_dir.glob(version_dir))
-        figax_store: list = []
         
         for i, v_dir in enumerate(version_dirs):
             # Better for figax_store to have a fixed length based of versions
@@ -98,8 +98,9 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                     plots_manager.viz_cols_in_one()
                     figax_store[i] = plots_manager.lone_figax # For runs in info they transfer on the same figax
                 else:
-                    figax = figax_store[i]
-                    assert type(figax) is Tuple[Figure, Axes], f"Type of figax store at curr version index {type(figax_store[-1])} is not Tuple[Figure, Axes]"
+                    fig, ax = figax_store[i]
+                    figax = (fig, ax)
+                    assert type(fig) is Figure and type(ax) is Axes, f"Type of figax store at curr version index {type(figax_store[-1])} is not Tuple[Figure, Axes]"
                     plots_manager.overwrite_figax(figax=figax)
                     plots_manager.viz_cols_in_one()
     
