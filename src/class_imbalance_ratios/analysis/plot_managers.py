@@ -110,7 +110,7 @@ class LonePlotManager():
         self._lone_figax = self._create_lone_figax()
 
     def _create_lone_figax(self) -> Tuple[Figure, Axes]:
-        fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, dpi=self._plot_options.dpi, figsize = ((self._plot_options._base_size + 60), (self._plot_options._base_size - 6)))
+        fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, figsize = ((self._plot_options._base_size), (self._plot_options._base_size)))
         figax = fig, ax
         return figax
 
@@ -130,21 +130,21 @@ class LonePlotManager():
         Optionally save figure (Recommended) per viz. 
         """
         fig, ax = self._lone_figax
-        fig.suptitle(f'{self._plot_options.title.upper()}', fontsize=self._plot_options.fontsize, y=self._plot_options.title_y_offset)
+        fig.suptitle(f'{self._plot_options.title.upper()}')
 
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', markersize=1, linestyle='-')
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-')
             line.set_label(col.upper())
 
-        ax.tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
+        # ax.tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
-        ax.tick_params(axis='x', labelsize=70)
-        ax.tick_params(axis='y', labelsize=70)
+        ax.tick_params(axis='x')
+        ax.tick_params(axis='y')
 
-        ax.set_ylabel(self._plot_options.y_label.upper(), fontsize=120)
-        ax.set_xlabel("Steps", fontsize=120)
+        ax.set_ylabel(self._plot_options.y_label.upper())
+        ax.set_xlabel("Steps")
 
-        ax.legend(fontsize=50, title_fontsize=90, loc="upper right")
+        ax.legend(loc="upper right")
         show_plt_with_cleanup(fig)
 
     def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:

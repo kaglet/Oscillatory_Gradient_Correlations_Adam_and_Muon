@@ -85,7 +85,7 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 # While still having access to v_dir with the relative path...
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
                 prefix_down = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
-                prefix_down = prefix_down + str(v_dir.stem) + str(path.stem)[last_underscore: ] 
+                prefix_down = prefix_down + str(v_dir.stem).lower() + str(path.stem).lower()[last_underscore: ] 
                 prefix_down = prefix_down.replace("-", " ")
 
                 options = LonePlotOptions(x_label="Epochs", y_label="Accuracy", unique_label=prefix_down)
