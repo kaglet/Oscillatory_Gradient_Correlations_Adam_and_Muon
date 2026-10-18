@@ -64,14 +64,11 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
-    prefix_down = ""
     for experim_dir in sorted(outputs_dir.iterdir()):
-        prefix_down += "Muon " if "muon" in str(experim_dir).lower() else "Adam "
         version_dirs = sorted(experim_dir.glob(version_dir))
         figax_store: list = []
-
+        
         for i, v_dir in enumerate(version_dirs):
-            prefix_down += str(v_dir)
             # Better for figax_store to have a fixed length based of versions
             # Then index into that when repeating diff experiments
             start_overwrite_figaxs = len(figax_store) == len(version_dirs)
@@ -79,6 +76,7 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 figax_store.append(None)
 
             for info in run_paths_info:
+                prefix_down = ""
                 path = sorted(v_dir.rglob(info["relative_path"], case_sensitive=False))[0]
                 if not Path(path).exists():
                     raise LookupError(f"Path to requested metric: {path} does not exit.")
@@ -86,7 +84,8 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 last_underscore = str(path.stem).rfind("_")
                 # While still having access to v_dir with the relative path...
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
-                prefix_down += str(path.stem)[last_underscore: ] 
+                prefix_down = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
+                prefix_down = prefix_down + str(v_dir.stem) + str(path.stem)[last_underscore: ] 
                 prefix_down = prefix_down.replace("-", " ")
 
                 options = LonePlotOptions(x_label="Epochs", y_label="Accuracy", unique_label=prefix_down)
@@ -96,7 +95,7 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
 
                 if not start_overwrite_figaxs:
                     plots_manager.viz_cols_in_one()
-                    figax_store[i] = plots_manager.lone_figax
+                    figax_store[i] = plots_manager.lone_figax # For runs in info they transfer on the same figax
                 else:
                     figax = figax_store[i]
                     assert type(figax) is Tuple[Figure, Axes], f"Type of figax store at curr version index {type(figax_store[-1])} is not Tuple[Figure, Axes]"
