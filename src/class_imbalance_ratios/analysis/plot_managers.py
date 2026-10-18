@@ -132,8 +132,8 @@ class LonePlotManager():
         fig, ax = self._lone_figax
         fig.suptitle(f'{self._plot_options.title.upper()}', fontsize=self._plot_options.fontsize, y=self._plot_options.title_y_offset)
 
-        for col in metric_df.columns:
-            line, = ax.plot(list(metric_df.index.to_numpy(dtype=np.int32)), list(metric_df.loc[:, col].values), marker='o', markersize=1, linestyle='-')
+        for col in self._metric_df.columns:
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', markersize=1, linestyle='-')
             line.set_label(col.upper())
 
         ax.tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)

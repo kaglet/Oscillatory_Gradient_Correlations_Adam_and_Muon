@@ -74,6 +74,9 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
             prefix_down += str(v_dir)
             # Better for figax_store to have a fixed length based of versions
             # Then index into that when repeating diff experiments
+            start_overwrite_figaxs = len(figax_store) == len(version_dirs)
+            if not start_overwrite_figaxs:
+                figax_store.append(None)
 
             for info in run_paths_info:
                 path = sorted(v_dir.rglob(info["relative_path"], case_sensitive=False))[0]
@@ -91,15 +94,14 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 metric_df = pd.read_parquet(path)
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
-                try:
+                if not start_overwrite_figaxs:
+                    plots_manager.viz_cols_in_one()
+                    figax_store[i] = plots_manager.lone_figax
+                else:
                     figax = figax_store[i]
                     assert type(figax) is Tuple[Figure, Axes], f"Type of figax store at curr version index {type(figax_store[-1])} is not Tuple[Figure, Axes]"
                     plots_manager.overwrite_figax(figax=figax)
                     plots_manager.viz_cols_in_one()
-                except:
-                    figax_store.append(None)
-                    plots_manager.viz_cols_in_one()
-                    figax_store[i] = plots_manager.lone_figax
 
 if __name__ == "__main__":
 
