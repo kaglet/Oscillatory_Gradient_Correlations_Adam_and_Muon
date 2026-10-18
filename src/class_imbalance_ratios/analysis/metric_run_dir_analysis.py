@@ -1,7 +1,7 @@
 """ 
 Main entry point for acc analysis. 
 """
-
+import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Any, Tuple
 from IPython.display import display
@@ -11,7 +11,7 @@ import pandas as pd
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
-from src.class_imbalance_ratios.analysis.plot_managers import LonePlotOptions, LonePlotManager
+from src.class_imbalance_ratios.analysis.plot_managers import LonePlotOptions, LonePlotManager, show_plt_with_cleanup
 from src.class_imbalance_ratios.analysis.summarise_metrics import summarize_runs_metric
 
 def subgroup_save_acc(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, limit: int | None = 1) -> None:
@@ -91,6 +91,7 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 options = LonePlotOptions(x_label="Epochs", y_label="Accuracy", unique_label=prefix_down)
                 assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
+                metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
                 if not start_overwrite_figaxs:
@@ -101,6 +102,9 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                     assert type(figax) is Tuple[Figure, Axes], f"Type of figax store at curr version index {type(figax_store[-1])} is not Tuple[Figure, Axes]"
                     plots_manager.overwrite_figax(figax=figax)
                     plots_manager.viz_cols_in_one()
+    
+    show_plt_with_cleanup()
+
 
 if __name__ == "__main__":
 

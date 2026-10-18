@@ -8,10 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import gc
 
-def show_plt_with_cleanup(fig: Figure) -> bool:
+def show_plt_with_cleanup() -> bool:
     plt.show()
-    plt.close(fig)
-    gc.collect()
+    plt.close('all')
+    # fig.canvas.draw()
+    # fig.canvas.flush_events()
+    # gc.collect()
     return True
 
 def cleanup_all() -> bool:
@@ -77,7 +79,6 @@ class GridPlotsmanager():
                 index_vals = list(self._metric_df.index.to_numpy(dtype=np.int32))
                 col_vals = list(self._metric_df.loc[:, col].values)
                 cols_limit_counter += 1
-                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4)
 
                 axs[grid_row, grid_col].tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
@@ -89,6 +90,9 @@ class GridPlotsmanager():
                 axs[grid_row, grid_col].tick_params(axis='y', fontsize=70)
 
                 axs[grid_row, grid_col].legend(loc="upper right")
+
+                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4);
+
 
     def overwrite_figaxes(self, figaxes: Tuple[Figure, Any]) -> bool:
         fig, axs = figaxes
@@ -120,7 +124,7 @@ class LonePlotManager():
 
     @lone_figax.setter
     def lone_figax(self, figax):
-        self._grid_figaxs = figax
+        self._lone_figax = figax
 
     def viz_cols_in_one(self) -> None:
         """
@@ -129,11 +133,11 @@ class LonePlotManager():
         Optionally save as compressed numpy file with flags per viz (Recommended).
         Optionally save figure (Recommended) per viz. 
         """
-        fig, ax = self._lone_figax
+        fig, ax = self.lone_figax
         fig.suptitle(f'{self._plot_options.title.upper()}')
 
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-')
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-');
             line.set_label(col.upper())
 
         # ax.tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
@@ -145,10 +149,9 @@ class LonePlotManager():
         ax.set_xlabel("Steps")
 
         ax.legend(loc="upper right")
-        show_plt_with_cleanup(fig)
 
     def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
-        self._lone_figax = figax
+        self.lone_figax = figax
         return True
 
 if __name__ == "__main__":
