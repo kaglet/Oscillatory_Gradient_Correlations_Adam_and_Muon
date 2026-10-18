@@ -94,7 +94,7 @@ def viz_agg_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ver
                 metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
-                if not start_overwrite_figaxs:
+                if not start_overwrite_figaxs and figax_store[i] is None:
                     plots_manager.viz_cols_in_one()
                     figax_store[i] = plots_manager.lone_figax # For runs in info they transfer on the same figax
                 else:
