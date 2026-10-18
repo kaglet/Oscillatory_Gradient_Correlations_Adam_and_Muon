@@ -145,9 +145,7 @@ class LonePlotManager():
         ax.set_xlabel("Steps", fontsize=120)
 
         ax.legend(fontsize=50, title_fontsize=90, loc="upper right")
-        plt.show()
-        plt.close(fig)
-        gc.collect()
+        show_plt_with_cleanup(fig)
 
     def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
         self._lone_figax = figax
