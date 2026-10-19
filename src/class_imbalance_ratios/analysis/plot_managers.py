@@ -21,7 +21,7 @@ def cleanup_all() -> bool:
     return True
 
 class LonePlotOptions():
-    def __init__(self, x_label: str, y_label:str, unique_label: str, title_y_offset:float = 1.0, font_size: int = 200, dpi: int = 400, base_size: int= 8) -> None:
+    def __init__(self, x_label: str, y_label:str, unique_label: str, title_y_offset:float = 1.0, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
         self.title: str = unique_label
         self.title_y_offset = title_y_offset
         self.fontsize = font_size
@@ -31,7 +31,7 @@ class LonePlotOptions():
         self.x_label = x_label
 
 class GridPlotOptions(LonePlotOptions):
-    def __init__(self, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
+    def __init__(self, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 2) -> None:
         super().__init__(x_label=x_label, y_label=y_label,unique_label=grid_title, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
@@ -53,9 +53,10 @@ class GridPlotsmanager():
         self._total_cols = len(self._metric_df.columns)
         self._grid_rows_num = math.ceil(self._total_cols / self._plot_options.grid_cols_num)
         fig, axs = plt.subplots(
-            self._plot_options.grid_cols_num, self._grid_rows_num, 
-            dpi=self._plot_options.dpi,
-            figsize = ((self._plot_options._base_size + 60) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 6) * self._grid_rows_num), 
+            ncols=self._plot_options.grid_cols_num, 
+            nrows=self._grid_rows_num, 
+            # dpi=self._plot_options.dpi,
+            figsize = ((self._plot_options._base_size + 10) * self._plot_options.grid_cols_num, (self._plot_options._base_size) * self._grid_rows_num), 
             sharex=True, 
             sharey=True
         )
@@ -70,8 +71,8 @@ class GridPlotsmanager():
         fig, axs = self.grid_figaxs
         fig.suptitle(f'{self._plot_options.title.upper()}', fontsize=self._plot_options.fontsize, y=self._plot_options.title_y_offset)
         cols_limit_counter = 0
-        for grid_row in range(self._plot_options.grid_cols_num):
-            for grid_col in range(self._grid_rows_num):
+        for grid_col in range(self._plot_options.grid_cols_num):
+            for grid_row in range(self._grid_rows_num):
                 if cols_limit_counter >= self._total_cols:
                     break 
 
@@ -82,17 +83,16 @@ class GridPlotsmanager():
 
                 axs[grid_row, grid_col].tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
-                axs[grid_row, grid_col].set_ylabel(self._plot_options.title.upper()) 
+                axs[grid_row, grid_col].set_ylabel(self._plot_options.y_label.upper()) 
                 axs[grid_row, grid_col].set_xlabel('Steps', fontsize=120)           
                 axs[grid_row, grid_col].set_title(f"{col.upper()}")
 
-                axs[grid_row, grid_col].tick_params(axis='x', fontsize=70)
-                axs[grid_row, grid_col].tick_params(axis='y', fontsize=70)
+                axs[grid_row, grid_col].tick_params(axis='x', labelsize=70)
+                axs[grid_row, grid_col].tick_params(axis='y', labelsize=70)
 
                 axs[grid_row, grid_col].legend(loc="upper right")
 
                 line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4);
-
 
     def overwrite_figaxes(self, figaxes: Tuple[Figure, Any]) -> bool:
         fig, axs = figaxes
@@ -140,15 +140,13 @@ class LonePlotManager():
             line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-');
             line.set_label(col.upper())
 
-        # ax.tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
-
         ax.tick_params(axis='x')
         ax.tick_params(axis='y')
 
         ax.set_ylabel(self._plot_options.y_label.upper())
         ax.set_xlabel("Steps")
 
-        ax.legend(loc="upper right")
+        ax.legend(loc="best")
 
     def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
         self.lone_figax = figax
