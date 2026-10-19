@@ -5,12 +5,6 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from IPython.core.interactiveshell import InteractiveShell  
-from ipywidgets import interact  
-InteractiveShell.ast_node_interactivity = "all"   # type: ignore
-import ipywidgets as widgets
-from ipywidgets import interact 
-import scienceplots
 import matplotlib as mpl
 
 from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss

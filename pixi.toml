@@ -13,6 +13,7 @@ tests = "python -m src.src_tests --num1=1 --num2=2 --num3=5"
 cls_imb_s = "python -m src.class_imbalance_ratios.run_with_cfg"
 batch_experim = "python -m src.class_imbalance_ratios.batch_run_pbs"
 post_proc = "python -m src.class_imbalance_ratios.analysis.post_proc_conversions"
+analysis = "python -m src.class_imbalance_ratios.analysis.analysis"
 
 cls_imb_datamodule = "python -m src.class_imbalance_ratios.datamodule.cls_imb_datamodule"
 test_dir_path = "python -m src.class_imbalance_ratios.tests"

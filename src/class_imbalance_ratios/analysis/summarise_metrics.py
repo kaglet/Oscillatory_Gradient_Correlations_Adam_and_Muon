@@ -7,8 +7,6 @@ import torch
 import numpy as np
 from pathlib import Path
 
-from IPython.display import display
-
 from typing import Literal
 from pandas import Index
 from typing import Any, TypedDict, Type
@@ -145,12 +143,12 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
         
         for extra, val in summary_mode_extras.items():
             epochs_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
-            all_mode_paths_exist = check_extra_exists(epochs_mode_paths[0]) and check_extra_exists(epochs_mode_paths[1])
+            all_mode_paths_exist = check_extra_exists(epochs_mode_paths[0]) and check_extra_exists(epochs_mode_paths[1]) # check mean and std versions
             
             if extra != "subgroup" and all_mode_paths_exist:
                 continue 
             else: 
-                display(f"Extras of those known at compile time does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
+                print(f"Extras of those known at compile time does not exist for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Creating by aggregation...")
 
             if extra == "epochs" and val == True:
                 agg_df = mean_epochs(data_df=data_df) 
@@ -211,7 +209,7 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
         for extra, dfs_list in per_aggregator_store.items():
             # TODO: Extras are not known except at dynamic write time to the key and just before calc
             if len(dfs_list) == 0:
-                # display(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
+                # print(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
                 continue 
             final_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
 
@@ -220,7 +218,7 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
             runs_mean_df = df_all.groupby(level=0).mean()
             runs_std_df = df_all.groupby(level=0).std()
 
-            runs_mean_df.to_parquet(final_mode_paths[0]) # Decide how to display later, do not plot separately yet for now, generic plot method will have more flexibility
+            runs_mean_df.to_parquet(final_mode_paths[0]) # Decide how to print later, do not plot separately yet for now, generic plot method will have more flexibility
             runs_std_df.to_parquet(final_mode_paths[1])
 
 if __name__ == "__main__":

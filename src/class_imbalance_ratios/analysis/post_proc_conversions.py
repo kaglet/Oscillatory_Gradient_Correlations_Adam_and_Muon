@@ -5,7 +5,6 @@ from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
 from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
 
 import os 
-from IPython.display import display
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -28,7 +27,7 @@ def delete_all_non_extension(outputs_dir: Path) -> None:
     pt_file_paths = sorted(outputs_dir.rglob("*"))
     for pt_path in pt_file_paths: 
         if (not pt_path.suffix) and (os.path.isfile(pt_path)): # do not try .is_file() of Pathlib
-            display(pt_path)
+            print(pt_path)
             os.remove(pt_path)
 
 def convert_all_pt_metrics_to_parquet(outputs_dir: Path):
@@ -40,16 +39,16 @@ def convert_all_pt_metrics_to_parquet(outputs_dir: Path):
         # Check direct conversions, not of derived metrics
         num_converted = len(existing_parquets) - len(summary_extra_parquets)
         if len(pt_file_paths) == num_converted:
-            display(f"Lengths of original pt to parquet files are equal: {len(pt_file_paths)} == {num_converted}.\n Aborting conversion...")
+            print(f"Lengths of original pt to parquet files are equal: {len(pt_file_paths)} == {num_converted}.\n Aborting conversion...")
             break
         else:
-            display(f"Lengths of original pt to parquet files are unequal: {len(pt_file_paths)} > {num_converted}.\n Proceeding with conversion...")
+            print(f"Lengths of original pt to parquet files are unequal: {len(pt_file_paths)} > {num_converted}.\n Proceeding with conversion...")
 
         if Path(pt_path.parent / Path(pt_path.stem + ".parquet")).exists():
-            display("File already exists at: {}".format(pt_path))
+            print("File already exists at: {}".format(pt_path))
             continue
         else: 
-            display("Matching parquet file does not exist at: {}. Converting...".format(pt_path))
+            print("Matching parquet file does not exist at: {}. Converting...".format(pt_path))
 
         save_path = pt_path.parent / Path(pt_path.stem + ".parquet")
         metric = torch.load(pt_path.resolve(), map_location="cpu", weights_only=True, mmap=True)

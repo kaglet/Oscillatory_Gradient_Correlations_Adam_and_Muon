@@ -4,7 +4,7 @@ from typing import Any
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import pandas as pd
-from src.class_imbalance_ratios.analysis.plot_managers import GridPlotOptions, GridPlotsmanager, LonePlotOptions, LonePlotManager, show_plt_with_cleanup
+from src.class_imbalance_ratios.analysis.plot_managers import GridPlotOptions, GridPlotsmanager, LonePlotOptions, LonePlotManager
 
 def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str) -> None:
     """ 
@@ -50,12 +50,11 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                     plots_manager.overwrite_figax(figax=figax)
                     plots_manager.viz_cols_in_one()
     
-    show_plt_with_cleanup()
-
 def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
+    plots_managers = []
     figaxs_store: list = []
     for experim_dir in sorted(outputs_dir.iterdir()):
         version_dirs = sorted(experim_dir.glob(version_dir))
@@ -82,23 +81,24 @@ def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
 
                 metric_df = pd.read_parquet(path)
                 # metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
-                options = GridPlotOptions(x_label="Epochs", y_label="Accuracy", grid_title=prefix_down, grid_cols_num=5)
+                options = GridPlotOptions(x_label="Epochs", y_label="Dot Product", grid_title=prefix_down, grid_cols_num=5)
                 assert type(options) is GridPlotOptions
 
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options)
 
                 if not start_overwrite_figaxs and figaxs_store[i] is None:
-                    plots_manager.viz_cols_in_grid()
-                    figaxs_store[i] = plots_manager.grid_figaxs # For runs in info they transfer on the same figax
+                    figaxs_store[i] = plots_manager # For runs in info they transfer on the same figax
                 else:
-                    fig, axs = figaxs_store[i]
-                    figaxs = (fig, axs)
-                    # assert type(fig) is Figure and type(axs) is Any, f"Type of figax store at curr version index {type(figaxs_store[-1])} is not Tuple[Figure, Axes]"
-                    plots_manager.overwrite_figaxes(figaxes=figaxs)
-                    plots_manager.viz_cols_in_grid()
-    
-    show_plt_with_cleanup()
+                    used_manager = figaxs_store[i]
+                    assert type(used_manager) is GridPlotsmanager, ""
+                    plots_manager.overwrite_figaxes(figaxes=used_manager.grid_figaxs)
 
+                plots_managers.append(plots_manager)
+
+    for mngr in plots_managers: 
+        assert type(mngr) is GridPlotsmanager, ""
+        mngr.viz_cols_in_grid()
+        
 if __name__ == "__main__":
     pass

@@ -8,17 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import gc
 
-def show_plt_with_cleanup() -> bool:
-    plt.show()
-    plt.close('all')
-    # fig.canvas.draw()
-    # fig.canvas.flush_events()
-    # gc.collect()
-    return True
-
-def cleanup_all() -> bool:
-    plt.close('all')
-    return True
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class LonePlotOptions():
     def __init__(self, x_label: str, y_label:str, unique_label: str, title_y_offset:float = 1.0, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
@@ -31,7 +21,7 @@ class LonePlotOptions():
         self.x_label = x_label
 
 class GridPlotOptions(LonePlotOptions):
-    def __init__(self, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 2) -> None:
+    def __init__(self, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
         super().__init__(x_label=x_label, y_label=y_label,unique_label=grid_title, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
@@ -52,13 +42,14 @@ class GridPlotsmanager():
     def _create_grid_figaxes(self) -> Tuple[Figure, Any]:
         self._total_cols = len(self._metric_df.columns)
         self._grid_rows_num = math.ceil(self._total_cols / self._plot_options.grid_cols_num)
-        fig, axs = plt.subplots(
-            ncols=self._plot_options.grid_cols_num, 
-            nrows=self._grid_rows_num, 
-            # dpi=self._plot_options.dpi,
-            figsize = ((self._plot_options._base_size + 10) * self._plot_options.grid_cols_num, (self._plot_options._base_size) * self._grid_rows_num), 
-            sharex=True, 
+        fig = Figure(figsize=(((self._plot_options._base_size + 60) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 6) * self._grid_rows_num) ))
+        canvas = FigureCanvas(fig)
+        axs = fig.subplots(
+            ncols=self._plot_options.grid_cols_num,
+            nrows=self._grid_rows_num,
+            sharex=True,
             sharey=True
+            # dpi=self._plot_options.dpi,
         )
         figaxes = fig, axs
         return figaxes
@@ -84,16 +75,18 @@ class GridPlotsmanager():
                 axs[grid_row, grid_col].tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
                 axs[grid_row, grid_col].set_ylabel(self._plot_options.y_label.upper()) 
-                axs[grid_row, grid_col].set_xlabel('Steps', fontsize=120)           
+                axs[grid_row, grid_col].set_xlabel('Steps')           
                 axs[grid_row, grid_col].set_title(f"{col.upper()}")
 
-                axs[grid_row, grid_col].tick_params(axis='x', labelsize=70)
-                axs[grid_row, grid_col].tick_params(axis='y', labelsize=70)
+                axs[grid_row, grid_col].tick_params(axis='x')
+                axs[grid_row, grid_col].tick_params(axis='y')
 
                 axs[grid_row, grid_col].legend(loc="upper right")
 
-                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4);
-
+                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4)
+        # fig.show()
+        fig.savefig(f"{self._plot_options.title.upper()}.png")
+        
     def overwrite_figaxes(self, figaxes: Tuple[Figure, Any]) -> bool:
         fig, axs = figaxes
         assert type(axs) == type(self.grid_figaxs[1]), f"Type of axs to overwrite current must be {type(self.grid_figaxs[1])} not {type(axs)}."
