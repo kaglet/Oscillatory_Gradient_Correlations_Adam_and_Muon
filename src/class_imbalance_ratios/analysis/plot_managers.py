@@ -11,8 +11,8 @@ import gc
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class LonePlotOptions():
-    def __init__(self, x_label: str, y_label:str, unique_label: str, title_y_offset:float = 1.0, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
-        self.title: str = unique_label
+    def __init__(self, x_label: str, y_label:str, lone_title: str, title_y_offset:float = 1.0, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
+        self.title: str = lone_title
         self.title_y_offset = title_y_offset
         self.fontsize = font_size
         self.dpi = dpi
@@ -22,14 +22,63 @@ class LonePlotOptions():
 
 class GridPlotOptions(LonePlotOptions):
     def __init__(self, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
-        super().__init__(x_label=x_label, y_label=y_label,unique_label=grid_title, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
+        super().__init__(x_label=x_label, y_label=y_label,lone_title=grid_title, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
+class LonePlotManager():
+    def __init__(self, metric_df: pd.DataFrame, plt_options: LonePlotOptions, version:str) -> None:
+        self._metric_df = metric_df
+        self._plot_options = plt_options
+        self._lone_figax = self._create_lone_figax()
+        self.version = version
+
+    def _create_lone_figax(self) -> Tuple[Figure, Axes]:
+        fig = Figure(figsize = ((self._plot_options._base_size + 10), (self._plot_options._base_size + 20)))
+        ax = fig.subplots(1, 1, sharex=True, sharey=True, )
+        ax.set_prop_cycle(color=['purple', 'orange', 'blue', 'red'], marker=['o', '+', 'x', '.'], markersize=[0.4] * 4, linewidth=[0.2] * 4)
+        figax = fig, ax
+        return figax
+
+    @property
+    def lone_figax(self):
+        return self._lone_figax
+
+    @lone_figax.setter
+    def lone_figax(self, figax):
+        self._lone_figax = figax
+
+    def viz_cols_in_one(self) -> Tuple[Figure, Axes]:
+        """
+        For a metric object instance, visualize all col of `values` with its associated string in `header`.
+        Internal output is figure with 1 plot for all column , labelled by col name in Index.
+        Optionally save as compressed numpy file with flags per viz (Recommended).
+        Optionally save figure (Recommended) per viz. 
+        """
+        fig, ax = self.lone_figax
+        fig.suptitle(f'{self._plot_options.title.upper()}')
+        focal_prefix = self._plot_options.title.upper()
+        for col in self._metric_df.columns:
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values))
+            line.set_label(f'{focal_prefix}') 
+
+        ax.tick_params(axis='x')
+        ax.tick_params(axis='y')
+
+        ax.set_ylabel(self._plot_options.y_label.upper())
+        ax.set_xlabel(self._plot_options.x_label)
+
+        return fig, ax
+
+    def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
+        self.lone_figax = figax
+        return True
+
 class GridPlotsmanager():
-    def __init__(self, metric_df: pd.DataFrame, plt_options: GridPlotOptions) -> None:
+    def __init__(self, metric_df: pd.DataFrame, plt_options: GridPlotOptions, version: str) -> None:
         self._metric_df = metric_df
         self._plot_options = plt_options
         self._grid_figaxs = self._create_grid_figaxes()
+        self.version = version # This is simply to get the semantic version for experiment - bad practice as coupled with external code, will decouple into separate list
 
     @property
     def grid_figaxs(self):
@@ -42,7 +91,8 @@ class GridPlotsmanager():
     def _create_grid_figaxes(self) -> Tuple[Figure, Any]:
         self._total_cols = len(self._metric_df.columns)
         self._grid_rows_num = math.ceil(self._total_cols / self._plot_options.grid_cols_num)
-        fig = Figure(figsize=(((self._plot_options._base_size + 10) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 6) * self._grid_rows_num) ))
+        fig = Figure(figsize=(((self._plot_options._base_size + 20) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 4) * self._grid_rows_num) ))
+        fig.tight_layout()
         canvas = FigureCanvas(fig)
         axs = fig.subplots(
             ncols=self._plot_options.grid_cols_num,
@@ -51,17 +101,20 @@ class GridPlotsmanager():
             sharey=True
             # dpi=self._plot_options.dpi,
         )
+        for grid_col in range(self._plot_options.grid_cols_num):
+            for grid_row in range(self._grid_rows_num):
+                axs[grid_row, grid_col].set_prop_cycle(color=['purple', 'orange'], marker=['o', '+'], markersize=[0.3] * 2, linestyle=['-']*2, linewidth=[0.15]*2)
+
         figaxes = fig, axs
         return figaxes
 
-    def viz_cols_in_grid(self) -> None:
+    def viz_cols_in_grid(self) -> Tuple[Figure, Any]:
         """
 
         """
         # figsize is (w,h) as spec
         fig, axs = self.grid_figaxs
         fig.suptitle(f'{self._plot_options.title.upper()}', fontsize=self._plot_options.fontsize, y=self._plot_options.title_y_offset)
-        focal_prefix = "Adam" if 'ADAM' in self._plot_options.title.upper() else "Muon"
         focal_prefix = self._plot_options.title.upper()
 
         cols_limit_counter = 0
@@ -74,7 +127,6 @@ class GridPlotsmanager():
                 index_vals = list(self._metric_df.index.to_numpy(dtype=np.int32))
                 col_vals = list(self._metric_df.loc[:, col].values)
                 cols_limit_counter += 1
-
                 axs[grid_row, grid_col].tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
                 axs[grid_row, grid_col].set_ylabel(self._plot_options.y_label.upper()) 
@@ -83,14 +135,12 @@ class GridPlotsmanager():
 
                 axs[grid_row, grid_col].tick_params(axis='x')
                 axs[grid_row, grid_col].tick_params(axis='y')
+                axs[grid_row, grid_col].set_title(f"{col.upper()}")
 
-                axs[grid_row, grid_col].legend(loc="upper right")
-
-                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=0.1, linestyle='-', linewidth=0.03)
-                line.set_label(f'{focal_prefix} {col.upper()}')
+                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, label=f'{focal_prefix}')
         # fig.show()
-        fig.savefig(f"grid_{self._plot_options.title.upper()}.png")
-        
+        return fig, axs
+            
     def overwrite_figaxes(self, figaxes: Tuple[Figure, Any]) -> bool:
         fig, axs = figaxes
         assert type(axs) == type(self.grid_figaxs[1]), f"Type of axs to overwrite current must be {type(self.grid_figaxs[1])} not {type(axs)}."
@@ -102,55 +152,6 @@ class GridPlotsmanager():
         else:
             raise ValueError()
         
-        return True
-
-class LonePlotManager():
-    def __init__(self, metric_df: pd.DataFrame, plt_options: LonePlotOptions) -> None:
-        self._metric_df = metric_df
-        self._plot_options = plt_options
-        self._lone_figax = self._create_lone_figax()
-
-    def _create_lone_figax(self) -> Tuple[Figure, Axes]:
-        fig = Figure(figsize = ((self._plot_options._base_size + 10), (self._plot_options._base_size + 3)))
-        ax = fig.subplots(1, 1, sharex=True, sharey=True, )
-        figax = fig, ax
-        return figax
-
-    @property
-    def lone_figax(self):
-        return self._lone_figax
-
-    @lone_figax.setter
-    def lone_figax(self, figax):
-        self._lone_figax = figax
-
-    def viz_cols_in_one(self) -> None:
-        """
-        For a metric object instance, visualize all col of `values` with its associated string in `header`.
-        Internal output is figure with 1 plot for all column , labelled by col name in Index.
-        Optionally save as compressed numpy file with flags per viz (Recommended).
-        Optionally save figure (Recommended) per viz. 
-        """
-        fig, ax = self.lone_figax
-        fig.suptitle(f'{self._plot_options.title.upper()}')
-        focal_prefix = "Adam" if 'ADAM' in self._plot_options.title.upper() else "Muon"
-        focal_prefix = self._plot_options.title.upper()
-        for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-', markersize=0.1, linewidth=0.03)
-            line.set_label(f'{focal_prefix} {col.upper()}')
-
-        ax.tick_params(axis='x')
-        ax.tick_params(axis='y')
-
-        ax.set_ylabel(self._plot_options.y_label.upper())
-        ax.set_xlabel(self._plot_options.x_label)
-
-        ax.legend(loc="best")
-
-        fig.savefig(f"lone_{self._plot_options.title.upper()}.png")
-
-    def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
-        self.lone_figax = figax
         return True
 
 if __name__ == "__main__":
