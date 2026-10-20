@@ -23,6 +23,8 @@ from src.class_imbalance_ratios.analysis.viz_metrics import viz_grid_metrics
 
 import logging
 
+delete_all_pt_extension(outputs_dir=cls_imb_outputs_dir)
+
 log_file = Path(os.getcwd()) / "src/log_analysis.log"
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
 

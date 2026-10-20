@@ -206,20 +206,20 @@ def summarize_runs_metric(summary_mode_extras: dict[Literal["epochs"] | Literal[
                 for final_name, agg_df in single_aggregated_store.items(): # When deferring funcs may return deferred keys-vals to append to this aggregator store 
                     per_aggregator_store = dynamic_append_to_dict(some_dict=per_aggregator_store, key=final_name, val=agg_df)
 
-        for extra, dfs_list in per_aggregator_store.items():
-            # TODO: Extras are not known except at dynamic write time to the key and just before calc
-            if len(dfs_list) == 0:
-                # print(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
-                continue 
-            final_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
+    for extra, dfs_list in per_aggregator_store.items():
+        # TODO: Extras are not known except at dynamic write time to the key and just before calc
+        if len(dfs_list) == 0:
+            # print(f"Extra exists for: {parent_dir}/runs_extra-{extra}_mean_{prefix}.parquet \n Aborting aggregation and store ...")
+            continue 
+        final_mode_paths = form_path_on_mode(root_dir=parent_dir, extra=extra, prefix=prefix)
 
-            df_all = pd.concat(dfs_list)
-            assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
-            runs_mean_df = df_all.groupby(level=0).mean()
-            runs_std_df = df_all.groupby(level=0).std()
+        df_all = pd.concat(dfs_list)
+        assert type(df_all) is pd.DataFrame, f"List of type {type(df_all)} for extra {extra} could not be aggregated into pd.Dataframe"
+        runs_mean_df = df_all.groupby(level=-1).mean()
+        runs_std_df = df_all.groupby(level=-1).std()
 
-            runs_mean_df.to_parquet(final_mode_paths[0]) # Decide how to print later, do not plot separately yet for now, generic plot method will have more flexibility
-            runs_std_df.to_parquet(final_mode_paths[1])
+        runs_mean_df.to_parquet(final_mode_paths[0]) # Decide how to print later, do not plot separately yet for now, generic plot method will have more flexibility
+        runs_std_df.to_parquet(final_mode_paths[1])
 
 if __name__ == "__main__":
     pass

@@ -32,7 +32,7 @@ def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
-    limit = -1 if limit is None else limit 
+    limit = -1 if limit is None else limit # By pass limit with -1 as hardstop of 0 condition is never met
 
     for experim_dir in sorted(outputs_dir.iterdir()):
         version_dirs = sorted(experim_dir.glob(version_dir))
@@ -47,7 +47,7 @@ def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                     raise LookupError(f"Length of paths found is {len(paths)}==0, which is not valid.")
             
             limit -= 1
-            if limit <= 0:
+            if limit == 0:
                 print(f"Limit reached floor of {limit}, analysis complete")
                 break
 

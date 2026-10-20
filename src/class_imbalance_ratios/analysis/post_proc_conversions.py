@@ -11,9 +11,9 @@ import numpy as np
 import torch
 
 def delete_all_pt_extension(outputs_dir: Path) -> None:
-    pt_file_paths = sorted(outputs_dir.rglob("*"))
+    pt_file_paths = sorted(outputs_dir.rglob("*.pt"))
     for pt_path in pt_file_paths: 
-        if (pt_path.suffix == "pt") and (os.path.isfile(pt_path)): # do not try .is_file() of Pathlib
+        if ("pt" in pt_path.suffix) and (os.path.isfile(pt_path)): # do not try .is_file() of Pathlib
             os.remove(pt_path)
 
 def convert_pt_class_counts_to_parquet(path: Path, save_path: Path) -> None: 
