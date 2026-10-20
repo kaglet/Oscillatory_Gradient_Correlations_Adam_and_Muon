@@ -83,6 +83,30 @@ class DataRenormalizer():
         self._data = data
         self._data_stats = self._get_data_stats(self._data)
 
+    def get_stats_simple(self):
+        """
+        Assumes image data.
+        """
+        pix_sum = np.zeros(shape=(3,))
+        pix_sum_sq = np.zeros_like(pix_sum)
+        # Access the *transformed* image via getter method
+        img_tensor = data[0][0]
+        assert type(img_tensor) is torch.Tensor, "Image must minimally be of type tensor"
+        img_dim = img_tensor.shape
+        img_pix_count: int = img_dim[1] * img_dim[2]
+        num_img = len(data)
+        total_pix_count = num_img * img_pix_count
+        for input, _ in data:
+            input_np = np.asarray(input)
+            pix_sum = np.sum([pix_sum, np.sum(input_np, axis=(1,2))], axis=0 )
+            pix_sum_sq = np.sum([pix_sum_sq, np.sum(np.square(input_np), axis=(1,2))], axis=0) 
+
+        global_mean = pix_sum / total_pix_count
+        global_var = (pix_sum_sq / total_pix_count) - (np.square(global_mean))
+        global_std = np.sqrt(global_var)
+
+        return global_mean, global_std
+
     def _get_data_stats(self, data: MyDataset)-> tuple[np.ndarray, np.ndarray]:
         """
         Assumes image data.
@@ -121,11 +145,18 @@ class DataRenormalizer():
     @property
     def norm_only(self) -> transforms.Normalize:
         normalize = transforms.Normalize(
-            mean=self._data_stats[0], # ImageNet standard norm
+            mean=self._data_stats[0], 
             std=self._data_stats[1]
         )
 
         return normalize
+
+    @property 
+    def saved_stats(self) -> tuple[np.ndarray, np.ndarray]:
+        mean=self._data_stats[0]
+        std=self._data_stats[1]
+
+        return (mean, std)
 
 if __name__ == "__main__":
     my_transforms = transforms.Compose([
@@ -135,7 +166,7 @@ if __name__ == "__main__":
     # print(len(og_ds))
     data = torch.as_tensor(og_ds.data)
     targets = torch.as_tensor(og_ds.targets).reshape(-1,1)
-    class_counts = [200 for _ in range(10)]
+    class_counts = [5000 for _ in range(10)]
     class_labels = list(range(10))
     class_counts_map = {k:v for k,v in zip(class_labels, class_counts)}
     imbalancer = ClassImbalancer(class_distr=targets, counts_map=class_counts_map)
@@ -153,3 +184,7 @@ if __name__ == "__main__":
     my_ds = MyDataset(data=data, targets=targets, transforms=my_transforms, target_transforms= None)
     renormer = DataRenormalizer(my_ds)
     norm = renormer.norm_only
+
+    known_mean = torch.tensor([0.4914, 0.4822, 0.4465])
+    known_std_dev = torch.tensor([0.2470, 0.2435, 0.2616])
+    print(norm) 

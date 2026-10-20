@@ -122,7 +122,7 @@ cls_imb_s_transforms = builds(
     torchvision.transforms.Compose,
     [
         horizontal_flip_cfg,
-        crops_cfg(size=28),
+        crops_cfg(size=32, padding=4),
         to_tensor_cfg,
     ]
 )
