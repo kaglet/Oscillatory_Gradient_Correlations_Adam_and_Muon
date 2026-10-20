@@ -77,15 +77,13 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
     for i, mngr in enumerate(plots_managers):
         assert type(mngr) is LonePlotManager, ""
 
-        if i == len(plots_managers) - 1:
-            fig, ax = mngr.viz_cols_in_one()
-            ax.legend()
-            save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
-            os.makedirs(save_dir, exist_ok=True)
-            fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
-        else:
-            _ = mngr.viz_cols_in_one()
-    
+        fig, ax = mngr.viz_cols_in_one()
+        ax.legend()
+        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
+        os.makedirs(save_dir, exist_ok=True)
+        # Directory path should ensure required uniqueness settings 
+        fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
+
 def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
@@ -148,16 +146,13 @@ def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
     for i, mngr in enumerate(plots_managers): 
         assert type(mngr) is GridPlotsmanager, ""
 
-        if i == len(plots_managers) - 1:
-            fig, axs = mngr.viz_cols_in_grid()
-            for i in range(len(axs)):
-                for j in range(len(axs[0])):
-                    axs[i,j].legend(loc="upper right")
-            save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
-            os.makedirs(save_dir, exist_ok=True)
-            fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
-        else:
-            _ = mngr.viz_cols_in_grid()
+        fig, axs = mngr.viz_cols_in_grid()
+        for i in range(len(axs)):
+            for j in range(len(axs[0])):
+                axs[i,j].legend(loc="upper right")
+        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
+        os.makedirs(save_dir, exist_ok=True)
+        fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
         
 if __name__ == "__main__":
     """ 
