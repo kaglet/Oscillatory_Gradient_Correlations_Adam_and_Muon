@@ -61,6 +61,9 @@ class GridPlotsmanager():
         # figsize is (w,h) as spec
         fig, axs = self.grid_figaxs
         fig.suptitle(f'{self._plot_options.title.upper()}', fontsize=self._plot_options.fontsize, y=self._plot_options.title_y_offset)
+        focal_prefix = "Adam" if 'ADAM' in self._plot_options.title.upper() else "Muon"
+        focal_prefix = self._plot_options.title.upper()
+
         cols_limit_counter = 0
         for grid_col in range(self._plot_options.grid_cols_num):
             for grid_row in range(self._grid_rows_num):
@@ -75,7 +78,7 @@ class GridPlotsmanager():
                 axs[grid_row, grid_col].tick_params(axis='both', which='both', labelsize=7, labelbottom=True, labelleft=True)
 
                 axs[grid_row, grid_col].set_ylabel(self._plot_options.y_label.upper()) 
-                axs[grid_row, grid_col].set_xlabel('Steps')           
+                axs[grid_row, grid_col].set_xlabel(self._plot_options.x_label)           
                 axs[grid_row, grid_col].set_title(f"{col.upper()}")
 
                 axs[grid_row, grid_col].tick_params(axis='x')
@@ -83,9 +86,10 @@ class GridPlotsmanager():
 
                 axs[grid_row, grid_col].legend(loc="upper right")
 
-                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=2.5, linestyle='-', linewidth=0.4)
+                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, marker='o', markersize=0.1, linestyle='-', linewidth=0.03)
+                line.set_label(f'{focal_prefix} {col.upper()}')
         # fig.show()
-        fig.savefig(f"{self._plot_options.title.upper()}.png")
+        fig.savefig(f"grid_{self._plot_options.title.upper()}.png")
         
     def overwrite_figaxes(self, figaxes: Tuple[Figure, Any]) -> bool:
         fig, axs = figaxes
@@ -107,7 +111,8 @@ class LonePlotManager():
         self._lone_figax = self._create_lone_figax()
 
     def _create_lone_figax(self) -> Tuple[Figure, Axes]:
-        fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, figsize = ((self._plot_options._base_size), (self._plot_options._base_size)))
+        fig = Figure(figsize = ((self._plot_options._base_size + 10), (self._plot_options._base_size + 3)))
+        ax = fig.subplots(1, 1, sharex=True, sharey=True, )
         figax = fig, ax
         return figax
 
@@ -128,18 +133,21 @@ class LonePlotManager():
         """
         fig, ax = self.lone_figax
         fig.suptitle(f'{self._plot_options.title.upper()}')
-
+        focal_prefix = "Adam" if 'ADAM' in self._plot_options.title.upper() else "Muon"
+        focal_prefix = self._plot_options.title.upper()
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-');
-            line.set_label(col.upper())
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), marker='o', linestyle='-', markersize=0.1, linewidth=0.03)
+            line.set_label(f'{focal_prefix} {col.upper()}')
 
         ax.tick_params(axis='x')
         ax.tick_params(axis='y')
 
         ax.set_ylabel(self._plot_options.y_label.upper())
-        ax.set_xlabel("Steps")
+        ax.set_xlabel(self._plot_options.x_label)
 
         ax.legend(loc="best")
+
+        fig.savefig(f"lone_{self._plot_options.title.upper()}.png")
 
     def overwrite_figax(self, figax: Tuple[Figure, Axes]) -> bool:
         self.lone_figax = figax
