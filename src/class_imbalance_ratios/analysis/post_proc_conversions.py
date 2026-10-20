@@ -10,6 +10,12 @@ import pandas as pd
 import numpy as np
 import torch
 
+def delete_all_parquet_extras(outputs_dir: Path) -> None:
+    parquet_file_paths = sorted(outputs_dir.rglob("*.parquet"))
+    for parquet_path in parquet_file_paths: 
+        if ("parquet" in parquet_path.suffix) and ("extra" in parquet_path.stem) and (os.path.isfile(parquet_path)): # do not try .is_file() of Pathlib
+            os.remove(parquet_path)
+
 def delete_all_pt_extension(outputs_dir: Path) -> None:
     pt_file_paths = sorted(outputs_dir.rglob("*.pt"))
     for pt_path in pt_file_paths: 

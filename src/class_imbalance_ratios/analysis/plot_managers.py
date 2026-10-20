@@ -42,7 +42,7 @@ class GridPlotsmanager():
     def _create_grid_figaxes(self) -> Tuple[Figure, Any]:
         self._total_cols = len(self._metric_df.columns)
         self._grid_rows_num = math.ceil(self._total_cols / self._plot_options.grid_cols_num)
-        fig = Figure(figsize=(((self._plot_options._base_size + 60) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 6) * self._grid_rows_num) ))
+        fig = Figure(figsize=(((self._plot_options._base_size + 10) * self._plot_options.grid_cols_num, (self._plot_options._base_size - 6) * self._grid_rows_num) ))
         canvas = FigureCanvas(fig)
         axs = fig.subplots(
             ncols=self._plot_options.grid_cols_num,

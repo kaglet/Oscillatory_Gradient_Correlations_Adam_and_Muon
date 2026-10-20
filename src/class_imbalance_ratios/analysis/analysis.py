@@ -11,7 +11,7 @@ from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
 
-from src.class_imbalance_ratios.analysis.post_proc_conversions import delete_all_non_extension, delete_all_pt_extension
+from src.class_imbalance_ratios.analysis.post_proc_conversions import delete_all_non_extension, delete_all_parquet_extras, delete_all_pt_extension
 from src.class_imbalance_ratios.analysis.post_proc_conversions import convert_all_pt_metrics_to_parquet, convert_pt_class_counts_to_parquet
 
 from src.class_imbalance_ratios.analysis.metric_run_dir_analysis import agg_save_metrics, subgroup_save_acc
@@ -24,6 +24,8 @@ from src.class_imbalance_ratios.analysis.viz_metrics import viz_grid_metrics
 import logging
 
 delete_all_pt_extension(outputs_dir=cls_imb_outputs_dir)
+delete_all_parquet_extras(outputs_dir=cls_imb_outputs_dir)
+
 
 log_file = Path(os.getcwd()) / "src/log_analysis.log"
 logging.basicConfig(filename=log_file, level=logging.DEBUG)
