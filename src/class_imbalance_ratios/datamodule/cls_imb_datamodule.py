@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import random
 import numpy as np
+import pandas as pd
 from typing import Any, Callable, Dict, Literal, Optional, Type
 from collections import Counter, namedtuple
 from collections.abc import Mapping
@@ -77,7 +78,8 @@ class ClsImbDataModule(CIFARDataModule):
             could be used intelligently for a test distribution, to carry on the same pipeline. 
             Due to stochasticity in shuffle the same indices in the unused_mask, needs to be used per model/seed combo. 
             """
-            torch.save(counts_map, self._metadata_dir + f"unused_class_counts.pt")
+            counts_map_df = pd.DataFrame(counts_map)
+            counts_map_df.to_parquet(self._metadata_dir + f"unused_class_counts.pt")
 
     def _save_count_metadata(self, stage: str, desired_counts_map: dict[str, int], actual_counts_map: dict[int, int]):
             """
@@ -86,8 +88,10 @@ class ClsImbDataModule(CIFARDataModule):
             # print(f"Desired counts map:\n {desired_counts_map}")
             # print(f"Actual counts map:\n {actual_counts_map}")
             os.makedirs(self._metadata_dir, exist_ok=True)
-            torch.save(desired_counts_map, self._metadata_dir + f"{stage}_desired_class_counts.pt")
-            torch.save(actual_counts_map, self._metadata_dir + f"{stage}_actual_class_counts.pt")
+            desired_counts_map_df = pd.DataFrame(desired_counts_map)
+            desired_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_desired_class_counts.pt")
+            actual_counts_map_df = pd.DataFrame(actual_counts_map)
+            actual_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_actual_class_counts.pt")
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders

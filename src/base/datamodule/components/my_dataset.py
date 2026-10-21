@@ -60,7 +60,7 @@ if __name__ == "__main__":
         transforms.ToTensor()
     ])
     og_ds = CIFAR10("./data", train=True,transform=my_transforms, target_transform=None, download=True)
-    data = torch.as_tensor(og_ds.data)
+    data = torch.as_tensor(og_ds.data) # This .data is natively in 0 to 1 range
     targets = torch.as_tensor(og_ds.targets).reshape(-1,1)
     my_ds = MyDataset(data=data, targets=targets, transforms=my_transforms, target_transforms= None)
     print(len(og_ds))

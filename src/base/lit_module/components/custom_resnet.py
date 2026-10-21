@@ -10,6 +10,7 @@ __all__ = ["create_resnet_model"]
 def create_resnet_model(net: Any = resnet18, num_classes: int = 10, num_in: int=3, num_out: int = 64, kern_size: list[int] = [3,3], stride: list[int] = [1,1], padding: list[int] = [1,1], bias: bool = True, weights: Any = ResNet18_Weights.DEFAULT) -> nn.Module:
     """ 
     Architecture dependent function to create and minimally edit a given resnet model. 
+    ImageNet finetuning is used from the research paper. Architecture alterations are not stated for random init case, which should not be the case. 
     """
     kern_size_n = (kern_size[0], kern_size[1])
     stride_n = stride[0], stride[1]

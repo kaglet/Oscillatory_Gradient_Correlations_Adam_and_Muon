@@ -8,6 +8,7 @@ from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 import csv
 import lightning.pytorch as pl
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,6 +25,7 @@ import matplotlib.pyplot as plt
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
+from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]
 
@@ -224,7 +226,24 @@ class DualOptLitModule(pl.LightningModule):
 
     def _save_metric(self, metric: Metric, root_dir: str, prefix: str, main_name: str) -> None: 
         log_path = Path(root_dir + f"/{prefix}_{main_name}.pt")
-        torch.save(metric.state_dict(), log_path)
+        computed = metric.compute()
+        data_df = pd.DataFrame(computed).replace(float('nan'), np.nan)
+        data_df = data_df.replace(100, np.nan)
+        data_df = data_df.map(lambda value: value.item() if isinstance(value, torch.Tensor) else value)
+        clean_epochs = np.asarray(metric.metric_state["epochs"]) 
+        clean_steps = np.asarray(metric.metric_state["steps"]) 
+
+        metadata = MetricMetadata(epochs=clean_epochs, steps=clean_steps) # Unify values in new dict
+        multiindex = pd.MultiIndex.from_arrays(
+            [
+                list(metadata["epochs"]), 
+                list(metadata["steps"]) # list of lists format required
+            ],
+            names=["epochs", "steps"]
+        )
+        data_df.index = multiindex
+
+        data_df.to_parquet(log_path)
 
     def _save_train_metrics(self) -> None: 
         root_dir = self.trainer.default_root_dir 

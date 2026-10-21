@@ -85,7 +85,9 @@ class DataRenormalizer():
 
     def get_stats_simple(self):
         """
-        Assumes image data.
+        This does not have meaning. Do NOT use. It was a backup if the current stats 
+        calc pipeline would work given a requirement of 0 to 1 range seemingly. 
+        It is currently a copy of the current pipeline. 
         """
         pix_sum = np.zeros(shape=(3,))
         pix_sum_sq = np.zeros_like(pix_sum)
@@ -153,6 +155,11 @@ class DataRenormalizer():
 
     @property 
     def saved_stats(self) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Simpler variation of the norm_only transform return if the original tuples 
+        are desired e.g. for comparison checks with other tuples without having the 
+        transform wrapper. 
+        """
         mean=self._data_stats[0]
         std=self._data_stats[1]
 

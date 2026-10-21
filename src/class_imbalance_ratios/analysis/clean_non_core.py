@@ -2,8 +2,8 @@
 from pathlib import Path
 
 from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
-from src.class_imbalance_ratios.analysis.post_proc_conversions import delete_all_non_extension, delete_all_parquet_extras, delete_all_pt_extension
-from src.class_imbalance_ratios.analysis.post_proc_conversions import convert_all_pt_metrics_to_parquet, convert_pt_class_counts_to_parquet
+from src.class_imbalance_ratios.analysis.post_proc_convert import delete_all_non_extension, delete_all_parquet_extras, delete_all_pt_extension
+from src.class_imbalance_ratios.analysis.post_proc_convert import convert_all_pt_metrics_to_parquet, convert_pt_class_counts_to_parquet
 import logging
 import os 
 
