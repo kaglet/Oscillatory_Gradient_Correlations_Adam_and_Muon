@@ -58,6 +58,9 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 else:
                     y_label = "Cosine Similarity"
 
+                optimizer_name = optimizer_name.capitalize()
+                mode = mode.capitalize()
+                final_fig_name=final_fig_name.capitalize()
                 options = LonePlotOptions(base_size=8, x_label=x_label, y_label=y_label, lone_title= optimizer_name + " " + mode + final_fig_name, prefix=prefix_down)
                 assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
@@ -112,7 +115,7 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
                 optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
 
-                prefix_down = optimizer_name
+                prefix_down = optimizer_name.capitalize()
                 prefix_down = prefix_down.replace("-", " ").replace("_", " ").capitalize()
 
                 metric_df = pd.read_parquet(path)

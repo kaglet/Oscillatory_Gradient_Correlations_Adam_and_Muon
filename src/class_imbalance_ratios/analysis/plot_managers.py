@@ -64,8 +64,9 @@ class LonePlotManager():
         fig.suptitle(f'{focal_prefix}', fontsize="xx-large", y=0.92)
 
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=str(col).capitalize() + " " + focal_prefix)
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=f'{self._plot_options.prefix} {col}')
             ax.legend(fontsize='medium', bbox_to_anchor=(1.05, 1.0))
+            ax.grid(axis='x', color='gray', linestyle=':', linewidth=1, alpha=0.5)
 
         ax.set_ylabel(self._plot_options.y_label.capitalize(), fontsize='x-large')
         ax.set_xlabel(self._plot_options.x_label.capitalize(), fontsize='x-large')
@@ -138,8 +139,9 @@ class GridPlotsmanager():
                 axs[grid_row, grid_col].set_ylabel(self._plot_options.y_label.capitalize(), fontsize='medium') 
                 axs[grid_row, grid_col].set_xlabel(self._plot_options.x_label.capitalize(), fontsize='medium')           
                 axs[grid_row, grid_col].set_title(f"{col.capitalize()}", fontsize='large')
+                axs[grid_row, grid_col].grid(axis='x', color='gray', linestyle=':', linewidth=1, alpha=0.5)
 
-                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, label=f'{focal_prefix}')
+                line, = axs[grid_row, grid_col].plot(index_vals, col_vals, label=f'{self._plot_options.prefix} {col}')
 
                 axs[grid_row, grid_col].legend(fontsize='x-small')
 
