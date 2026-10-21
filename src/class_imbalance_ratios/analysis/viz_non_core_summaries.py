@@ -8,7 +8,7 @@ import pandas as pd
 from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
 from src.class_imbalance_ratios.analysis.plot_managers import GridPlotOptions, GridPlotsmanager, LonePlotOptions, LonePlotManager
 
-def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
+def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
@@ -32,7 +32,6 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                 if not Path(path).exists():
                     raise LookupError(f"Path to requested metric: {path} does not exit.")
                 
-                first_hyphen = str(path.stem).find("-")
                 # While still having access to v_dir with the relative path...
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
                 optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
@@ -42,9 +41,10 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                 elif "subgroup_epochs" in str(path.stem).lower():
                     prefix_down = prefix_down + "subgroup_epochs "
 
+                last_underscore = str(path.stem).rfind("_")
                 version = str(v_dir.stem).lower()
-                extra_name_full = str(path.stem).lower()[first_hyphen: ] 
-                prefix_down = prefix_down + version + extra_name_full
+                extra_name_full = str(path.stem).lower()[last_underscore: ] 
+                prefix_down = prefix_down + extra_name_full
                 prefix_down = prefix_down.replace("-", " ").replace("_", " ").capitalize()
 
                 x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps"
@@ -58,7 +58,7 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                 else:
                     y_label = "Cosine Similarity"
 
-                options = LonePlotOptions(base_size=8, x_label=x_label, y_label=y_label, lone_title=prefix_down)
+                options = LonePlotOptions(base_size=8, x_label=x_label, y_label=y_label, lone_title= optimizer_name + " " + mode + final_fig_name, prefix=prefix_down)
                 assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
                 metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
@@ -78,13 +78,12 @@ def viz_lone_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
         assert type(mngr) is LonePlotManager, ""
 
         fig, ax = mngr.viz_cols_in_one()
-        ax.legend()
-        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
+        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
         os.makedirs(save_dir, exist_ok=True)
         # Directory path should ensure required uniqueness settings 
         fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
 
-def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
+def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
@@ -111,10 +110,10 @@ def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                 first_hyphen = str(path.stem).find("-")
                 # While still having access to v_dir with the relative path...
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
-                prefix_down = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
+                optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
 
-                prefix_down = prefix_down + str(v_dir.stem).lower() + str(path.stem).lower()[first_hyphen: ] 
-                prefix_down = prefix_down.replace("-", " ").replace("_", " ")
+                prefix_down = optimizer_name
+                prefix_down = prefix_down.replace("-", " ").replace("_", " ").capitalize()
 
                 metric_df = pd.read_parquet(path)
                 # TODO: Have plot options passed in immediately later on if needed, no need to extract it so heavily, do like fig name
@@ -128,8 +127,8 @@ def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                     y_label = "Dot Product"
                 else:
                     y_label = "Cosine Similarity"
-                # metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
-                options = GridPlotOptions(x_label=x_label, y_label=y_label, grid_title=prefix_down, grid_cols_num=5)
+
+                options = GridPlotOptions(x_label=x_label, y_label=y_label, grid_title= optimizer_name + " " + mode + " " + final_fig_name, grid_cols_num=5, prefix=prefix_down)
                 assert type(options) is GridPlotOptions
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
@@ -147,10 +146,7 @@ def viz_grid_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
         assert type(mngr) is GridPlotsmanager, ""
 
         fig, axs = mngr.viz_cols_in_grid()
-        for i in range(len(axs)):
-            for j in range(len(axs[0])):
-                axs[i,j].legend(loc="upper right")
-        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mngr.version}/"
+        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
         os.makedirs(save_dir, exist_ok=True)
         fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
         
@@ -158,133 +154,143 @@ if __name__ == "__main__":
     """ 
     Visualize non-core metrics that were created. 
     """
-    # TODO: Do this again but for STD not mean (replace or do loop for modes (easiest))
-    print("=========== VIZ UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
-    # Unnormed Per col per step (per OPTIM step)
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-none_mean_Unnormalised-GC.parquet", 
-        )
-    ]
+    modes = ["mean", "std"]
+    for mode in modes: 
+        # TODO: Do this again but for STD not mean (replace or do loop for modes (easiest))
+        print("=========== VIZ UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
+        # Unnormed Per col per step (per OPTIM step)
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-none_{mode}_Unnormalised-GC.parquet", 
+            )
+        ]
 
-    viz_grid_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Per Layer Dot Product (Grid)"
-    ) 
-
-    # Unnormed Col reduction per step (per OPTIM step)
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-cols_mean_Unnormalised-GC.parquet", 
-        )
-    ]
-
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Dot Product Comparison"
-    ) 
-
-    print("=========== VIZ NORMED GRAD CORR METRICS FOR REPORT ===========") 
-    # Normed Per col per step (per OPTIM step)
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-none_mean_Normalised-GC.parquet", 
-        )
-    ]
-
-    viz_grid_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Per Layer Cosine Similarity (Grid)"
-    ) 
-
-    # Normed Col reduction per step (per OPTIM step)
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-cols_mean_Normalised-GC.parquet", 
-        )
-    ]
-
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Cosine Similarity Comparison"
-    ) 
-
-    print("=========== VIZ SUMMARY ACCURACY METRICS FOR REPORT ===========") 
-    # Cols present per epoch
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-epochs_mean_Train-Accuracy.parquet", 
-        ),
-        dict(
-            relative_path = f"runs_extra-epochs_mean_Validation-Accuracy.parquet", 
+        viz_grid_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Per Layer Dot Product (Grid)"
         ) 
-    ]
 
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class Across Epochs)"
-    ) 
-    
-    # Col reduction per epoch
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-both_mean_Train-Accuracy.parquet", 
-        ),
-        dict(
-            relative_path = f"runs_extra-both_mean_Validation-Accuracy.parquet", 
+        # Unnormed Col reduction per step (per OPTIM step)
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-cols_{mode}_Unnormalised-GC.parquet", 
+            )
+        ]
+
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Dot Product Comparison"
         ) 
-    ]
 
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Train and Validation Accuracy (Per Epoch Global Average)"
-    ) 
+        print("=========== VIZ NORMED GRAD CORR METRICS FOR REPORT ===========") 
+        # Normed Per col per step (per OPTIM step)
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-none_{mode}_Normalised-GC.parquet", 
+            )
+        ]
 
-    # Subgroups per epoch
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-subgroup_epochs_mean_Train-Accuracy.parquet", 
-        ),
-        dict(
-            relative_path = f"runs_extra-subgroup_epochs_mean_Validation-Accuracy.parquet", 
+        viz_grid_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Per Layer Cosine Similarity (Grid)"
         ) 
-    ]
 
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Train and Validation Accuracy (Majority and Minority Class)"
-    ) 
+        # Normed Col reduction per step (per OPTIM step)
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-cols_{mode}_Normalised-GC.parquet", 
+            )
+        ]
 
-    print("=========== VIZ SUMMARY LOSS METRICS FOR REPORT ===========") 
-    # Loss per step (NOT per optim step)
-    relative_paths_info = [
-        dict(
-            relative_path= f"runs_extra-none_mean_Train-Loss.parquet", 
-        ),
-        dict(
-            relative_path = f"runs_extra-none_mean_Validation-Loss.parquet", 
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Cosine Similarity Comparison"
         ) 
-    ]
 
-    viz_lone_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
-        version_dir="multijob/R*", 
-        run_paths_info=relative_paths_info,
-        final_fig_name="Muon and Adam Train and Validation Loss"
-    ) 
+        print("=========== VIZ SUMMARY ACCURACY METRICS FOR REPORT ===========") 
+        # Cols present per epoch
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-epochs_{mode}_Train-Accuracy.parquet", 
+            ),
+            dict(
+                relative_path = f"runs_extra-epochs_{mode}_Validation-Accuracy.parquet", 
+            ) 
+        ]
+
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class Across Epochs)"
+        ) 
+        
+        # Col reduction per epoch
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-both_{mode}_Train-Accuracy.parquet", 
+            ),
+            dict(
+                relative_path = f"runs_extra-both_{mode}_Validation-Accuracy.parquet", 
+            ) 
+        ]
+
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Epoch Global Average)"
+        ) 
+
+        # Subgroups per epoch
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-subgroup_epochs_{mode}_Train-Accuracy.parquet", 
+            ),
+            dict(
+                relative_path = f"runs_extra-subgroup_epochs_{mode}_Validation-Accuracy.parquet", 
+            ) 
+        ]
+
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Train and Validation Accuracy (Majority and Minority Class)"
+        ) 
+
+        print("=========== VIZ SUMMARY LOSS METRICS FOR REPORT ===========") 
+        # Loss per step (NOT per optim step)
+        relative_paths_info = [
+            dict(
+                relative_path= f"runs_extra-none_{mode}_Train-Loss.parquet", 
+            ),
+            dict(
+                relative_path = f"runs_extra-none_{mode}_Validation-Loss.parquet", 
+            ) 
+        ]
+
+        viz_lone_metrics(
+            mode=mode,
+            outputs_dir=cls_imb_outputs_dir, 
+            version_dir="multijob/R*", 
+            run_paths_info=relative_paths_info,
+            final_fig_name="Muon and Adam Train and Validation Loss"
+        ) 
 
 
