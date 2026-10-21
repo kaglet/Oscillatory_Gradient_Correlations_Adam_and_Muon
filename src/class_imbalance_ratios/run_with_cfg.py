@@ -20,7 +20,7 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from hydra_zen import instantiate, to_yaml, just, launch, make_custom_builds_fn, make_config, make_custom_builds_fn, multirun, zen, store
 from muon import MuonWithAuxAdam, SingleDeviceMuonWithAuxAdam
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ConstantLR
 from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.group_name_store import group_names
@@ -67,8 +67,11 @@ grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 2})
 
 # LR Scheduler
 # Hover over @CosineAnnealingWarmRestarts to see that eta_max is starting lr. If it is set to == eta_min, there will be no change according to formula. 
-adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
-muon_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_adam}")
+# adam_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_muon}")
+# muon_lr_sch_pcfg = pbuilds(CosineAnnealingWarmRestarts, T_mult=1, T_0="${trainer.max_epochs}", eta_min="${params_cache.lr_adam}")
+
+adam_lr_sch_pcfg = pbuilds(ConstantLR, factor=1)
+muon_lr_sch_pcfg = pbuilds(ConstantLR, factor=1)
 
 single_lit_module_cfg = pbuilds(DualOptLitModule)
 
