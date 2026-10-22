@@ -42,7 +42,7 @@ class ClsImbDataModule(CIFARDataModule):
         labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         counts_prepper: CountsPrepperFromRatio,
-        dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, 
+        dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR100, 
         data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
     ):
         """
