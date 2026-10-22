@@ -89,9 +89,12 @@ class ClsImbDataModule(CIFARDataModule):
             # print(f"Desired counts map:\n {desired_counts_map}")
             # print(f"Actual counts map:\n {actual_counts_map}")
             os.makedirs(self._metadata_dir, exist_ok=True)
-            desired_counts_map_df = pd.DataFrame(desired_counts_map)
+            saveable_desired_map = {str(k): [v] for k,v in desired_counts_map.items()}
+            desired_counts_map_df = pd.DataFrame(saveable_desired_map)
             desired_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_desired_class_counts.pt")
-            actual_counts_map_df = pd.DataFrame(actual_counts_map)
+
+            saveable_actual_map = {str(k): [v] for k,v in actual_counts_map.items()}
+            actual_counts_map_df = pd.DataFrame(saveable_actual_map)
             actual_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_actual_class_counts.pt")
 
     def setup(self, stage: str)  -> None:
