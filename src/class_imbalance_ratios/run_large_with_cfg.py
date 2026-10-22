@@ -33,7 +33,7 @@ from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.class_imbalance_ratios.conf_assembly_helpers.artificial_overrides_padder import ArtificialOverridesPadder
 from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.conf_assembly_helpers.group_names import shared_config_names
-from src.class_imbalance_ratios.conf_assembly_helpers.override_strings import adam_overrides, muon_overrides, autofill_exceptions
+from src.class_imbalance_ratios.conf_assembly_helpers.override_strings_large import adam_overrides, muon_overrides, autofill_exceptions
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
 from torchvision.models import resnet18, resnet50, ResNet18_Weights, ResNet50_Weights
@@ -57,7 +57,7 @@ resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
 
 cls_imb_l_num_classes = 100
 
-cls_imb_model_s_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_in=3)
+cls_imb_model_l_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_in=3)
 
 # Optimiser variations
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
@@ -75,7 +75,7 @@ muon_lr_sch_pcfg = pbuilds(ConstantLR, factor=1)
 
 single_lit_module_cfg = pbuilds(DualOptLitModule)
 
-cls_imb_s_module_cfg = pbuilds(
+cls_imb_l_module_cfg = pbuilds(
     DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes
@@ -121,7 +121,7 @@ horizontal_flip_cfg = builds(torchvision.transforms.RandomHorizontalFlip)
 crops_cfg = builds(torchvision.transforms.RandomCrop)
 to_tensor_cfg = builds(torchvision.transforms.ToTensor)
 
-cls_imb_s_transforms = builds(
+cls_imb_l_transforms = builds(
     torchvision.transforms.Compose,
     [
         horizontal_flip_cfg,
@@ -163,14 +163,14 @@ runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path i
 
 data_dir = "${my_root_dir}/data/"
 # print("data_dir set to: ", data_dir)
-cls_imb_datamdl_s_cfg = builds(
+cls_imb_datamdl_l_cfg = builds(
     ClsImbDataModule, 
     persistent_workers=True,
     data_dir = data_dir,
-    train_transforms = cls_imb_s_transforms,
-    val_transforms = cls_imb_s_transforms,
-    test_transforms = cls_imb_s_transforms,
-    batch_size = 1024, # From batch size set grad_accum to get new effective batch size
+    train_transforms = cls_imb_l_transforms,
+    val_transforms = cls_imb_l_transforms,
+    test_transforms = cls_imb_l_transforms,
+    batch_size = 64, # From batch size set grad_accum to get new effective batch size
     num_workers = 8,
     metadata_dir = runtime_run_subdir,
     labels=class_labels,
@@ -178,16 +178,16 @@ cls_imb_datamdl_s_cfg = builds(
 )
 
 lit_module_store = store(group=group_names.lightning_module)
-lit_module_store(cls_imb_s_module_cfg, name=shared_config_names.experiment)
+lit_module_store(cls_imb_l_module_cfg, name=shared_config_names.experiment)
 
 trainer_store = store(group=group_names.trainer)
 trainer_store(trainer_cfg, name=shared_config_names.experiment)
 
 datamodule_store = store(group=group_names.datamodule)
-datamodule_store(cls_imb_datamdl_s_cfg, name=shared_config_names.experiment)
+datamodule_store(cls_imb_datamdl_l_cfg, name=shared_config_names.experiment)
 
 model_store = store(group=group_names.models)
-model_store(cls_imb_model_s_cfg, name=shared_config_names.experiment)
+model_store(cls_imb_model_l_cfg, name=shared_config_names.experiment)
 
 params_store = store(group=group_names.parameters_set)
 params_store(mu_aux_adam_params_cfg, name=shared_config_names.experiment)

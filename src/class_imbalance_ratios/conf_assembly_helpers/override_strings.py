@@ -66,9 +66,9 @@ muon_overrides = {
     f"++{group_names.parameters_set}.lr_muon": 1e-1, # Use research value
     f"++{group_names.parameters_set}.lr_adam": 3e-4, # Not given - Use default MuonWithAuxAdam rec
     f"++{group_names.parameters_set}.use_muon": "True",
-    f"++{group_names.parameters_set}.momentum_muon": 0.9,
-    f"++{group_names.parameters_set}.beta_1_adam": 0.9,
-    f"++{group_names.parameters_set}.beta_2_adam": 0.95,
+    f"++{group_names.parameters_set}.momentum_muon": 0.95, # Use research value
+    f"++{group_names.parameters_set}.beta_1_adam": 0.9, # Not given - Use default MuonWithAuxAdam rec
+    f"++{group_names.parameters_set}.beta_2_adam": 0.95, # Not given - Use default MuonWithAuxAdam rec
     f"++{group_names.parameters_set}.nesterov": "False",
     f"++{group_names.parameters_set}.use_layer_recs": "False",
     f"++{group_names.parameters_set}.eps": 1e-8, # Not given - Use default MuonWithAuxAdam
