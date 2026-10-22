@@ -145,15 +145,15 @@ class_labels = [
 
 labels = list(range(cls_imb_l_num_classes))
 
-train_class_counts = [3500 for _ in range(cls_imb_l_num_classes)]
-train_class_counts = [3500 for _ in range(cls_imb_l_num_classes)]
+train_class_counts = [350 for _ in range(cls_imb_l_num_classes)]
+train_class_counts = [350 for _ in range(cls_imb_l_num_classes)]
 
 train_map = {k:v for k,v in zip(labels, train_class_counts)}
 
-val_class_counts = [1000 for _ in range(cls_imb_l_num_classes)]
+val_class_counts = [100 for _ in range(cls_imb_l_num_classes)]
 val_map = {k:v for k,v in zip(labels, val_class_counts)}
 
-test_class_counts = [500 for _ in range(cls_imb_l_num_classes)]
+test_class_counts = [50 for _ in range(cls_imb_l_num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
