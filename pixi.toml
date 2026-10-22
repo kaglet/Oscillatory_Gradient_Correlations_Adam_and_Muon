@@ -11,6 +11,7 @@ platforms = [
 [tasks]
 tests = "python -m src.src_tests --num1=1 --num2=2 --num3=5"
 cls_imb_s = "python -m src.class_imbalance_ratios.run_with_cfg"
+cls_imb_l = "python -m src.class_imbalance_ratios.run_large_with_cfg"
 batch_experim = "python -m src.class_imbalance_ratios.batch_run_pbs"
 post_proc = "python -m src.class_imbalance_ratios.analysis.post_proc_conversions"
 report_viz = "python -m src.class_imbalance_ratios.analysis.viz_non_core_summaries"
