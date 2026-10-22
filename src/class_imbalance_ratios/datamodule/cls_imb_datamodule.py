@@ -78,7 +78,8 @@ class ClsImbDataModule(CIFARDataModule):
             could be used intelligently for a test distribution, to carry on the same pipeline. 
             Due to stochasticity in shuffle the same indices in the unused_mask, needs to be used per model/seed combo. 
             """
-            counts_map_df = pd.DataFrame(counts_map)
+            saveable_map = {str(k): [v] for k,v in counts_map.items()}
+            counts_map_df = pd.DataFrame(saveable_map)
             counts_map_df.to_parquet(self._metadata_dir + f"unused_class_counts.pt")
 
     def _save_count_metadata(self, stage: str, desired_counts_map: dict[str, int], actual_counts_map: dict[int, int]):
