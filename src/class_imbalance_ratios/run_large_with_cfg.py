@@ -55,15 +55,15 @@ mu_aux_adam_params_cfg = pbuilds(
 # Define base vision model cfg
 resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
 
-cls_imb_s_num_classes = 10
+cls_imb_l_num_classes = 100
 
-cls_imb_model_s_cfg = resnet50_model_cfg(num_classes=cls_imb_s_num_classes, num_in=3)
+cls_imb_model_s_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_in=3)
 
 # Optimiser variations
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 2})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
 
 # LR Scheduler
 # Hover over @CosineAnnealingWarmRestarts to see that eta_max is starting lr. If it is set to == eta_min, there will be no change according to formula. 
@@ -78,7 +78,7 @@ single_lit_module_cfg = pbuilds(DualOptLitModule)
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
-    num_classes = cls_imb_s_num_classes
+    num_classes = cls_imb_l_num_classes
 )
 
 # ---- TRAINER CONFIGS START ---- #
@@ -105,7 +105,7 @@ csv_logger_cfg = [
 trainer_cfg = pbuilds(
     pl.Trainer, 
     num_sanity_val_steps = 0,
-    max_epochs=20,
+    max_epochs=2,
     deterministic=True,
     # accelerator="gpu", # TODO: Change gpu use to allow cpus
     benchmark=False,
@@ -131,29 +131,29 @@ cls_imb_s_transforms = builds(
 )
 
 class_labels = [
-    "airplane",
-    "automobile",
-    "bird",
-    "cat",
-    "deer",
-    "dog",
-    "frog",
-    "horse",
-    "ship",
-    "truck"
+    'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle', 'bicycle', 'bottle',
+    'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel', 'can', 'castle', 'caterpillar', 'cattle',
+    'chair', 'chimpanzee', 'clock', 'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+    'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster', 'house', 'kangaroo', 'keyboard',
+    'lamp', 'lawn_mower', 'leopard', 'lion', 'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain',
+    'mouse', 'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear', 'pickup_truck', 'pine_tree',
+    'plain', 'plate', 'poppy', 'porcupine', 'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket',
+    'rose', 'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake', 'spider',
+    'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table', 'tank', 'telephone', 'television', 'tiger', 'tractor',
+    'train', 'trout', 'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
 ]
 
-labels = list(range(cls_imb_s_num_classes))
+labels = list(range(cls_imb_l_num_classes))
 
-train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
-train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
+train_class_counts = [3500 for _ in range(cls_imb_l_num_classes)]
+train_class_counts = [3500 for _ in range(cls_imb_l_num_classes)]
 
 train_map = {k:v for k,v in zip(labels, train_class_counts)}
 
-val_class_counts = [1000 for _ in range(cls_imb_s_num_classes)]
+val_class_counts = [1000 for _ in range(cls_imb_l_num_classes)]
 val_map = {k:v for k,v in zip(labels, val_class_counts)}
 
-test_class_counts = [500 for _ in range(cls_imb_s_num_classes)]
+test_class_counts = [500 for _ in range(cls_imb_l_num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)

@@ -63,6 +63,7 @@ def hydra_tests():
 
 model50 = resnet50()
 print(model50.fc)
-
-model50 = resnet18()
-print(model50.fc)
+print(model50.conv1)
+model18 = resnet18()
+print(model18.fc)
+print(model18.conv1)
