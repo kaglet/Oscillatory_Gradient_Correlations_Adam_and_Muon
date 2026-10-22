@@ -53,11 +53,11 @@ mu_aux_adam_params_cfg = pbuilds(
 )
 
 # Define base vision model cfg
-resnet18_model_cfg = builds(create_resnet_model, net=just(resnet50))
+resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
 
 cls_imb_s_num_classes = 10
 
-cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_in=3)
+cls_imb_model_s_cfg = resnet50_model_cfg(num_classes=cls_imb_s_num_classes, num_in=3)
 
 # Optimiser variations
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
