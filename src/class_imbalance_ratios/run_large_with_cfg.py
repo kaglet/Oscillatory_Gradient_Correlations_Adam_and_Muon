@@ -306,7 +306,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="muon_class_imbalance_ratios",
-        job_name="cls_imb_s",
+        job_name="cls_imb_l",
         version_base="1.3",
         overrides=curr_vals
     )
@@ -331,7 +331,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_class_imbalance_ratios",
-        job_name="cls_imb_s",
+        job_name="cls_imb_l",
         version_base="1.3",
         overrides=curr_vals
     )
