@@ -36,20 +36,10 @@ class DualOptLitModule(pl.LightningModule):
         params: list[list[dict[str, Any]]],
         optims: list[Optimizer],
         schedulers: list[LRScheduler],
+        labels: list[str],
         grad_accum_schedule: GradAccumSchedule = GradAccumSchedule({0: 1}),  
         # TODO: Allow params to be either this OR strict tensor format for other use cases, may not fit streamlined MuonAuxAdam format  
         num_classes: int = 10,
-        labels: list[str] = 
-        ["airplane",
-        "automobile",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck"] #cifar10 labels
     ):
         super().__init__()
         # Loss function
