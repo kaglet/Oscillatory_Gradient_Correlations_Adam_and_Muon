@@ -2,7 +2,7 @@
 from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
-from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
+from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_s_outputs_dir, cls_imb_l_outputs_dir
 
 import os 
 from pathlib import Path
@@ -99,5 +99,7 @@ def convert_all_pt_metrics_to_parquet(outputs_dir: Path):
         data_df.to_parquet(save_path)   # by default pandas does not append .parquet      
 
 if __name__ == "__main__":
-    convert_all_pt_metrics_to_parquet(outputs_dir=cls_imb_outputs_dir)
+    convert_all_pt_metrics_to_parquet(outputs_dir=cls_imb_s_outputs_dir)
+    convert_all_pt_metrics_to_parquet(outputs_dir=cls_imb_l_outputs_dir)
+
     # delete_all_pt_extension(outputs_dir=outputs_dir)

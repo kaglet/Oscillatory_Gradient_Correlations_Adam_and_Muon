@@ -5,7 +5,7 @@ from typing import Any
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import pandas as pd
-from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
+from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_s_outputs_dir, cls_imb_l_outputs_dir
 from src.class_imbalance_ratios.analysis.plot_managers import GridPlotOptions, GridPlotsmanager, LonePlotOptions, LonePlotManager
 
 def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
@@ -81,7 +81,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         assert type(mngr) is LonePlotManager, ""
 
         fig, ax = mngr.viz_cols_in_one()
-        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
+        save_dir = f"{str(outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
         os.makedirs(save_dir, exist_ok=True)
         # Directory path should ensure required uniqueness settings 
         fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
@@ -149,7 +149,7 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         assert type(mngr) is GridPlotsmanager, ""
 
         fig, axs = mngr.viz_cols_in_grid()
-        save_dir = f"{str(cls_imb_outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
+        save_dir = f"{str(outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
         os.makedirs(save_dir, exist_ok=True)
         fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
         
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
         viz_grid_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Per Layer Dot Product (Grid)"
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Dot Product Comparison"
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
         viz_grid_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Per Layer Cosine Similarity (Grid)"
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Cosine Similarity Comparison"
@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class Across Epochs)"
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Per Epoch Global Average)"
@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Majority and Minority Class)"
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_outputs_dir, 
+            outputs_dir=cls_imb_l_outputs_dir, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Loss"

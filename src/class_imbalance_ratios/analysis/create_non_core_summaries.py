@@ -4,7 +4,7 @@ Main entry point for acc analysis.
 from pathlib import Path
 from typing import Any
 from src.class_imbalance_ratios.analysis.summarise_metrics import summarize_runs_metric
-from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_outputs_dir
+from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_s_outputs_dir, cls_imb_l_outputs_dir
 from src.class_imbalance_ratios.analysis.needed_names import corr_store_names
 
 def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, limit: int | None = 1) -> None:
@@ -30,7 +30,7 @@ def agg_save_metrics(outputs_dir: Path, run_paths_info: list[dict[str, Any]], ve
                 print(f"Limit reached floor of {limit}, analysis complete")
                 break
 
-if __name__ == "__main__":
+def summarize_all(dir: Path):
     """
     Generate non-core metrics from .parquet core files. 
     This operates over run directories to form different summary metrics. 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     ]
 
     agg_save_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
+        outputs_dir=dir, 
         version_dir="multijob/R*", 
         limit=None,
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     ]
 
     agg_save_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
+        outputs_dir=dir, 
         version_dir="multijob/R*", 
         limit=None,
         run_paths_info=relative_paths_info
@@ -145,8 +145,11 @@ if __name__ == "__main__":
     ]
 
     agg_save_metrics(
-        outputs_dir=cls_imb_outputs_dir, 
+        outputs_dir=dir, 
         version_dir="multijob/R*", 
         limit=None,
         run_paths_info=relative_paths_info
     )
+
+if __name__ == "__main__":
+    summarize_all(cls_imb_l_outputs_dir)
