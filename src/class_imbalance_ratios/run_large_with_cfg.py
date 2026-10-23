@@ -277,10 +277,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
     )
-    parser.add_argument("--run", required=False, nargs="?", type=int, help="Enter `run`")
-    parser.add_argument("--seed", required=False, nargs="?", type=int, help="Enter `seed`")
-    parser.add_argument("--slice", required=False, nargs="?", type=int, help="Enter `slice`")
-    parser.add_argument("--ratio_seed", required=False, nargs="?", type=int, help="Enter `run_seed`")
+    parser.add_argument("--run", required=False, nargs="?", type=int, help="Enter `run`", default=0)
+    parser.add_argument("--seed", required=False, nargs="?", type=int, help="Enter `seed`", default=0)
+    parser.add_argument("--slice", required=False, nargs="?", type=int, help="Enter `slice`", default=0)
+    parser.add_argument("--ratio_seed", required=False, nargs="?", type=int, help="Enter `run_seed`", default=0)
 
     args = parser.parse_args()
 
