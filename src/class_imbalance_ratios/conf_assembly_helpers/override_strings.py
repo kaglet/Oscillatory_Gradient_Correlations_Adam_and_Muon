@@ -40,9 +40,9 @@ adam_overrides = {
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1], # Part of map blueprint given
     
-    f"++{group_names.trainer}.limit_train_batches": 2048,
-    f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 2,
+    # f"++{group_names.trainer}.limit_train_batches": 2048,
+    # f"++{group_names.trainer}.limit_val_batches": 2048,
+    f"++{group_names.trainer}.max_epochs": 50,
 
     f"++{group_names.datamodule}.num_workers": 8, 
     f"++{group_names.datamodule}.persistent_workers": "True", 
@@ -75,9 +75,9 @@ muon_overrides = {
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1],
 
-    f"++{group_names.trainer}.limit_train_batches": 2048,
-    f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 2,
+    # f"++{group_names.trainer}.limit_train_batches": 2048,
+    # f"++{group_names.trainer}.limit_val_batches": 2048,
+    f"++{group_names.trainer}.max_epochs": 50,
 
     f"++{group_names.datamodule}.num_workers": 8, 
     f"++{group_names.datamodule}.persistent_workers": "True", 
