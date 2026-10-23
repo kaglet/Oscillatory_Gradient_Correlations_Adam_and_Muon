@@ -47,7 +47,7 @@ class MyMultiClassAccuracy(Metric):
                 curr_list = getattr(self, self._labels[i])
                 assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-                curr_list.append(avg)
+                curr_list.append(avg.clone().detach())
                 setattr(self, self._labels[i], curr_list)
             else:
                 curr_list = getattr(self, self._labels[i])
@@ -67,18 +67,18 @@ class MyMultiClassAccuracy(Metric):
         Returns a dict of each lbl name and its paired list of tensor scalar values for "all"
         In other reduction modes we may get a single tensor summary value, or the value preceded by metadata, such as the step_idx. 
         """
-        layer_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu()) for lbl in self._labels}
+        layer_dict = {lbl: np.asarray(getattr(self, lbl)) for lbl in self._labels}
 
         if mode == "all":
             return layer_dict
         elif mode == "mean":
-            mean_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu().mean()) for lbl in self._labels}
+            mean_dict = {lbl: np.asarray(getattr(self, lbl).mean()) for lbl in self._labels}
             return mean_dict
         elif mode == "last":
-            last_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu()[-1]) for lbl in self._labels}
+            last_dict = {lbl: np.asarray(getattr(self, lbl)[-1]) for lbl in self._labels}
             return last_dict   
         elif mode == "max":
-            max_dict = {lbl: (np.asarray(getattr(self, lbl).detach().cpu().argmax()), np.asarray(getattr(self, lbl).detach().cpu().max())) for lbl in self._labels}
+            max_dict = {lbl: (np.asarray(getattr(self, lbl).argmax()), np.asarray(getattr(self, lbl).max())) for lbl in self._labels}
             return max_dict        
 
         return layer_dict
@@ -103,7 +103,7 @@ class MyLoss(Metric):
         curr_list = getattr(self, "loss")
         assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-        curr_list.append(loss)
+        curr_list.append(loss.clone().detach())
         setattr(self, "loss", curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"
@@ -118,11 +118,11 @@ class MyLoss(Metric):
         """
         # assert type(list(self.loss)) is list[torch.Tensor], f"Loss of type {type(self.loss)} is not list of tensor in metrics tracker"
 
-        loss = self.loss.detach().cpu().numpy() # type: ignore
+        loss = np.asarray(self.loss)
         if mode == "all":
             loss = loss
         elif mode == "mean":
-            loss = np.mean(loss, axis=0)
+            loss = loss.mean(dim=0) # type: ignore
         else:
             loss = loss
 

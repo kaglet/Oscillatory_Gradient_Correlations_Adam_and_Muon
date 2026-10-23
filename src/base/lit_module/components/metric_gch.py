@@ -37,7 +37,7 @@ class RGCH_Metric(Metric):
             curr_list = getattr(self, name)
             assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-            curr_list.append(val)
+            curr_list.append(val.clone().detach())
             setattr(self, name, curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"

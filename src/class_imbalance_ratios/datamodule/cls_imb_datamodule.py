@@ -80,7 +80,7 @@ class ClsImbDataModule(CIFARDataModule):
             """
             saveable_map = {str(k): [v] for k,v in counts_map.items()}
             counts_map_df = pd.DataFrame(saveable_map)
-            counts_map_df.to_parquet(self._metadata_dir + f"unused_class_counts.pt")
+            counts_map_df.to_parquet(self._metadata_dir + f"unused_class_counts.parquet")
 
     def _save_count_metadata(self, stage: str, desired_counts_map: dict[str, int], actual_counts_map: dict[int, int]):
             """
@@ -91,11 +91,11 @@ class ClsImbDataModule(CIFARDataModule):
             os.makedirs(self._metadata_dir, exist_ok=True)
             saveable_desired_map = {str(k): [v] for k,v in desired_counts_map.items()}
             desired_counts_map_df = pd.DataFrame(saveable_desired_map)
-            desired_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_desired_class_counts.pt")
+            desired_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_desired_class_counts.parquet")
 
             saveable_actual_map = {str(k): [v] for k,v in actual_counts_map.items()}
             actual_counts_map_df = pd.DataFrame(saveable_actual_map)
-            actual_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_actual_class_counts.pt")
+            actual_counts_map_df.to_parquet(self._metadata_dir + f"{stage}_actual_class_counts.parquet")
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders

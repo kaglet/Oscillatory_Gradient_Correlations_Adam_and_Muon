@@ -225,7 +225,7 @@ class DualOptLitModule(pl.LightningModule):
         return metrics 
 
     def _save_metric(self, metric: Metric, root_dir: str, prefix: str, main_name: str) -> None: 
-        log_path = Path(root_dir + f"/{prefix}_{main_name}.pt")
+        log_path = Path(root_dir + f"/{prefix}_{main_name}.parquet")
         computed = metric.compute()
         data_df = pd.DataFrame(computed).replace(float('nan'), np.nan)
         data_df = data_df.replace(100, np.nan)
