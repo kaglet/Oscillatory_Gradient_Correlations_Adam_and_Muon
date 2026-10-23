@@ -47,7 +47,7 @@ class MyMultiClassAccuracy(Metric):
                 curr_list = getattr(self, self._labels[i])
                 assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-                curr_list.append(avg.clone().detach())
+                curr_list.append(avg.clone().detach().cpu())
                 setattr(self, self._labels[i], curr_list)
             else:
                 curr_list = getattr(self, self._labels[i])
@@ -103,7 +103,7 @@ class MyLoss(Metric):
         curr_list = getattr(self, "loss")
         assert type(curr_list) is list, "Layer values must be a list for CH store"
 
-        curr_list.append(loss.clone().detach())
+        curr_list.append(loss.clone().detach().cpu())
         setattr(self, "loss", curr_list)
 
         assert type(self.steps) is list, "Steps must be list of GC metric"

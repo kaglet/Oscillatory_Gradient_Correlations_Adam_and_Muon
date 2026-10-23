@@ -64,7 +64,7 @@ cls_imb_model_l_cfg = resnet50_model_cfg(num_classes=cls_imb_l_num_classes, num_
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 8})
 
 # LR Scheduler
 # Hover over @CosineAnnealingWarmRestarts to see that eta_max is starting lr. If it is set to == eta_min, there will be no change according to formula. 
@@ -172,7 +172,7 @@ cls_imb_datamdl_l_cfg = builds(
     train_transforms = cls_imb_l_transforms,
     val_transforms = cls_imb_l_transforms,
     test_transforms = cls_imb_l_transforms,
-    batch_size = 64, # From batch size set grad_accum to get new effective batch size
+    batch_size = 256, # From batch size set grad_accum to get new effective batch size
     num_workers = 8,
     metadata_dir = runtime_run_subdir,
     labels=class_labels,
