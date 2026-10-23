@@ -67,18 +67,18 @@ class MyMultiClassAccuracy(Metric):
         Returns a dict of each lbl name and its paired list of tensor scalar values for "all"
         In other reduction modes we may get a single tensor summary value, or the value preceded by metadata, such as the step_idx. 
         """
-        layer_dict = {lbl: np.asarray(getattr(self, lbl)) for lbl in self._labels}
+        layer_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu()) for lbl in self._labels}
 
         if mode == "all":
             return layer_dict
         elif mode == "mean":
-            mean_dict = {lbl: np.asarray(getattr(self, lbl).mean()) for lbl in self._labels}
+            mean_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu().mean()) for lbl in self._labels}
             return mean_dict
         elif mode == "last":
-            last_dict = {lbl: np.asarray(self, lbl)[-1] for lbl in self._labels}
+            last_dict = {lbl: np.asarray(getattr(self, lbl).detach().cpu()[-1]) for lbl in self._labels}
             return last_dict   
         elif mode == "max":
-            max_dict = {lbl: (np.asarray(getattr(self, lbl).argmax()), np.asarray(getattr(self, lbl).max())) for lbl in self._labels}
+            max_dict = {lbl: (np.asarray(getattr(self, lbl).detach().cpu().argmax()), np.asarray(getattr(self, lbl).detach().cpu().max())) for lbl in self._labels}
             return max_dict        
 
         return layer_dict
@@ -118,13 +118,15 @@ class MyLoss(Metric):
         """
         # assert type(list(self.loss)) is list[torch.Tensor], f"Loss of type {type(self.loss)} is not list of tensor in metrics tracker"
 
+        loss = self.loss.detach().cpu().numpy() # type: ignore
         if mode == "all":
-            loss = self.loss
+            loss = loss
         elif mode == "mean":
-            loss = torch.as_tensor(self.loss)
-            loss = loss.mean(dim=0)
+            loss = np.mean(loss, axis=0)
+        else:
+            loss = loss
 
-        return dict(loss = np.asarray(self.loss)) # fallback if modes not parseable
+        return dict(loss = loss) # type: ignore # fallback if modes not parseable
 
 if __name__ == "__main__":
     pass
