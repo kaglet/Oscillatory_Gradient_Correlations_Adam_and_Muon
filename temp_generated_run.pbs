@@ -3,7 +3,7 @@
 #PBS -q gpu_1
 #PBS -l select=1:ncpus=9:ngpus=1
 #PBS -P CSCI1166
-#PBS -l walltime=01:00:00
+#PBS -l walltime=1:30:00
 #PBS -m abe -M u25735056@tuks.co.za
 
 # Navigate to the folder where job is submitted (project folder)
@@ -20,4 +20,4 @@ module load chpc/cuda/12.0/12.0
 echo "Starting Experiment Run via Pixi..."
 
 # 2. Execute current experiment (cls_imb_s) run using the absolute path to Pixi
-~/.pixi/bin/pixi run cls_imb_s --run=2 --seed=2 --slice=2 --ratio_seed=2
+~/.pixi/bin/pixi run cls_imb_l --run=1 --seed=1 --slice=3 --ratio_seed=3
