@@ -4,8 +4,8 @@
 #PBS -l select=1:ncpus=9:ngpus=1
 #PBS -P CSCI1166
 #PBS -l walltime=00:04:00
-#PBS -m abe
 #PBS -M u25735056@tuks.co.za
+#PBS -m abe
 
 # Navigate to the folder where job is submitted (project folder)
 cd $PBS_O_WORKDIR
