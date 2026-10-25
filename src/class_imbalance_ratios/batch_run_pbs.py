@@ -45,10 +45,10 @@ def run_pbs_many(root_dir: Path, run_interval: list[int], slice_interval: list[i
     while run < run_length:
         slice = 0
         while slice < slice_length:
-            print(f"Generating and submitting job for run={run}, slice={slice}")
-
             injected_run: int = run_interval[run]
             injected_slice: int = slice_interval[slice]
+
+            print(f"Generating and submitting job for run={injected_run}, slice={injected_slice}")
 
             job_script = template_content
             job_script = job_script.replace("{{run}}", str(injected_run)).replace("{{seed}}", str(injected_run))
