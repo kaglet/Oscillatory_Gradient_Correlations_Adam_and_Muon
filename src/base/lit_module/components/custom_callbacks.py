@@ -6,10 +6,12 @@ from lightning import LightningModule, Trainer
 from lightning.pytorch.callbacks import Callback
 import torch 
 import numpy as np
+import torch.nn.functional as F
+
 
 from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
 
-__all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback", "StoreClassRatiosCallback"]
+__all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback"]
 
 class StoreAllGCH(Callback):
     def __init__(self, what="CH", verbose=True):
@@ -29,27 +31,26 @@ class StoreAllGCH(Callback):
         
         self.trainable_params = [p for p in pl_module.parameters() if p.requires_grad]
         
-        curr_param_grads = []
+        per_layer_grads = []
         prev_grads_exist = len(self.state["prev_param_grads"]) != 0
+        # Grid 
         curr_gcv = torch.Tensor(size=(len(self.trainable_params),))
         curr_r_gcv = torch.zeros_like(curr_gcv)
 
         for i, p in enumerate(self.trainable_params):
             assert p.grad is not None, "None gradients detected, debug optimizer/s invoked on current step"
 
-            curr_p_grad = p.grad.detach().clone()
-            curr_param_grads.append(curr_p_grad) 
+            curr_grad = p.grad.clone().detach().reshape(-1).cpu()
+            per_layer_grads.append(curr_grad) 
 
             # Do not compute dot product if record does not exist
             if prev_grads_exist:
-                prev_p_grad = self.state["prev_param_grads"][i].detach().clone()
-                dot_prod = torch.sum(torch.mul(prev_p_grad, curr_p_grad))
-                norm = prev_p_grad.data.norm() * curr_p_grad.data.norm()
-                curr_gcv[i] = dot_prod / norm
-                curr_r_gcv[i] = dot_prod
-
+                prev_grad = self.state["prev_param_grads"][i]
+                curr_r_gcv[i] = torch.dot(prev_grad, curr_grad)
+                curr_gcv[i] = F.cosine_similarity(prev_grad, curr_grad)
+                
         # Current grad becomes past grads
-        self.state["prev_param_grads"] = curr_param_grads 
+        self.state["prev_param_grads"] = per_layer_grads 
 
         # curr_gcs (and curr_r_gcs) is filled only after a past and prev pair exist
         # Given the above, the global stores can be filled
