@@ -75,10 +75,23 @@ muon_lr_sch_pcfg = pbuilds(ConstantLR, factor=1)
 
 single_lit_module_cfg = pbuilds(DualOptLitModule)
 
+class_labels = [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+]
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
-    num_classes = cls_imb_s_num_classes
+    num_classes = cls_imb_s_num_classes,
+    labels=class_labels
 )
 
 # ---- TRAINER CONFIGS START ---- #
@@ -129,19 +142,6 @@ cls_imb_s_transforms = builds(
         to_tensor_cfg,
     ]
 )
-
-class_labels = [
-    "airplane",
-    "automobile",
-    "bird",
-    "cat",
-    "deer",
-    "dog",
-    "frog",
-    "horse",
-    "ship",
-    "truck"
-]
 
 labels = list(range(cls_imb_s_num_classes))
 
