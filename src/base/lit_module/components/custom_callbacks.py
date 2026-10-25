@@ -47,7 +47,7 @@ class StoreAllGCH(Callback):
             if prev_grads_exist:
                 prev_grad = self.state["prev_param_grads"][i]
                 curr_r_gcv[i] = torch.dot(prev_grad, curr_grad)
-                curr_gcv[i] = F.cosine_similarity(prev_grad, curr_grad)
+                curr_gcv[i] = F.cosine_similarity(prev_grad, curr_grad, dim=0)
                 
         # Current grad becomes past grads
         self.state["prev_param_grads"] = per_layer_grads 
