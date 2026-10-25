@@ -23,8 +23,8 @@ if __name__ == "__main__":
   # logging.debug("log_file {} \n".format(my_log_file))
   # logging.debug("data_dir {} \n".format(data_dir))
 
-  prev_grad = torch.randn(100, 128)
-  curr_grad = torch.randn(100, 128)
+  prev_grad = torch.as_tensor([-100, 2, 9], dtype=torch.float32)
+  curr_grad = torch.as_tensor([50, 29, 3], dtype=torch.float32)
   my_output = torch.sum(torch.mul(prev_grad, curr_grad)) / (prev_grad.norm() * curr_grad.norm())
 
   with_dot = torch.dot(prev_grad.reshape(-1), curr_grad.reshape(-1)) / (prev_grad.norm() * curr_grad.norm())
