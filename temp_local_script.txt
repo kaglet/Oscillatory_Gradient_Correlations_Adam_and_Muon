@@ -1,0 +1,1 @@
+.pixi/bin/pixi run cls_imb_s --run=0 --seed=0 --slice=0 --ratio_seed=0
