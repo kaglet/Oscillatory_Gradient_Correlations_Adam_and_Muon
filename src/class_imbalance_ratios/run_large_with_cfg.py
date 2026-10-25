@@ -25,7 +25,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.group_name_store import group_names
 from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
-from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
+from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule, ClsImbLargeDM
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
@@ -90,7 +90,7 @@ class_labels = [
 ]
 
 cls_imb_l_module_cfg = pbuilds(
-    ClsImbLargeLitModule,
+    ClsImbLargeDM,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes,
     labels=class_labels

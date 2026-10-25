@@ -25,7 +25,7 @@ from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.group_name_store import group_names
 from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
-from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
+from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule, ClsImbSmallDM
 from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
@@ -63,7 +63,7 @@ cls_imb_model_s_cfg = resnet18_model_cfg(num_classes=cls_imb_s_num_classes, num_
 mu_aux_adam_pcfg = [pbuilds(SingleDeviceMuonWithAuxAdam)]
 
 # Gradient accum schedules 
-grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 32})
+grad_accum_schedule_cfg = builds(GradAccumSchedule, {0: 4})
 
 # LR Scheduler
 # Hover over @CosineAnnealingWarmRestarts to see that eta_max is starting lr. If it is set to == eta_min, there will be no change according to formula. 
@@ -164,14 +164,14 @@ runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path i
 data_dir = "${my_root_dir}/data/"
 # print("data_dir set to: ", data_dir)
 cls_imb_datamdl_s_cfg = builds(
-    ClsImbDataModule, 
+    ClsImbSmallDM, 
     persistent_workers=True,
     data_dir = data_dir,
     train_transforms = cls_imb_s_transforms,
     val_transforms = cls_imb_s_transforms,
     test_transforms = cls_imb_s_transforms,
-    batch_size = 64, # From batch size set grad_accum to get new effective batch size
-    num_workers = 8,
+    batch_size = 512, # From batch size set grad_accum to get new effective batch size
+    num_workers = 3,
     metadata_dir = runtime_run_subdir,
     labels=class_labels,
     counts_prepper=counts_prepper_cfg,
@@ -275,10 +275,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script that adds 3 numbers from CMD"
     )
-    parser.add_argument("--run", required=False, nargs="?", type=int, help="Enter `run`")
-    parser.add_argument("--seed", required=False, nargs="?", type=int, help="Enter `seed`")
-    parser.add_argument("--slice", required=False, nargs="?", type=int, help="Enter `slice`")
-    parser.add_argument("--ratio_seed", required=False, nargs="?", type=int, help="Enter `run_seed`")
+    parser.add_argument("--run", required=False, nargs="?", type=int, help="Enter `run`", default=0)
+    parser.add_argument("--seed", required=False, nargs="?", type=int, help="Enter `seed`", default=0)
+    parser.add_argument("--slice", required=False, nargs="?", type=int, help="Enter `slice`", default=0)
+    parser.add_argument("--ratio_seed", required=False, nargs="?", type=int, help="Enter `run_seed`", default=0)
 
     args = parser.parse_args()
 
@@ -306,7 +306,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="muon_class_imbalance_ratios",
-        job_name="cls_imb_s",
+        job_name="cls_imb_s_tests",
         version_base="1.3",
         overrides=curr_vals
     )
@@ -331,7 +331,7 @@ if __name__ == "__main__":
         ExperimentConfig,
         task_function,
         config_name="adam_class_imbalance_ratios",
-        job_name="cls_imb_s",
+        job_name="cls_imb_s_tests",
         version_base="1.3",
         overrides=curr_vals
     )

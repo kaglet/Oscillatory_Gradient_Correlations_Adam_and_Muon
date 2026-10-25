@@ -94,7 +94,7 @@ if __name__ == "__main__":
   root_dir = Path(__file__).parent.parent.parent
   print(str(root_dir))
   runs = list(range(10))
-  slices = [2]
+  slices = list(range(4))
   run_pbs_many(root_dir=root_dir, run_interval = runs, slice_interval = slices)
 
 
