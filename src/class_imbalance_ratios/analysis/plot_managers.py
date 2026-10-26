@@ -125,8 +125,8 @@ class GridPlotsmanager():
         fig.suptitle(f'{focal_prefix}', fontsize="xx-large", y=0.92)
 
         cols_limit_counter = 0
-        for grid_row in range(self._grid_rows_num):
-            for grid_col in range(self._plot_options.grid_cols_num):
+        for grid_col in range(self._plot_options.grid_cols_num):
+            for grid_row in range(self._grid_rows_num):
                 if cols_limit_counter >= self._total_cols:
                     break 
 
@@ -135,7 +135,7 @@ class GridPlotsmanager():
                 col_vals = list(self._metric_df.loc[:, col].values)
                 cols_limit_counter += 1
 
-                ax = axs[grid_col, grid_row]
+                ax = axs[grid_row, grid_col]
                 ax.tick_params(axis='both', which='both', labelbottom=True, labelleft=True, labelsize='x-small')
 
                 ax.set_ylabel(self._plot_options.y_label.capitalize(), fontsize='medium') 

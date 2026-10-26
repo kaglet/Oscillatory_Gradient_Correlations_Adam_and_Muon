@@ -152,4 +152,4 @@ def summarize_all(dir: Path):
     )
 
 if __name__ == "__main__":
-    summarize_all(cls_imb_l_outputs_dir)
+    summarize_all(cls_imb_s_outputs_dir)

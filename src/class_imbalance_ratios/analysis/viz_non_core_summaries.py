@@ -152,8 +152,8 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         save_dir = f"{str(outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
         os.makedirs(save_dir, exist_ok=True)
         fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
-        
-if __name__ == "__main__":
+
+def viz_over_dir(dir_path: Path):
     """ 
     Visualize non-core metrics that were created. 
     """
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
         viz_grid_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Per Layer Dot Product (Grid)"
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Dot Product Comparison"
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
         viz_grid_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Per Layer Cosine Similarity (Grid)"
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Cosine Similarity Comparison"
@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class Across Epochs)"
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Per Epoch Global Average)"
@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Accuracy (Majority and Minority Class)"
@@ -290,10 +290,12 @@ if __name__ == "__main__":
 
         viz_lone_metrics(
             mode=mode,
-            outputs_dir=cls_imb_l_outputs_dir, 
+            outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
             final_fig_name="Muon and Adam Train and Validation Loss"
         ) 
 
 
+if __name__ == "__main__":
+    viz_over_dir(cls_imb_s_outputs_dir)
