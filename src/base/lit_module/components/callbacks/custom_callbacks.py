@@ -9,7 +9,7 @@ import numpy as np
 import torch.nn.functional as F
 
 
-from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics.metric_gch import GCH_Metric, RGCH_Metric
 
 __all__ = ["StoreAllGCH", "TimerCallback", "DebugCallback"]
 

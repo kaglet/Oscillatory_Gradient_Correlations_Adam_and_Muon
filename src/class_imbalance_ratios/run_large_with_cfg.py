@@ -24,10 +24,10 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ConstantLR
 from hydra.conf import HydraConf, JobConf, SweepDir, RunDir
 
 from src.base.group_name_store import group_names
-from src.base.lit_module.components.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
+from src.base.lit_module.components.callbacks.custom_callbacks import DebugCallback, StoreAllGCH, TimerCallback
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule, ClsImbLargeDM
-from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
-from src.base.lit_module.components.custom_resnet import create_resnet_model
+from src.base.lit_module.components.grad_accum.custom_grad_accum import GradAccumSchedule
+from src.class_imbalance_ratios.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_nondist_Muon_Adam_params
 from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.class_imbalance_ratios.lit_module.cls_imb_lit_module import ClsImbLargeLitModule

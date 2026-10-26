@@ -2,41 +2,41 @@ import torch
 from torch import nn
 import torch.nn.functional as tf
 
-__all__ = ["SimpleCNN"]
+__all__ = ["SpPixCNN"]
 
-class SimpleCNN(nn.Module):
+class SpPixCNN(nn.Module):
+    """
+    Initialize the SimpleCNN for the spurious pixel task research experiment. 
+    """
     def __init__(
         self,
         num_in: int = 1,
         num_classes: int = 10
     ) -> None:
-        """Initialize a hardcoded SimpleCNN for the spurious pixel task
-        """
         super().__init__()
 
         # [img_size] 28 -> [...] 24 -> [fm] 12 
         self.conv_layer1 = nn.Sequential(
             nn.Conv2d( 
-                in_channels=1,
-                out_channels=6,
-                kernel_size=5,
+                in_channels=num_in,
+                out_channels=32,
+                kernel_size=3,
                 stride=1,
                 padding=0
             ),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.MaxPool2d(kernel_size=2, stride=1)
         )
 
         # -> [...] 10 -> [fm] 5
         self.conv_layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=6, out_channels=16, kernel_size=3, stride=1, padding=0),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=0),
         )
 
-        # 5*5*16
+        # in_features computed manually assuming stride 1 for convolutions, and 2 for pooling to be a valid computation and to reduce dimensionality, respectively        
         self.dense = nn.Sequential( 
-            nn.Linear(in_features=144, out_features=30),
+            nn.Linear(in_features=7774, out_features=128), 
             nn.ReLU(),
-            nn.Linear(in_features=30, out_features=10)
+            nn.Linear(in_features=128, out_features=num_classes)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

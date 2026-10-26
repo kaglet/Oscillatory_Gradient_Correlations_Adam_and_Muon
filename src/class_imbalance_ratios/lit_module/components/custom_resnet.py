@@ -7,7 +7,7 @@ from torchvision.models import Weights
 __all__ = ["create_resnet_model"]
 
 # TODO: Edit type checked of resnet in fact a callable/mapping
-def create_resnet_model(net: Any = resnet50, num_classes: int = 100, num_in: int=3, num_out: int = 64, kern_size: list[int] = [3,3], stride: list[int] = [1,1], padding: list[int] = [1,1], bias: bool = True, weights: Any = ResNet18_Weights.DEFAULT) -> nn.Module:
+def create_resnet_model(net: Any, num_classes: int = 100, num_in: int=3, num_out: int = 64, kern_size: list[int] = [3,3], stride: list[int] = [1,1], padding: list[int] = [1,1], bias: bool = True, weights: Any = ResNet18_Weights.DEFAULT) -> nn.Module:
     """ 
     Architecture dependent function to create and minimally edit a given resnet model. 
     ImageNet finetuning is used from the research paper. Architecture alterations are not stated for random init case, which should not be the case. 

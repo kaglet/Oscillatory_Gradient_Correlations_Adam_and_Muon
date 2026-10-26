@@ -1,6 +1,6 @@
 
-from src.base.lit_module.components.metrics_standard import MyMultiClassAccuracy, MyLoss
-from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics.metrics_standard import MyMultiClassAccuracy, MyLoss
+from src.base.lit_module.components.metrics.metric_gch import GCH_Metric, RGCH_Metric
 from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
 from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_s_outputs_dir, cls_imb_l_outputs_dir
 

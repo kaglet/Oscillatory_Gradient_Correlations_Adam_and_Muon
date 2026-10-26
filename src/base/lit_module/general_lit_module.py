@@ -20,11 +20,11 @@ from torchmetrics.wrappers import ClasswiseWrapper
 from torchmetrics import MaxMetric, CatMetric, Metric, MetricCollection
 from torchmetrics.classification.accuracy import Accuracy
 import torchvision
-from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
+from src.base.lit_module.components.grad_accum.custom_grad_accum import GradAccumSchedule
 import matplotlib.pyplot as plt
 
-from src.base.lit_module.components.metric_gch import GCH_Metric, RGCH_Metric
-from src.base.lit_module.components.metrics_standard import MyLoss, MyMultiClassAccuracy
+from src.base.lit_module.components.metrics.metric_gch import GCH_Metric, RGCH_Metric
+from src.base.lit_module.components.metrics.metrics_standard import MyLoss, MyMultiClassAccuracy
 from src.class_imbalance_ratios.analysis.summarise_metrics import MetricMetadata
 
 __all__ = ["DualOptLitModule", "DistOptLitModule", "SingleOptLitModule"]

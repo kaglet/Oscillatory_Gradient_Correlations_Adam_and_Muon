@@ -2,7 +2,7 @@ from typing import Any
 
 from torch.nn import Module
 
-from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
+from src.base.lit_module.components.grad_accum.custom_grad_accum import GradAccumSchedule
 from src.base.lit_module.general_lit_module import DualOptLitModule
 
 from torch.optim import Optimizer  

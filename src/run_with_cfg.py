@@ -23,10 +23,10 @@ from torch.optim.lr_scheduler import LRScheduler
 from src.class_imbalance_ratios.datamodule.cls_imb_datamodule import ClsImbDataModule
 from src.base.datamodule.components.mnist_normalization import mnist_normalization
 from src.base.datamodule.mnist_datamodule import MNISTDataModule, SimpleMNISTDataModule
-from src.base.lit_module.components.custom_grad_accum import GradAccumSchedule
-from src.base.lit_module.components.custom_resnet import create_resnet_model
+from src.base.lit_module.components.grad_accum.custom_grad_accum import GradAccumSchedule
+from src.class_imbalance_ratios.lit_module.components.custom_resnet import create_resnet_model
 from src.base.lit_module.components.per_optim_params.resnet_params.get_params import get_Adam_params, get_dist_Muon_Adam_params, get_dual_opt_params, get_nondist_Muon_Adam_params
-from src.base.lit_module.components.simple_net import SimpleCNN
+from src.spurious_pix.lit_module.components.simple_net import SpPixCNN
 from src.base.lit_module.general_lit_module import DualOptLitModule
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
@@ -57,7 +57,7 @@ single_optim_params_cfg = pbuilds(
 # Define base vision model cfg
 resnet18_model_cfg = builds(create_resnet_model, net=just(resnet18))
 resnet50_model_cfg = builds(create_resnet_model, net=just(resnet50))
-simple_cnn_cfg = builds(SimpleCNN)
+simple_cnn_cfg = builds(SpPixCNN)
 
 cls_imb_s_num_classes = 10
 cls_imb_l_num_classes = 100
