@@ -96,7 +96,7 @@ class DataRenormalizer():
         assert type(img_tensor) is torch.Tensor, "Image must minimally be of type tensor"
         img_dim = img_tensor.shape
         img_pix_count: int = img_dim[1] * img_dim[2]
-        num_img = len(data)
+        num_img = len(data) 
         total_pix_count = num_img * img_pix_count
         for input, _ in data:
             input_np = np.asarray(input)
