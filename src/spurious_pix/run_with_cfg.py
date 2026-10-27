@@ -139,15 +139,15 @@ transforms_cfg = builds(
 
 labels = list(range(num_classes))
 
-train_class_counts = [3500 for _ in range(num_classes)]
-train_class_counts = [3500 for _ in range(num_classes)]
+train_class_counts = [4200 for _ in range(num_classes)]
+train_class_counts = [4200 for _ in range(num_classes)]
 
 train_map = {k:v for k,v in zip(labels, train_class_counts)}
 
-val_class_counts = [1000 for _ in range(num_classes)]
+val_class_counts = [1800 for _ in range(num_classes)]
 val_map = {k:v for k,v in zip(labels, val_class_counts)}
 
-test_class_counts = [500 for _ in range(num_classes)]
+test_class_counts = [0 for _ in range(num_classes)]
 test_map = {k:v for k,v in zip(labels, test_class_counts)}
 
 counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
