@@ -34,7 +34,7 @@ class MyDataset(Dataset):
         
     def __len__(self):
         return len(self.targets) 
-
+        
     def __getitem__(self, index):
         """ 
         Returns tuple of image, single spurious feature for experiment, target
