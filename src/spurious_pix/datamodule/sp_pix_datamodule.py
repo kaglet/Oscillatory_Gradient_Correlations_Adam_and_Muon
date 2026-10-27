@@ -26,12 +26,14 @@ from src.base.datamodule.components.my_dataset import MyDataset
 
 from PIL import Image
 
+from src.base.datamodule.mnist_datamodule import MNISTDataModule
+from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.datamodule.dataset.class_imbalance_utils import ClassImbalancer, DataRenormalizer
 from src.spurious_pix.datamodule.components.pixel_injection_map import PixelInjectionMap
 
-__all__ = ["ClsImbDataModule"]
+__all__ = ["SpPixDataModule"]
 
-class ClsImbDataModule(MNISTDataModule):
+class SpPixDataModule(MNISTDataModule):
     # TODO" Unify the data directory from env see old template
     def __init__(
         self,
@@ -40,6 +42,7 @@ class ClsImbDataModule(MNISTDataModule):
         labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         injection_map: PixelInjectionMap,
+        counts_prepper: CountsPrepperFromRatio,
         dataset: Type[MNIST], 
         data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
     ):
@@ -47,10 +50,12 @@ class ClsImbDataModule(MNISTDataModule):
         """
         super().__init__(persistent_workers=persistent_workers, data_dir=data_dir, dataset=dataset ,train_transforms=train_transforms, val_transforms=val_transforms, test_transforms=test_transforms, batch_size=batch_size, num_workers=num_workers)
         self._injection_map = injection_map
-
         self._metadata_dir = metadata_dir
-
         self._class_labels: list[str] = labels
+
+        self._train_counts_map = counts_prepper.train_map
+        self._val_counts_map = counts_prepper.val_map 
+        self._test_counts_map = counts_prepper.test_map
 
     def _get_masked_splits(self, data: torch.Tensor, targets: torch.Tensor, counts_map: dict[int, int]) -> tuple[tuple[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
             imbalancer = ClassImbalancer(class_distr=targets, counts_map=counts_map)
@@ -174,14 +179,6 @@ class ClsImbDataModule(MNISTDataModule):
     def class_labels(self) -> list[str]:
         return self._class_labels
 
-class ClsImbSmallDM(ClsImbDataModule):
-    def __init__(self, persistent_workers: bool, metadata_dir: str, labels: list[str], train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, counts_prepper: CountsPrepperFromRatio, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR10, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4):
-        super().__init__(persistent_workers, metadata_dir, labels, train_transforms, val_transforms, test_transforms, counts_prepper, dataset, data_dir, batch_size, num_workers)
-
-class ClsImbLargeDM(ClsImbDataModule):
-    def __init__(self, persistent_workers: bool, metadata_dir: str, labels: list[str], train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, counts_prepper: CountsPrepperFromRatio, dataset: Type[CIFAR10] | Type[CIFAR100] = CIFAR100, data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4):
-        super().__init__(persistent_workers, metadata_dir, labels, train_transforms, val_transforms, test_transforms, counts_prepper, dataset, data_dir, batch_size, num_workers)
-
 # Entry point
 if __name__ == "__main__":
     """
@@ -223,7 +220,8 @@ if __name__ == "__main__":
         downsampler_ratio=20, 
         slice_random=True
     )
-    dmodule = ClsImbDataModule(
+    
+    dmodule = SpPixDataModule(
         persistent_workers=True,
         num_workers=0, 
         counts_prepper=counts_prepper,    
@@ -232,7 +230,7 @@ if __name__ == "__main__":
         test_transforms=base_transforms,
         metadata_dir=f"{str(Path(__file__).parent)}/", 
         labels=labels,
-        dataset=CIFAR10
+        dataset=MNIST
     ) 
     dmodule.prepare_data()
     dmodule.setup("fit")

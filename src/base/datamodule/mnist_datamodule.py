@@ -13,7 +13,7 @@ __all__ = ["MNISTDataModule"]
 
 class MNISTDataModule(L.LightningDataModule):
     # TODO: Unify the data directory from env see old template
-    def __init__(self, dataset: Type[MNIST], train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 0, persistent_workers:bool=False, download:bool=False) -> None:
+    def __init__(self, dataset: Type[MNIST], train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 0, persistent_workers:bool=False, download:bool=False) -> None:
         super().__init__()
         self.download = download
         self.data_dir = data_dir

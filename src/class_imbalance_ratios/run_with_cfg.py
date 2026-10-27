@@ -146,8 +146,6 @@ cls_imb_s_transforms = builds(
 labels = list(range(cls_imb_s_num_classes))
 
 train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
-train_class_counts = [3500 for _ in range(cls_imb_s_num_classes)]
-
 train_map = {k:v for k,v in zip(labels, train_class_counts)}
 
 val_class_counts = [1000 for _ in range(cls_imb_s_num_classes)]

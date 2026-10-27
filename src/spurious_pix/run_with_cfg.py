@@ -139,8 +139,18 @@ transforms_cfg = builds(
 )
 
 labels = list(range(num_classes))
+train_class_counts = [4200 for _ in range(num_classes)]
+train_map = {k:v for k,v in zip(labels, train_class_counts)}
 
-counts_prepper_cfg = builds(PixelInjectionMap, labels=labels, width_only=IMG_WIDTH, injection_seed="${injection_seed}")
+val_class_counts = [1800 for _ in range(num_classes)]
+val_map = {k:v for k,v in zip(labels, val_class_counts)}
+
+test_class_counts = [0 for _ in range(num_classes)]
+test_map = {k:v for k,v in zip(labels, test_class_counts)}
+
+DOWNSAMPLER_RATIO = 1
+pixel_map_cfg = builds(PixelInjectionMap, labels=labels, width_only=IMG_WIDTH, injection_seed="${injection_seed}")
+counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=DOWNSAMPLER_RATIO, train_map=train_map, val_map=val_map, test_map=test_map)
 
 runtime_experim_dir = "${my_root_dir}/outputs/${hydra.job.name}/${hydra.job.config_name}/multijob/R_${counts_prepper.downsampler_ratio}"
 runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function
