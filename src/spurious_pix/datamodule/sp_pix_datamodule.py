@@ -120,11 +120,12 @@ class SpPixDataModule(MNISTDataModule):
             idxs = torch.randperm(train_data.shape[0])
             train_data = train_data[idxs]
             train_targets = train_targets[idxs]
-            self._train = MyDataset(train_data, train_targets, self.train_transforms, None)
+            self._train = MyDataset(train_data, train_targets, None, None)
 
             # (!!) Perform spurious pixel injection on data ONLY converted to PIL int range via accessor 
             pixel_injector = PixelInjector(self._train, self._injection_map, self._intensity)
             self._train = pixel_injector.injected_ds
+            self._train = MyDataset(self._train.data, self._train.targets, self.train_transforms, None)
 
             # Create val dataset 
             (val_data, val_targets), (unused_data, unused_targets) = self._get_masked_splits(

@@ -25,7 +25,7 @@ from src.base.datamodule.components.convert_ax import convert_img_axes
 logger = logging.getLogger(__name__)
 
 class MyDataset(Dataset):
-    def __init__(self, data: torch.Tensor, targets: torch.Tensor, transforms:Compose, target_transforms: Optional[Compose]) -> None:
+    def __init__(self, data: torch.Tensor, targets: torch.Tensor, transforms:Optional[Compose], target_transforms: Optional[Compose]) -> None:
         # Do NOT use super.init(), though inherit all other aspects, else below attributes are typed in unwanted ways
         self.targets = targets
         self.data = data
@@ -45,7 +45,7 @@ class MyDataset(Dataset):
         # to return a PIL Image
         if img.ndim == 3:
             img = convert_img_axes(img, channel_first=False)
-            
+
         img = np.asarray(img)
         img = Image.fromarray(img)
 
