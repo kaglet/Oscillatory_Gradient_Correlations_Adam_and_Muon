@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Optional
+from typing import Callable, Optional, Type
 
 import torch
 import lightning as L
@@ -9,13 +9,16 @@ from torchvision import transforms
 from torch import nn
 from tqdm import tqdm
 
-__all__ = ["SimpleMNISTDataModule", "MNISTDataModule"]
+__all__ = ["MNISTDataModule"]
 
 class MNISTDataModule(L.LightningDataModule):
     # TODO: Unify the data directory from env see old template
-    def __init__(self, train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 0) -> None:
+    def __init__(self, dataset: Type[MNIST], train_transforms: Optional[Callable], val_transforms: Optional[Callable], test_transforms: Optional[Callable], data_dir: str = "./data", batch_size: int = 2048, num_workers: int = 0, persistent_workers:bool=False, download:bool=False) -> None:
         super().__init__()
+        self.download = download
         self.data_dir = data_dir
+
+        self._persistent_workers = persistent_workers
 
         self.train_transforms = train_transforms
         self.val_transforms = val_transforms
@@ -23,59 +26,38 @@ class MNISTDataModule(L.LightningDataModule):
 
         self.batch_size_per_device = batch_size
         self.num_workers = num_workers
+        self.ds = dataset
 
     def prepare_data(self)  -> None:
         # download
-        MNIST(self.data_dir, train=True, download=True)
-        MNIST(self.data_dir, train=False, download=True)
+        self.ds(self.data_dir, train=True, download=True)
+        self.ds(self.data_dir, train=False, download=True)
 
     def setup(self, stage: str)  -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            self._mnist_full = MNIST(self.data_dir, train=True, transform=self.train_transforms)
-            self.mnist_train, self.mnist_val = random_split(
-                self._mnist_full, [0.8, 0.2]
+            mnist_full = MNIST(self.data_dir, train=True, transform=self.train_transforms)
+            self._train, self._val = random_split(
+                mnist_full, [0.8, 0.2]
             )
 
         # Ensure test is never mixed up with train, val for any model, and is seen once and once only at the end
         if stage == "test":
-            self.mnist_test = MNIST(self.data_dir, train=False, transform=self.test_transforms)
+            self._test = MNIST(self.data_dir, train=False, transform=self.test_transforms)
 
         if stage == "predict":
-            self.mnist_predict = MNIST(self.data_dir, train=False, transform=self.test_transforms)
+            self._predict = MNIST(self.data_dir, train=False, transform=self.test_transforms)
 
     # Define dataloaders below. Do not need to call ourselves, Trainer uses them. 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_train, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
+        return DataLoader(self._train, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_val, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
+        return DataLoader(self._val, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_test, batch_size=self.batch_size_per_device, num_workers=self.num_workers)
+        return DataLoader(self._test, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True)
 
     def predict_dataloader(self) -> DataLoader:
-        return DataLoader(self.mnist_predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers) 
+        return DataLoader(self._predict, batch_size=self.batch_size_per_device, num_workers=self.num_workers, persistent_workers=self._persistent_workers, drop_last=True, shuffle=True) 
 
-class SimpleMNISTDataModule(L.LightningDataModule):
-
-  def setup(self, stage):
-    # transforms for images
-    transform=transforms.Compose([transforms.ToTensor(), 
-                                  transforms.Normalize((0.1307,), (0.3081,))])
-      
-    # prepare transforms standard to MNIST
-    self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
-    self.mnist_train, self.mnist_val = random_split(
-                    self.mnist_train, [0.8, 0.2]
-                )
-    self.mnist_test = MNIST(os.getcwd(), train=False, download=True, transform=transform)
-
-  def train_dataloader(self):
-    return DataLoader(self.mnist_train, batch_size=64, shuffle=True)
-
-  def val_dataloader(self):
-    return DataLoader(self.mnist_val, batch_size=64, shuffle=False)
-
-  def test_dataloader(self):
-    return DataLoader(self.mnist_val, batch_size=64, shuffle=False)

@@ -34,6 +34,7 @@ from src.class_imbalance_ratios.conf_assembly_helpers.artificial_overrides_padde
 from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.conf_assembly_helpers.group_names import shared_config_names
 from src.class_imbalance_ratios.conf_assembly_helpers.override_strings import adam_overrides, muon_overrides, autofill_exceptions
+from src.spurious_pix.datamodule.components.pixel_injection_map import PixelInjectionMap
 from src.spurious_pix.lit_module.components.simple_net import SpPixCNN
 from src.train_and_val import train_and_val
 from lightning.pytorch.loggers import TensorBoardLogger, CSVLogger
@@ -139,18 +140,7 @@ transforms_cfg = builds(
 
 labels = list(range(num_classes))
 
-train_class_counts = [4200 for _ in range(num_classes)]
-train_class_counts = [4200 for _ in range(num_classes)]
-
-train_map = {k:v for k,v in zip(labels, train_class_counts)}
-
-val_class_counts = [1800 for _ in range(num_classes)]
-val_map = {k:v for k,v in zip(labels, val_class_counts)}
-
-test_class_counts = [0 for _ in range(num_classes)]
-test_map = {k:v for k,v in zip(labels, test_class_counts)}
-
-counts_prepper_cfg = builds(CountsPrepperFromRatio, ratio_seed="${ratio_seed}", downsampler_ratio=20, train_map=train_map, val_map=val_map, test_map=test_map)
+counts_prepper_cfg = builds(PixelInjectionMap, labels=labels, width_only=IMG_WIDTH, injection_seed="${injection_seed}")
 
 runtime_experim_dir = "${my_root_dir}/outputs/${hydra.job.name}/${hydra.job.config_name}/multijob/R_${counts_prepper.downsampler_ratio}"
 runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path is relative to cwd (current working dir) set by Hydra during program run, could use an interpolated function

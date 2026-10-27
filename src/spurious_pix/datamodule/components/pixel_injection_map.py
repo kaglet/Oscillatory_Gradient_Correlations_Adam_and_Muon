@@ -3,8 +3,8 @@ import numpy as np
 import torch
 
 class PixelInjectionMap():
-    def __init__(self, labels: list[int], width_only: int, injection_site_seed: int) -> None:
-        rng = np.random.default_rng(seed=injection_site_seed)
+    def __init__(self, labels: list[int], width_only: int, injection_seed: int) -> None:
+        rng = np.random.default_rng(seed=injection_seed)
         self._injections_mapping = {}
         for lbl in labels:
             lbl = str(lbl)
