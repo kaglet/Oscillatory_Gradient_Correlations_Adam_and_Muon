@@ -22,6 +22,9 @@ class PixelInjector():
 
     """
     def __init__(self, dataset: MyDataset, injection_map: PixelInjectionMap, intensity: int) -> None:
+        """
+        Dataset must have transforms None.
+        """
         # Check class dist has all classes in map to set new counts of, else abort
         self._ds = dataset
         for lbl, loc in injection_map.injections_mapping.items():
@@ -29,9 +32,10 @@ class PixelInjector():
             class_len = len(self._ds.data[mask])
             for idx in range(class_len):
                 PIL_sample = self._ds[idx][0]
-                sample_as_tensor = pil_to_tensor(PIL_sample)
+                sample_as_tensor = pil_to_tensor(PIL_sample).squeeze()
                 # Inject pixel into tensor form of PIL of Torch Dataset
-                sample_as_tensor = self._inject_pix(PIL_sample, list(loc), intensity)
+                sample_as_tensor = self._inject_pix(sample_as_tensor, list(loc), intensity)
+                # Change original data so if dataset is reindexed PIL only transform is returned
                 self._ds.setter_bypass(idx, 0, sample_as_tensor)
 
     def _inject_pix(self, sample: Any, loc: list, intensity: int) -> Any:
