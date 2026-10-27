@@ -57,6 +57,12 @@ class MyDataset(Dataset):
 
         return img, target
 
+    def setter_bypass(self, sample_idx: int, xy_idx:int, val: Any) -> None:
+        if xy_idx == 0:
+            self.data[sample_idx] = val 
+        else:
+            raise ValueError(f"Index: {sample_idx} is not supported currently. Setter on data at idx 0 alone must be used.")
+
 if __name__ == "__main__":
     my_transforms = transforms.Compose([
         transforms.ToTensor()

@@ -30,8 +30,9 @@ class PixelInjector():
             for idx in range(class_len):
                 PIL_sample = self._ds[idx][0]
                 sample_as_tensor = pil_to_tensor(PIL_sample)
+                # Inject pixel into tensor form of PIL of Torch Dataset
                 sample_as_tensor = self._inject_pix(PIL_sample, list(loc), intensity)
-                self._ds[idx][0] = to_pil_image(sample_as_tensor)
+                self._ds.setter_bypass(idx, 0, sample_as_tensor)
 
     def _inject_pix(self, sample: Any, loc: list, intensity: int) -> Any:
         x, y = loc[0], loc[1]
