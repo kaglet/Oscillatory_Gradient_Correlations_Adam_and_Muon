@@ -43,7 +43,9 @@ class MyDataset(Dataset):
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
-        img = convert_img_axes(img, channel_first=False)
+        if img.ndim == 3:
+            img = convert_img_axes(img, channel_first=False)
+            
         img = np.asarray(img)
         img = Image.fromarray(img)
 

@@ -69,7 +69,7 @@ muon_lr_sch_pcfg = pbuilds(ConstantLR, factor=1)
 
 single_lit_module_cfg = pbuilds(DualOptLitModule)
 
-class_labels = [
+CLASS_LABELS = [
     "zero",
     "one",
     "two",
@@ -81,13 +81,13 @@ class_labels = [
     "eight",
     "nine"
 ]
-num_classes = len(class_labels)
+num_classes = len(CLASS_LABELS)
 
 cls_imb_s_module_cfg = pbuilds(
     DualOptLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = num_classes,
-    labels=class_labels
+    labels=CLASS_LABELS
 )
 
 # ---- TRAINER CONFIGS START ---- #
@@ -128,7 +128,7 @@ horizontal_flip_cfg = builds(torchvision.transforms.RandomHorizontalFlip)
 crops_cfg = builds(torchvision.transforms.RandomCrop)
 to_tensor_cfg = builds(torchvision.transforms.ToTensor)
 
-IMG_WIDTH = 32
+IMG_WIDTH = 28
 transforms_cfg = builds(
     torchvision.transforms.Compose,
     [
@@ -167,7 +167,7 @@ cls_imb_datamdl_s_cfg = builds(
     batch_size = 512, # From batch size set grad_accum to get new effective batch size
     num_workers = 3,
     metadata_dir = runtime_run_subdir,
-    labels=class_labels,
+    labels=CLASS_LABELS,
     counts_prepper=counts_prepper_cfg,
 )
 

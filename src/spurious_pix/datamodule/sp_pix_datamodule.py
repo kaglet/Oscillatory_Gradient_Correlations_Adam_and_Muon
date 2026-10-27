@@ -30,6 +30,7 @@ from src.base.datamodule.mnist_datamodule import MNISTDataModule
 from src.class_imbalance_ratios.datamodule.components.ratio_prepper import CountsPrepperFromRatio
 from src.class_imbalance_ratios.datamodule.dataset.class_imbalance_utils import ClassImbalancer, DataRenormalizer
 from src.spurious_pix.datamodule.components.pixel_injection_map import PixelInjectionMap
+from src.spurious_pix.datamodule.dataset.components.sp_pix_utils import PixelInjector
 
 __all__ = ["SpPixDataModule"]
 
@@ -42,6 +43,7 @@ class SpPixDataModule(MNISTDataModule):
         labels: list[str],
         train_transforms: transforms.Compose, val_transforms: transforms.Compose, test_transforms: transforms.Compose, 
         injection_map: PixelInjectionMap,
+        intensity:int,
         counts_prepper: CountsPrepperFromRatio,
         dataset: Type[MNIST], 
         data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
@@ -52,6 +54,8 @@ class SpPixDataModule(MNISTDataModule):
         self._injection_map = injection_map
         self._metadata_dir = metadata_dir
         self._class_labels: list[str] = labels
+
+        self._intensity = intensity
 
         self._train_counts_map = counts_prepper.train_map
         self._val_counts_map = counts_prepper.val_map 
@@ -111,11 +115,16 @@ class SpPixDataModule(MNISTDataModule):
                  targets, 
                  self._train_counts_map
             )
+
             # Randomly shuffle: Violates first idea to shuffle once, as this shuffle post mask gives variety to dataloader else targets repeat across batches somehow
             idxs = torch.randperm(train_data.shape[0])
             train_data = train_data[idxs]
             train_targets = train_targets[idxs]
             self._train = MyDataset(train_data, train_targets, self.train_transforms, None)
+
+            # (!!) Perform spurious pixel injection on data ONLY converted to PIL int range via accessor 
+            pixel_injector = PixelInjector(self._train, self._injection_map, self._intensity)
+            self._train = pixel_injector.injected_ds
 
             # Create val dataset 
             (val_data, val_targets), (unused_data, unused_targets) = self._get_masked_splits(
@@ -188,39 +197,44 @@ if __name__ == "__main__":
         ToTensor(),
     ])
 
-    class_labels = list(range(10))
+    NUM_LABELS = list(range(10))
 
-    train_class_counts = [3500 for _ in range(10)]
-    train_map = {k:v for k,v in zip(class_labels, train_class_counts)}
+    train_class_counts = [4200 for _ in range(10)]
+    train_map = {k:v for k,v in zip(NUM_LABELS, train_class_counts)}
 
-    val_class_counts = [1000 for _ in range(10)]
-    val_map = {k:v for k,v in zip(class_labels, val_class_counts)}
+    val_class_counts = [1800 for _ in range(10)]
+    val_map = {k:v for k,v in zip(NUM_LABELS, val_class_counts)}
 
-    test_class_counts = [500 for _ in range(10)]
-    test_map = {k:v for k,v in zip(class_labels, test_class_counts)}
+    test_class_counts = [0 for _ in range(10)]
+    test_map = {k:v for k,v in zip(NUM_LABELS, test_class_counts)}
 
-    labels = [
-            "airplane",
-            "automobile",
-            "bird",
-            "cat",
-            "deer",
-            "dog",
-            "frog",
-            "horse",
-            "ship",
-            "truck"
-        ]
+    CLASS_LABELS = [
+        "zero",
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine"
+    ]
+
+    DOWNSAMPLER_RATIO = 1
 
     counts_prepper = CountsPrepperFromRatio(
         ratio_seed=0,
         val_map=val_map,         
         train_map=train_map, 
         test_map=test_map, 
-        downsampler_ratio=20, 
+        downsampler_ratio=DOWNSAMPLER_RATIO, 
         slice_random=True
     )
-    
+
+    WIDTH = 28
+    pixel_injection_map = PixelInjectionMap(labels=NUM_LABELS, width_only=WIDTH, injection_seed=0)
+
     dmodule = SpPixDataModule(
         persistent_workers=True,
         num_workers=0, 
@@ -229,9 +243,12 @@ if __name__ == "__main__":
         val_transforms=base_transforms, 
         test_transforms=base_transforms,
         metadata_dir=f"{str(Path(__file__).parent)}/", 
-        labels=labels,
-        dataset=MNIST
+        labels=CLASS_LABELS,
+        dataset=MNIST, 
+        intensity=6,
+        injection_map=pixel_injection_map
     ) 
+
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
@@ -242,15 +259,15 @@ if __name__ == "__main__":
 
     i = 0
     for inputs, targets in dmodule.train_dataloader():
-        img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        img = inputs[0]
+        viz_img(torch.as_tensor(img), label=targets[0])
         i += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
 
     logging.debug("---- VAL DATALOADER NEXT --- \n")
     j = 0
     for inputs, targets in dmodule.val_dataloader():
-        img = convert_img_axes(inputs[0])
-        # viz_img(torch.as_tensor(img), label=targets[0])
+        img = inputs[0]
+        viz_img(torch.as_tensor(img), label=targets[0])
         j += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))
