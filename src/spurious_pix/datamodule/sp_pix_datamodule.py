@@ -46,7 +46,8 @@ class SpPixDataModule(MNISTDataModule):
         intensity:int,
         counts_prepper: CountsPrepperFromRatio,
         dataset: Type[MNIST], 
-        data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4,
+        data_dir: str = "./data", batch_size: int = 64, num_workers: int = 4, 
+        norm_from_train: bool =False,
     ):
         """
         """
@@ -55,6 +56,7 @@ class SpPixDataModule(MNISTDataModule):
         self._metadata_dir = metadata_dir
         self._class_labels: list[str] = labels
 
+        self._norm_from_train = norm_from_train
         self._intensity = intensity
 
         self._train_counts_map = counts_prepper.train_map
@@ -144,7 +146,8 @@ class SpPixDataModule(MNISTDataModule):
             # Train receives appended version of og transforms stored by normalizer
             self._train.transforms = train_renormer.renormed_transforms(True)
             # Train receives only norm to append to its own transform pipeline
-            self._val.transforms = transforms.Compose((self.val_transforms, train_renormer.norm_only))
+            if self._norm_from_train:
+                self._val.transforms = transforms.Compose((self.val_transforms, train_renormer.norm_only))
 
             # Store metadata for train counts map
             train_desired_labels = {k:v for k,v in zip(self.class_labels, self._train_counts_map.values())}
@@ -264,23 +267,25 @@ if __name__ == "__main__":
     i = 0
     for inputs, targets in dmodule.train_dataloader():
         img = inputs[0]
-        img = torch.as_tensor(img)
-        viz_img(img, label=targets[0])
+
         target = targets[0]
         target = str(int(target))
         x,y = pixel_injection_map.injections_mapping[target] 
-        if img[x, y] != intensity:
-            raise ValueError(f"Image value {img[x, y]} at {x,y} is not expected {intensity}")
+        if img[0, x, y] != (intensity):
+            raise ValueError(f"Image value {img[0, x, y]} at {0, x,y} is not expected {intensity}")
+
+        img = torch.as_tensor(img)
+        viz_img(img, label=int(target))
 
         i += 1
         logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets.detach().clone().cpu()))))
 
-    logging.debug("---- VAL DATALOADER NEXT --- \n")
-    j = 0
-    for inputs, targets in dmodule.val_dataloader():
-        img = inputs[0]
-        img = torch.as_tensor(img)
+    # logging.debug("---- VAL DATALOADER NEXT --- \n")
+    # j = 0
+    # for inputs, targets in dmodule.val_dataloader():
+    #     img = inputs[0]
+    #     img = torch.as_tensor(img)
 
-        viz_img(img, label=targets[0])
-        j += 1
-        logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets.detach().clone().cpu()))))
+    #     viz_img(img, label=targets[0])
+    #     j += 1
+    #     logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets.detach().clone().cpu()))))
