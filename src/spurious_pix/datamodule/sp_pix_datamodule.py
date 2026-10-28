@@ -141,12 +141,12 @@ class SpPixDataModule(MNISTDataModule):
             val_targets = val_targets[idxs]
             self._val = MyDataset(val_data, val_targets, self.val_transforms, None)
 
-            # Apply custom normalization from train distribution
-            train_renormer = DataRenormalizer(self._train)
-            # Train receives appended version of og transforms stored by normalizer
-            self._train.transforms = train_renormer.renormed_transforms(True)
-            # Train receives only norm to append to its own transform pipeline
             if self._norm_from_train:
+                # Apply custom normalization from train distribution
+                train_renormer = DataRenormalizer(self._train)
+                # Train receives appended version of og transforms stored by normalizer
+                self._train.transforms = train_renormer.renormed_transforms(True)
+                # Train receives only norm to append to its own transform pipeline
                 self._val.transforms = transforms.Compose((self.val_transforms, train_renormer.norm_only))
 
             # Store metadata for train counts map
@@ -271,7 +271,7 @@ if __name__ == "__main__":
         target = targets[0]
         target = str(int(target))
         x,y = pixel_injection_map.injections_mapping[target] 
-        if img[0, x, y] != (intensity):
+        if img[0, x, y] != (intensity/255):
             raise ValueError(f"Image value {img[0, x, y]} at {0, x,y} is not expected {intensity}")
 
         img = torch.as_tensor(img)

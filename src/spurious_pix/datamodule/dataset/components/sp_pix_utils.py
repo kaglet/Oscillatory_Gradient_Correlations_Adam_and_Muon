@@ -28,20 +28,21 @@ class PixelInjector():
         # Check class dist has all classes in map to set new counts of, else abort
         self._ds = dataset
         for lbl, loc in injection_map.injections_mapping.items():
-            mask = self._ds.targets == int(lbl)
-            class_len = len(self._ds.data[mask])
-            for idx in range(class_len):
+            class_member_idxs = np.where(self._ds.targets == int(lbl)) 
+            class_len = len(self._ds.data[class_member_idxs])
+            class_data = self._ds.data[class_member_idxs]
+            for idx in np.nditer(class_member_idxs):
                 PIL_sample = self._ds[idx][0]
                 sample_as_tensor = pil_to_tensor(PIL_sample).squeeze() # Keep native tensor shape 28 x 28 (PIL is 1 x 28 x 28)
                 # Inject pixel into tensor form of PIL of Torch Dataset
                 sample_as_tensor = self._inject_pix(sample_as_tensor, list(loc), intensity)
                 # Change original data so if dataset is reindexed PIL only transform is returned
-                self._ds.setter_bypass(idx, 0, sample_as_tensor)
+                self._ds.setter_bypass(int(idx), 0, sample_as_tensor) # type: ignore
 
     def _inject_pix(self, sample: Any, loc: list, intensity: int) -> Any:
         x, y = loc[0], loc[1]
         sample[x,y] = intensity
-        return sample[x,y]
+        return sample
 
     @property
     def injected_ds(self):
