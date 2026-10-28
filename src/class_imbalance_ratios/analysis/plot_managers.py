@@ -8,38 +8,38 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import gc
 import matplotlib as mpl
+import matplotlib.ticker as ticker
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class LonePlotOptions():
-    def __init__(self, prefix:str, x_label: str, y_label:str, lone_title: str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
-        self.title: str = lone_title
+    def __init__(self, train_split: str, version:str, x_label: str, y_label:str, final_fig_name: str, mode: str, optim_name:str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
         self.title_y_offset = title_y_offset
         self.fontsize = font_size
         self.dpi = dpi
         self._base_size: int = base_size
-        self.y_label = y_label
-        self.x_label = x_label
-        self.prefix = prefix
+        self.names = dict(train_split=train_split, x_label = x_label, y_label = y_label, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, version=version)
 
 class GridPlotOptions(LonePlotOptions):
-    def __init__(self, prefix:str, x_label:str, y_label:str, grid_cols_num: int, grid_title: str, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
-        super().__init__(prefix=prefix, x_label=x_label, y_label=y_label,lone_title=grid_title, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
+    def __init__(self, train_split:str, version:str, final_fig_name: str, mode: str, optim_name:str, x_label:str, y_label:str, grid_cols_num: int, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
+        super().__init__(train_split=train_split, version=version, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, x_label=x_label, y_label=y_label, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
 class LonePlotManager():
-    def __init__(self, metric_df: pd.DataFrame, plt_options: LonePlotOptions, version:str) -> None:
+    def __init__(self, metric_df: pd.DataFrame, plt_options: LonePlotOptions) -> None:
         self._metric_df = metric_df
         self._plot_options = plt_options
         self._lone_figax = self._create_lone_figax()
-        self.version = version
 
     def _create_lone_figax(self) -> Tuple[Figure, Axes]:
         fig = Figure(figsize = ((self._plot_options._base_size + 7), (self._plot_options._base_size + 7)))
         ax = fig.subplots(1, 1, sharex=True, sharey=True)
         # The cycle does Muon (2 [line] plots) then Adam (2 plots), we have made proficiency for up to 8 lines on a plot at once
-        ax.set_prop_cycle(color=['#CC79A7', '#E69F00', '#0072B2', '#56B4E9', '#CC79A7', '#E69F00', '#0072B2', '#56B4E9'], marker=['o', '.', 'o', '.', 'D', 's', 'D', 's'], markersize=[7] * 8, linewidth=[4] * 8)
+        ax.set_prop_cycle(color=['#CC79A7', '#E69F00', '#0072B2', '#56B4E9', '#CC79A7', '#E69F00', '#0072B2', '#56B4E9'], marker=['o', '.', 'o', '.', 'D', 's', 'D', 's'], markersize=[5] * 8, linewidth=[3] * 8)
         ax.tick_params(axis='both', labelsize='large')
+        n = 5
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(n))
+        # ax.yaxis.set_major_locator(ticker.FixedLocator([0]))
         
         figax = fig, ax
         return figax
@@ -60,16 +60,17 @@ class LonePlotManager():
         Optionally save figure (Recommended) per viz. 
         """
         fig, ax = self.lone_figax
-        focal_prefix = self._plot_options.title.capitalize()
-        fig.suptitle(f'{focal_prefix}', fontsize="xx-large", y=0.92)
+        title = self._plot_options.names["mode"]  + " " + self._plot_options.names["final_fig_name"] + " " + self._plot_options.names["x_label"]
+        fig.suptitle(f'{title}', fontsize="xx-large", y=0.92)
 
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=f'{self._plot_options.prefix} {col}')
-            ax.legend(fontsize='medium', bbox_to_anchor=(1.05, 1.0))
-            ax.grid(axis='x', color='gray', linestyle=':', linewidth=1, alpha=0.5)
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=f'{self._plot_options.names["optim_name"]} {self._plot_options.names["train_split"]} {col.upper()}')
+            ax.legend(fontsize='medium')
+        
+        ax.grid(axis='both', color='gray', linestyle='--', linewidth=1, alpha=0.65, which="major")
 
-        ax.set_ylabel(self._plot_options.y_label.capitalize(), fontsize='x-large')
-        ax.set_xlabel(self._plot_options.x_label.capitalize(), fontsize='x-large')
+        ax.set_ylabel(self._plot_options.names["y_label"].upper(), fontsize='x-large')
+        ax.set_xlabel(self._plot_options.names["x_label"].upper(), fontsize='x-large')
 
         return fig, ax
 
@@ -107,9 +108,14 @@ class GridPlotsmanager():
         )
         fig.subplots_adjust(top=0.90)
 
+
         for grid_row in range(self._grid_rows_num):
             for grid_col in range(self._plot_options.grid_cols_num):
-                axs[grid_row, grid_col].set_prop_cycle(color=['#CC79A7', '#0072B2'], marker=['o', 'o'], markersize=[3] * 2, linestyle=['-']*2, linewidth=[1.5]*2)
+                ax = axs[grid_row, grid_col]
+                ax.set_prop_cycle(color=['#CC79A7', '#0072B2'], marker=['o', 'o'], markersize=[3] * 2, linestyle=['-']*2, linewidth=[1.5]*2)
+                n = 5
+                # ax.xaxis.set_major_locator(ticker.MultipleLocator(n))
+                # ax.yaxis.set_major_locator(ticker.FixedLocator([0]))
 
         figaxes = fig, axs
         return figaxes
@@ -120,9 +126,9 @@ class GridPlotsmanager():
         """
         # figsize is (w,h) as spec
         fig, axs = self.grid_figaxs
-        focal_prefix = self._plot_options.title.capitalize()
+        title = self._plot_options.names["mode"]  + " " + self._plot_options.names["final_fig_name"] + " " + self._plot_options.names["x_label"]
 
-        fig.suptitle(f'{focal_prefix}', fontsize="xx-large", y=0.92)
+        fig.suptitle(f'{title}', fontsize="xx-large", y=0.92)
 
         cols_limit_counter = 0
         for grid_col in range(self._plot_options.grid_cols_num):
@@ -136,15 +142,16 @@ class GridPlotsmanager():
                 cols_limit_counter += 1
 
                 ax = axs[grid_row, grid_col]
+                
                 ax.tick_params(axis='both', which='both', labelbottom=True, labelleft=True, labelsize='x-small')
 
-                ax.set_ylabel(self._plot_options.y_label.capitalize(), fontsize='medium') 
-                ax.set_xlabel(self._plot_options.x_label.capitalize(), fontsize='medium')           
-                ax.set_title(f"{col.capitalize()}", fontsize='large')
-                ax.grid(axis='x', color='gray', linestyle=':', linewidth=1, alpha=0.5)
+                ax.set_ylabel(self._plot_options.names["y_label"].upper(), fontsize='medium') 
+                ax.set_xlabel(self._plot_options.names["x_label"].upper(), fontsize='medium')           
+                ax.set_title(f"{col.upper()}", fontsize='large')
 
-                line, = ax.plot(index_vals, col_vals, label=f'{self._plot_options.prefix} {col}')
+                line, = ax.plot(index_vals, col_vals, label=f'{self._plot_options.names["optim_name"]}')
 
+                ax.grid(axis='both', color='gray', linestyle='--', linewidth=1, alpha=0.65, which="major")
                 ax.legend(fontsize='x-small')
 
         # fig.show()

@@ -42,10 +42,10 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                     prefix_down = prefix_down + "subgroup_epochs "
 
                 last_underscore = str(path.stem).rfind("_")
-                version = str(v_dir.stem).lower()
-                extra_name_full = str(path.stem).lower()[last_underscore: ] 
+                version = str(v_dir.stem).upper()
+                extra_name_full = str(path.stem).upper()[last_underscore: ] 
                 prefix_down = prefix_down + extra_name_full
-                prefix_down = prefix_down.replace("-", " ").replace("_", " ").capitalize()
+                prefix_down = prefix_down.replace("-", " ").replace("_", " ").upper()
 
                 x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps"
                 y_label = "Unknown"
@@ -58,15 +58,24 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 else:
                     y_label = "Cosine Similarity"
 
-                optimizer_name = optimizer_name.capitalize()
-                mode = mode.capitalize()
-                final_fig_name=final_fig_name.capitalize()
-                options = LonePlotOptions(base_size=8, x_label=x_label, y_label=y_label, lone_title= optimizer_name + " " + mode + final_fig_name, prefix=prefix_down)
+                if "train" in path.stem:
+                    train_split = "train"
+                elif "val" in path.stem: 
+                    train_split = "val"
+                else: 
+                    train_split = ""
+                
+                train_split = train_split.upper()
+
+                optimizer_name = optimizer_name.upper()
+                mode = mode.upper()
+                final_fig_name=final_fig_name.upper()
+                options = LonePlotOptions(version=version, train_split=train_split, final_fig_name=final_fig_name, mode=mode, optim_name=optimizer_name, base_size=8, x_label=x_label, y_label=y_label)
                 assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
                 metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
 
-                plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
+                plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
                 if not start_overwrite_figaxs and figax_store[i] is None:
                     figax_store[i] = plots_manager # For runs in info they transfer on the same figax
@@ -81,7 +90,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         assert type(mngr) is LonePlotManager, ""
 
         fig, ax = mngr.viz_cols_in_one()
-        save_dir = f"{str(outputs_dir.resolve())}/report/{mode}/{mngr.version}/"
+        save_dir = f"{str(outputs_dir.resolve())}/report/{mode}/{mngr._plot_options.names["version"]}/"
         os.makedirs(save_dir, exist_ok=True)
         # Directory path should ensure required uniqueness settings 
         fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
@@ -115,8 +124,8 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
                 optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
 
-                prefix_down = optimizer_name.capitalize()
-                prefix_down = prefix_down.replace("-", " ").replace("_", " ").capitalize()
+                prefix_down = optimizer_name.upper()
+                prefix_down = prefix_down.replace("-", " ").replace("_", " ").upper()
 
                 metric_df = pd.read_parquet(path)
                 # TODO: Have plot options passed in immediately later on if needed, no need to extract it so heavily, do like fig name
@@ -131,7 +140,21 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 else:
                     y_label = "Cosine Similarity"
 
-                options = GridPlotOptions(x_label=x_label, y_label=y_label, grid_title= optimizer_name + " " + mode + " " + final_fig_name, grid_cols_num=5, prefix=prefix_down)
+                if "train" in path.stem:
+                    train_split = "train"
+                elif "val" in path.stem: 
+                    train_split = "val"
+                else: 
+                    train_split = ""
+                    
+                train_split = train_split.upper()
+
+                version = str(v_dir.stem).upper()
+                optimizer_name = optimizer_name.upper()
+                mode = mode.upper()
+                final_fig_name=final_fig_name.upper()
+
+                options = GridPlotOptions(version=version, train_split=train_split, final_fig_name=final_fig_name, mode=mode, optim_name=optimizer_name, x_label=x_label, y_label=y_label, grid_cols_num=5)
                 assert type(options) is GridPlotOptions
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
