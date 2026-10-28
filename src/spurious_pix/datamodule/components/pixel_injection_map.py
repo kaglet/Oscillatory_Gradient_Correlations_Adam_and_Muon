@@ -9,10 +9,10 @@ class PixelInjectionMap():
         for lbl in labels:
             lbl = str(lbl)
             injection_site = rng.choice(np.arange(width_only), size=2, replace=False)
-            self._injections_mapping[lbl] = injection_site
+            self._injections_mapping[lbl] = list(injection_site)
 
     @property
-    def injections_mapping(self):
+    def injections_mapping(self) -> dict[str, list[int]]:
         return self._injections_mapping
 
 if __name__ == "__main__":

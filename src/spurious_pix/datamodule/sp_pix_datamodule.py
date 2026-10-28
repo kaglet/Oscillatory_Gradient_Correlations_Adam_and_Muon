@@ -236,8 +236,9 @@ if __name__ == "__main__":
     WIDTH = 28
     pixel_injection_map = PixelInjectionMap(labels=NUM_LABELS, width_only=WIDTH, injection_seed=0)
 
+    intensity = 6
     dmodule = SpPixDataModule(
-        persistent_workers=True,
+        persistent_workers=False,
         num_workers=0, 
         counts_prepper=counts_prepper,    
         train_transforms=base_transforms, 
@@ -246,13 +247,15 @@ if __name__ == "__main__":
         metadata_dir=f"{str(Path(__file__).parent)}/", 
         labels=CLASS_LABELS,
         dataset=MNIST, 
-        intensity=6,
+        intensity=intensity,
         injection_map=pixel_injection_map
     ) 
 
     dmodule.prepare_data()
     dmodule.setup("fit")
     print(f"Train dataloader length: {len(dmodule.train_dataloader())}")
+
+    os.makedirs(Path(__file__).parent / "logs", exist_ok=True)
     log_file = Path(__file__).parent / "logs/cls_imb_logs.log"
     logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
@@ -261,14 +264,23 @@ if __name__ == "__main__":
     i = 0
     for inputs, targets in dmodule.train_dataloader():
         img = inputs[0]
-        viz_img(torch.as_tensor(img), label=targets[0])
+        img = torch.as_tensor(img)
+        viz_img(img, label=targets[0])
+        target = targets[0]
+        target = str(int(target))
+        x,y = pixel_injection_map.injections_mapping[target] 
+        if img[x, y] != intensity:
+            raise ValueError(f"Image value {img[x, y]} at {x,y} is not expected {intensity}")
+
         i += 1
-        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets).detach().clone())))
+        logging.debug("Batch {}\n :: Unique Targets {}".format(i, list(torch.unique(targets.detach().clone().cpu()))))
 
     logging.debug("---- VAL DATALOADER NEXT --- \n")
     j = 0
     for inputs, targets in dmodule.val_dataloader():
         img = inputs[0]
-        viz_img(torch.as_tensor(img), label=targets[0])
+        img = torch.as_tensor(img)
+
+        viz_img(img, label=targets[0])
         j += 1
-        logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets).detach().clone())))
+        logging.debug("Batch {}\n :: Unique Targets {}".format(j, list(torch.unique(targets.detach().clone().cpu()))))

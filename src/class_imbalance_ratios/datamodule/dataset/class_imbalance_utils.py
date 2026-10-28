@@ -114,11 +114,14 @@ class DataRenormalizer():
         """
         Assumes image data.
         """
-        pix_sum = np.zeros(shape=(3,))
-        pix_sum_sq = np.zeros_like(pix_sum)
-        # Access the *transformed* image via getter method
         img_tensor = data[0][0]
         assert type(img_tensor) is torch.Tensor, "Image must minimally be of type tensor"
+
+        num_channels = img_tensor.shape[0]
+        pix_sum = np.zeros(shape=(num_channels,))
+        pix_sum_sq = np.zeros_like(pix_sum)
+        # Access the *transformed* image via getter method
+        
         img_dim = img_tensor.shape
         img_pix_count: int = img_dim[1] * img_dim[2]
         num_img = len(data)
