@@ -13,6 +13,17 @@ relative_root_raw = str(Path(__file__).parent.parent.parent.parent)
 chpc_root_raw = "/mnt/lustre/users/kmotlhabane/Oscillatory_Gradient_Correlations_Adam_and_Muon"
 my_root_dir = "my_root_dir"
 
+# TODO: Unify override strings for large with the small case starting with these constants
+SMALL_TRAIN_BATCH = 2
+SMALL_MAX_EPOCHS = 2
+SMALL_NUM_WORKERS = 0
+SMALL_PERSISTENT_WORKERS = False
+SMALL_LIMIT_TRAIN_BATCHES = 5
+SMALL_LIMIT_VAL_BATCHES = 3
+
+NO_LIMIT_TRAIN_BATCHES = "null" #Omega Conf recognised keyword, like False/True, NOT "None"
+NO_LIMIT_VAL_BATCHES = "null"
+
 adam_overrides = {
     f"++{run_idx}": "0",
     f"++{seed}": "0",
@@ -40,12 +51,12 @@ adam_overrides = {
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1], # Part of map blueprint given
     
-    # f"++{group_names.trainer}.limit_train_batches": 2048,
-    # f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 50,
+    f"++{group_names.trainer}.limit_train_batches": SMALL_LIMIT_TRAIN_BATCHES,
+    f"++{group_names.trainer}.limit_val_batches": SMALL_LIMIT_VAL_BATCHES,
+    f"++{group_names.trainer}.max_epochs": SMALL_MAX_EPOCHS,
 
-    f"++{group_names.datamodule}.num_workers": 8, 
-    f"++{group_names.datamodule}.persistent_workers": "True", 
+    f"++{group_names.datamodule}.num_workers": SMALL_NUM_WORKERS,
+    f"++{group_names.datamodule}.persistent_workers": SMALL_PERSISTENT_WORKERS, 
 }
 
 muon_overrides = {
@@ -75,12 +86,12 @@ muon_overrides = {
     
     f"{cfg_key_downsampler}": [20, 10, 5, 1],
 
-    # f"++{group_names.trainer}.limit_train_batches": 2048,
-    # f"++{group_names.trainer}.limit_val_batches": 2048,
-    f"++{group_names.trainer}.max_epochs": 50,
+    f"++{group_names.trainer}.limit_train_batches": SMALL_LIMIT_TRAIN_BATCHES,
+    f"++{group_names.trainer}.limit_val_batches": SMALL_LIMIT_VAL_BATCHES,
+    f"++{group_names.trainer}.max_epochs": SMALL_MAX_EPOCHS,
 
-    f"++{group_names.datamodule}.num_workers": 8, 
-    f"++{group_names.datamodule}.persistent_workers": "True", 
+    f"++{group_names.datamodule}.num_workers": SMALL_NUM_WORKERS,
+    f"++{group_names.datamodule}.persistent_workers": SMALL_PERSISTENT_WORKERS, 
 }
 
 if __name__ == "__main__":

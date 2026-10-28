@@ -90,7 +90,7 @@ class_labels = [
 ]
 
 cls_imb_l_module_cfg = pbuilds(
-    ClsImbLargeDM,
+    ClsImbLargeLitModule,
     grad_accum_schedule = grad_accum_schedule_cfg,
     num_classes = cls_imb_l_num_classes,
     labels=class_labels
@@ -166,7 +166,7 @@ runtime_run_subdir = "${hydra:runtime.output_dir}/run_${run_idx}/" # This path i
 data_dir = "${my_root_dir}/data/"
 # print("data_dir set to: ", data_dir)
 cls_imb_datamdl_l_cfg = builds(
-    ClsImbDataModule, 
+    ClsImbLargeDM, 
     persistent_workers=True,
     data_dir = data_dir,
     train_transforms = cls_imb_l_transforms,
