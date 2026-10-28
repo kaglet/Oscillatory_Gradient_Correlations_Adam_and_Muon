@@ -65,6 +65,9 @@ class LonePlotManager():
 
         for col in self._metric_df.columns:
             line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=f'{self._plot_options.names["optim_name"]} {self._plot_options.names["train_split"]} {col.upper()}')
+            if "Original Columns Avg - " in col:
+                col = "Average" + " " + self._plot_options.names["optim_name"]  +  " " + col.replace("Original Columns Avg - ", "").replace("-", " ")
+            line.set_label(col.upper())
             ax.legend(fontsize='medium')
         
         ax.grid(axis='both', color='gray', linestyle='--', linewidth=1, alpha=0.65, which="major")

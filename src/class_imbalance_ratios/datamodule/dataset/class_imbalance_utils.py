@@ -93,6 +93,7 @@ class DataRenormalizer():
         pix_sum_sq = np.zeros_like(pix_sum)
         # Access the *transformed* image via getter method
         img_tensor = data[0][0]
+        img_tensor = img_tensor.unsqueeze(0) if img_tensor.ndim == 2 else img_tensor
         assert type(img_tensor) is torch.Tensor, "Image must minimally be of type tensor"
         img_dim = img_tensor.shape
         img_pix_count: int = img_dim[1] * img_dim[2]
@@ -133,7 +134,7 @@ class DataRenormalizer():
 
         return global_mean, global_std
 
-    def renormed_transforms(self, output_new: bool) -> transforms.Compose:
+    def renormed_transforms(self, output_new: bool) -> transforms.Compose | None:
         new_transforms = self._og_transforms
         if output_new:
             normalize = transforms.Normalize(

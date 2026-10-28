@@ -41,13 +41,13 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 elif "subgroup_epochs" in str(path.stem).lower():
                     prefix_down = prefix_down + "subgroup_epochs "
 
-                last_underscore = str(path.stem).rfind("_")
+                last_underscore = str(path.stem).rfind("_") + 1
                 version = str(v_dir.stem).upper()
-                extra_name_full = str(path.stem).upper()[last_underscore: ] 
+                extra_name_full = str(path.stem).upper()[last_underscore: ].replace("-", " ").replace("_", " ")
                 prefix_down = prefix_down + extra_name_full
-                prefix_down = prefix_down.replace("-", " ").replace("_", " ").upper()
+                prefix_down = prefix_down
 
-                x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps"
+                x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps" # Default is steps assuming no aggregation
                 y_label = "Unknown"
                 if "accuracy" in path.stem.lower():
                     y_label = "Accuracy" 
@@ -58,12 +58,12 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 else:
                     y_label = "Cosine Similarity"
 
-                if "train" in path.stem:
+                if "train" in path.stem.lower():
                     train_split = "train"
-                elif "val" in path.stem: 
+                elif "val" in path.stem.lower(): 
                     train_split = "val"
                 else: 
-                    train_split = ""
+                    train_split = "train"
                 
                 train_split = train_split.upper()
 
@@ -73,7 +73,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 options = LonePlotOptions(version=version, train_split=train_split, final_fig_name=final_fig_name, mode=mode, optim_name=optimizer_name, base_size=8, x_label=x_label, y_label=y_label)
                 assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
-                metric_df.rename(columns={"Filler":prefix_down}, inplace=True)
+                metric_df.rename(columns={"Filler":extra_name_full}, inplace=True)
 
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
@@ -196,7 +196,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Per Layer Dot Product (Grid)"
+            final_fig_name="Muon and Adam Per Layer Dot Product"
         ) 
 
         # Unnormed Col reduction per step (per OPTIM step)
@@ -227,7 +227,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Per Layer Cosine Similarity (Grid)"
+            final_fig_name="Muon and Adam Per Layer Cosine Similarity"
         ) 
 
         # Normed Col reduction per step (per OPTIM step)
@@ -261,7 +261,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class Across Epochs)"
+            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class)"
         ) 
         
         # Col reduction per epoch
@@ -279,7 +279,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Epoch Global Average)"
+            final_fig_name="Muon and Adam Train and Validation Accuracy (Global)"
         ) 
 
         # Subgroups per epoch

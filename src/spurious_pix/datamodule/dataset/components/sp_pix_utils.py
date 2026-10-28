@@ -32,7 +32,7 @@ class PixelInjector():
             class_len = len(self._ds.data[mask])
             for idx in range(class_len):
                 PIL_sample = self._ds[idx][0]
-                sample_as_tensor = pil_to_tensor(PIL_sample).squeeze()
+                sample_as_tensor = pil_to_tensor(PIL_sample).squeeze() # Keep native tensor shape 28 x 28 (PIL is 1 x 28 x 28)
                 # Inject pixel into tensor form of PIL of Torch Dataset
                 sample_as_tensor = self._inject_pix(sample_as_tensor, list(loc), intensity)
                 # Change original data so if dataset is reindexed PIL only transform is returned
