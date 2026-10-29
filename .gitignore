@@ -152,6 +152,7 @@ archived/
 MNIST/
 *.ckpt
 *.png 
+*.parquet
 # Lightning-Hydra-Template
 configs/local/default.yaml
 /data/
