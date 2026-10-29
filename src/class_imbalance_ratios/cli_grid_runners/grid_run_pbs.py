@@ -49,10 +49,10 @@ def run_pbs_many(root_dir: Path, run_interval: list[int], slice_interval: list[i
             while optim_idx < num_optims:
                 injected_run: int = run_interval[run]
                 injected_slice: int = slice_interval[slice]
-
-                print(f"Generating and submitting job for run={injected_run}, slice={injected_slice}")
-
                 optim_name = OPTIM_NAMES[optim_idx]
+
+                print(f"Generating and submitting job for {optim_name} run={injected_run}, slice={injected_slice}")
+
                 with open(root_dir.resolve() / f"run_{optim_name}.pbs", "r") as f:
                     template_content = f.read()
 
