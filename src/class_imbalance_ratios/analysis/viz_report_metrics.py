@@ -2,11 +2,60 @@ import os
 from pathlib import Path
 from typing import Any
 
+from types import SimpleNamespace
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import pandas as pd
 from src.class_imbalance_ratios.analysis.needed_paths import cls_imb_s_outputs_dir, cls_imb_l_outputs_dir
 from src.class_imbalance_ratios.analysis.plot_managers import GridPlotOptions, GridPlotsmanager, LonePlotOptions, LonePlotManager
+
+def get_mix_match_names(mode: str, final_fig_name: str, experim_dir: Path, path: Path, v_dir: Path) -> SimpleNamespace:
+    optimizer_name = "Muon" if "muon" in str(experim_dir).lower() else "Adam"
+
+    last_underscore = str(path.stem).rfind("_") + 1
+    version = str(v_dir.stem).upper()
+    metric_name = str(path.stem).upper()[last_underscore: ].replace("-", " ").replace("_", " ")
+
+    x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps" # Default is steps assuming no aggregation
+    y_label = "Unknown"
+    if "accuracy" in path.stem.lower():
+        y_label = "Accuracy" 
+    elif "loss" in path.stem.lower():
+        y_label = "Loss" 
+    elif "unnormalised" in path.stem.lower():
+        y_label = "Dot Product"
+    else:
+        y_label = "Cosine Similarity"
+
+    if "train" in path.stem.lower():
+        train_split = "train"
+    elif "val" in path.stem.lower(): 
+        train_split = "val"
+    else: 
+        train_split = "train"
+    
+    train_split = train_split.upper()
+
+    optimizer_name = optimizer_name.upper()
+    mode = mode.upper()
+    final_fig_name=final_fig_name.upper()
+    x_label = x_label.upper()
+    y_label = y_label.upper()
+    mix_match_names = SimpleNamespace(mode=mode, unique_cols=use_unique_col_names(path), version=version, metric_name=metric_name, x_label = x_label, y_label = y_label, final_fig_name=final_fig_name, optimizer_name=optimizer_name, train_split=train_split)
+
+    return mix_match_names
+
+def use_unique_col_names(path: Path) -> bool:
+    unique_cols = False
+    if "accuracy" in path.stem.lower():
+        if "subgroup_steps" in str(path.stem).lower(): # subgroup cases first
+            unique_cols = True
+        elif "subgroup_epochs" in str(path.stem).lower():
+            unique_cols = True
+        elif "epochs" in path.stem.lower(): # fine grained per epoch case, no subgroups detected
+            unique_cols = True 
+
+    return unique_cols
 
 def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
     """ 
@@ -19,7 +68,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         version_dirs = sorted(experim_dir.glob(version_dir))
         
         for i, v_dir in enumerate(version_dirs):
-            print(f"v_dir: {v_dir.stem} matched to idx: {i}")
+            # print(f"v_dir: {v_dir.stem} matched to idx: {i}")
             # Better for figax_store to have a fixed length based of versions
             # Then index into that when repeating diff experiments
             start_overwrite_figaxs = len(figax_store) == len(version_dirs)
@@ -27,53 +76,17 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 figax_store.append(None)
 
             for info in run_paths_info:
-                prefix_down = ""
                 path = sorted(v_dir.rglob(info["relative_path"], case_sensitive=False))[0]
                 if not Path(path).exists():
                     raise LookupError(f"Path to requested metric: {path} does not exit.")
-                
-                # While still having access to v_dir with the relative path...
-                # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
-                optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
-                prefix_down = optimizer_name
-                if "subgroup_steps" in str(path.stem).lower():
-                    prefix_down = prefix_down + "subgroup_steps "
-                elif "subgroup_epochs" in str(path.stem).lower():
-                    prefix_down = prefix_down + "subgroup_epochs "
 
-                last_underscore = str(path.stem).rfind("_") + 1
-                version = str(v_dir.stem).upper()
-                extra_name_full = str(path.stem).upper()[last_underscore: ].replace("-", " ").replace("_", " ")
-                prefix_down = prefix_down + extra_name_full
-                prefix_down = prefix_down
-
-                x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps" # Default is steps assuming no aggregation
-                y_label = "Unknown"
-                if "accuracy" in path.stem.lower():
-                    y_label = "Accuracy" 
-                elif "loss" in path.stem.lower():
-                    y_label = "Loss" 
-                elif "unnormalised" in path.stem.lower():
-                    y_label = "Dot Product"
-                else:
-                    y_label = "Cosine Similarity"
-
-                if "train" in path.stem.lower():
-                    train_split = "train"
-                elif "val" in path.stem.lower(): 
-                    train_split = "val"
-                else: 
-                    train_split = "train"
-                
-                train_split = train_split.upper()
-
-                optimizer_name = optimizer_name.upper()
-                mode = mode.upper()
-                final_fig_name=final_fig_name.upper()
-                options = LonePlotOptions(version=version, train_split=train_split, final_fig_name=final_fig_name, mode=mode, optim_name=optimizer_name, base_size=8, x_label=x_label, y_label=y_label)
-                assert type(options) is LonePlotOptions
                 metric_df = pd.read_parquet(path)
-                metric_df.rename(columns={"Filler":extra_name_full}, inplace=True)
+
+                names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
+                metric_df.rename(columns={"Filler":names.metric_name}, inplace=True)
+
+                options = LonePlotOptions(use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label)
+                assert type(options) is LonePlotOptions
 
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
 
@@ -107,54 +120,21 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         for i, v_dir in enumerate(version_dirs):
             # Better for figax_store to have a fixed length based of versions
             # Then index into that when repeating diff experiments
-            print(f"v_dir: {v_dir.stem} matched to idx: {i}")
+            # print(f"v_dir: {v_dir.stem} matched to idx: {i}")
             start_overwrite_figaxs = len(figaxs_store) == len(version_dirs)
             if not start_overwrite_figaxs:
                 figaxs_store.append(None)
 
             for info in run_paths_info:
-                prefix_down = ""
                 path = sorted(v_dir.rglob(info["relative_path"], case_sensitive=False))[0]
                 if not Path(path).exists():
                     raise LookupError(f"Path to requested metric: {path} does not exit.")
-                
-                last_underscore = str(path.stem).rfind("_")
-                first_hyphen = str(path.stem).find("-")
-                # While still having access to v_dir with the relative path...
-                # Get {Train | Validation}-{Accuracy | Loss} OR {Norm | Unnorm}-GC
-                optimizer_name = "Muon " if "muon" in str(experim_dir).lower() else "Adam "
-
-                prefix_down = optimizer_name.upper()
-                prefix_down = prefix_down.replace("-", " ").replace("_", " ").upper()
 
                 metric_df = pd.read_parquet(path)
-                # TODO: Have plot options passed in immediately later on if needed, no need to extract it so heavily, do like fig name
-                x_label = "Epochs" if "epochs" in path.stem.lower() else "Steps"
-                y_label = "Unknown"
-                if "accuracy" in path.stem.lower():
-                    y_label = "Accuracy" 
-                elif "loss" in path.stem.lower():
-                    y_label = "Loss" 
-                elif "unnormalised" in path.stem.lower():
-                    y_label = "Dot Product"
-                else:
-                    y_label = "Cosine Similarity"
 
-                if "train" in path.stem:
-                    train_split = "train"
-                elif "val" in path.stem: 
-                    train_split = "val"
-                else: 
-                    train_split = ""
-                    
-                train_split = train_split.upper()
+                names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
 
-                version = str(v_dir.stem).upper()
-                optimizer_name = optimizer_name.upper()
-                mode = mode.upper()
-                final_fig_name=final_fig_name.upper()
-
-                options = GridPlotOptions(version=version, train_split=train_split, final_fig_name=final_fig_name, mode=mode, optim_name=optimizer_name, x_label=x_label, y_label=y_label, grid_cols_num=5)
+                options = GridPlotOptions(use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label, grid_cols_num=5)
                 assert type(options) is GridPlotOptions
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
@@ -180,8 +160,8 @@ def viz_over_dir(dir_path: Path):
     """ 
     Visualize non-core metrics that were created. 
     """
-    modes = ["mean", "std"]
-    for mode in modes: 
+    MODES = ["mean", "std"]
+    for mode in MODES: 
         # TODO: Do this again but for STD not mean (replace or do loop for modes (easiest))
         print("=========== VIZ UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
         # Unnormed Per col per step (per OPTIM step)
@@ -211,7 +191,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Dot Product Comparison"
+            final_fig_name="Muon and Adam Dot Product"
         ) 
 
         print("=========== VIZ NORMED GRAD CORR METRICS FOR REPORT ===========") 
@@ -242,7 +222,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Cosine Similarity Comparison"
+            final_fig_name="Muon and Adam Cosine Similarity"
         ) 
 
         print("=========== VIZ SUMMARY ACCURACY METRICS FOR REPORT ===========") 
@@ -261,7 +241,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Train and Validation Accuracy (Per Class)"
+            final_fig_name="Per Class Muon and Adam Train and Validation Accuracy"
         ) 
         
         # Col reduction per epoch
@@ -297,7 +277,7 @@ def viz_over_dir(dir_path: Path):
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Train and Validation Accuracy (Majority and Minority Class)"
+            final_fig_name="Subgroup Muon and Adam Train and Validation Accuracy"
         ) 
 
         print("=========== VIZ SUMMARY LOSS METRICS FOR REPORT ===========") 

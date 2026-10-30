@@ -13,16 +13,17 @@ import matplotlib.ticker as ticker
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class LonePlotOptions():
-    def __init__(self, train_split: str, version:str, x_label: str, y_label:str, final_fig_name: str, mode: str, optim_name:str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
+    def __init__(self, use_cols: bool, train_split: str, version:str, x_label: str, y_label:str, final_fig_name: str, mode: str, optim_name:str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
         self.title_y_offset = title_y_offset
         self.fontsize = font_size
         self.dpi = dpi
         self._base_size: int = base_size
+        self._use_cols = use_cols
         self.names = dict(train_split=train_split, x_label = x_label, y_label = y_label, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, version=version)
 
 class GridPlotOptions(LonePlotOptions):
-    def __init__(self, train_split:str, version:str, final_fig_name: str, mode: str, optim_name:str, x_label:str, y_label:str, grid_cols_num: int, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
-        super().__init__(train_split=train_split, version=version, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, x_label=x_label, y_label=y_label, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
+    def __init__(self, use_cols: bool, train_split:str, version:str, final_fig_name: str, mode: str, optim_name:str, x_label:str, y_label:str, grid_cols_num: int, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
+        super().__init__(use_cols=use_cols, train_split=train_split, version=version, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, x_label=x_label, y_label=y_label, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
 class LonePlotManager():
@@ -37,7 +38,6 @@ class LonePlotManager():
         # The cycle does Muon (2 [line] plots) then Adam (2 plots), we have made proficiency for up to 8 lines on a plot at once
         ax.set_prop_cycle(color=['#CC79A7', '#E69F00', '#0072B2', '#56B4E9', '#CC79A7', '#E69F00', '#0072B2', '#56B4E9'], marker=['o', '.', 'o', '.', 'D', 's', 'D', 's'], markersize=[5] * 8, linewidth=[3] * 8)
         ax.tick_params(axis='both', labelsize='large')
-        n = 5
         # ax.xaxis.set_major_locator(ticker.MultipleLocator(n))
         # ax.yaxis.set_major_locator(ticker.FixedLocator([0]))
         
@@ -60,13 +60,16 @@ class LonePlotManager():
         Optionally save figure (Recommended) per viz. 
         """
         fig, ax = self.lone_figax
-        title = self._plot_options.names["mode"]  + " " + self._plot_options.names["final_fig_name"] + " " + self._plot_options.names["x_label"]
+        title = self._plot_options.names["mode"]  + " " + self._plot_options.names["final_fig_name"]
         fig.suptitle(f'{title}', fontsize="xx-large", y=0.92)
 
         for col in self._metric_df.columns:
-            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values), label=f'{self._plot_options.names["optim_name"]} {self._plot_options.names["train_split"]} {col.upper()}')
-            if "Original Columns Avg - " in col:
-                col = "Average" + " " + self._plot_options.names["optim_name"]  +  " " + col.replace("Original Columns Avg - ", "").replace("-", " ")
+            line, = ax.plot(list(self._metric_df.index.to_numpy(dtype=np.int32)), list(self._metric_df.loc[:, col].values))
+
+            og_col = col
+            col = f'{self._plot_options.names["optim_name"]} {self._plot_options.names["train_split"]}'
+            if self._plot_options._use_cols:
+                col = col + " " + og_col
             line.set_label(col.upper())
             ax.legend(fontsize='medium')
         
