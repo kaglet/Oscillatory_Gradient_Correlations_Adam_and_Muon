@@ -97,7 +97,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
                 metric_df.rename(columns={"Filler":names.metric_name}, inplace=True)
 
-                options = LonePlotOptions(use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label)
+                options = LonePlotOptions(plot_cycler=plot_cycler_settings, use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label)
                 assert type(options) is LonePlotOptions
 
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
@@ -120,7 +120,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         # Directory path should ensure required uniqueness settings 
         fig.savefig(f"{save_dir}/lone_{final_fig_name.replace(" ", "_").lower()}.png") 
 
-def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
+def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str, plot_cycler_settings: dict | None) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
@@ -146,7 +146,7 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
 
                 names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
 
-                options = GridPlotOptions(use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label, grid_cols_num=5)
+                options = GridPlotOptions(plot_cycler=plot_cycler_settings, use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label, grid_cols_num=5)
                 assert type(options) is GridPlotOptions
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
@@ -178,9 +178,10 @@ def viz_mean_correlation(dir_path: Path, mode: str) -> None:
     ]
 
     NUM_PROPS_IN_CYCLE = 2
-    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['-', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['--', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
     
     viz_grid_metrics(
+        plot_cycler_settings=plot_cycler_settings,
         mode=mode,
         outputs_dir=dir_path, 
         version_dir="multijob/R*", 
@@ -214,9 +215,10 @@ def viz_dot_prod(dir_path: Path, mode: str) -> None:
     ]
 
     NUM_PROPS_IN_CYCLE = 2
-    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['-', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['--', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
         
     viz_grid_metrics(
+        plot_cycler_settings=plot_cycler_settings,
         mode=mode,
         outputs_dir=dir_path, 
         version_dir="multijob/R*", 

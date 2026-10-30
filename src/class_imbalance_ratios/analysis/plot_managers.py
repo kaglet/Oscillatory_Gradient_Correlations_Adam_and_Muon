@@ -13,18 +13,19 @@ import matplotlib.ticker as ticker
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class LonePlotOptions():
-    def __init__(self, use_prop_cycle: bool, use_cols: bool, train_split: str, version:str, x_label: str, y_label:str, final_fig_name: str, mode: str, optim_name:str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
+    def __init__(self, plot_cycler: dict | None, use_prop_cycle: bool, use_cols: bool, train_split: str, version:str, x_label: str, y_label:str, final_fig_name: str, mode: str, optim_name:str, title_y_offset:float = 0.01, font_size: int = 200, dpi: int = 400, base_size: int= 4) -> None:
         self.title_y_offset = title_y_offset
         self.fontsize = font_size
         self.dpi = dpi
         self._base_size: int = base_size
         self._use_cols = use_cols
         self._use_prop_cycle = use_prop_cycle
+        self._plot_cycler = plot_cycler
         self.names = dict(train_split=train_split, x_label = x_label, y_label = y_label, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, version=version)
 
 class GridPlotOptions(LonePlotOptions):
-    def __init__(self, use_prop_cycle: bool, use_cols: bool, train_split:str, version:str, final_fig_name: str, mode: str, optim_name:str, x_label:str, y_label:str, grid_cols_num: int, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
-        super().__init__(use_prop_cycle=use_prop_cycle, use_cols=use_cols, train_split=train_split, version=version, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, x_label=x_label, y_label=y_label, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
+    def __init__(self, plot_cycler: dict | None, use_prop_cycle: bool, use_cols: bool, train_split:str, version:str, final_fig_name: str, mode: str, optim_name:str, x_label:str, y_label:str, grid_cols_num: int, title_y_offset: float = 1, font_size: int = 200, dpi: int = 400, base_size: int = 8) -> None:
+        super().__init__(plot_cycler=plot_cycler, use_prop_cycle=use_prop_cycle, use_cols=use_cols, train_split=train_split, version=version, optim_name=optim_name, mode=mode, final_fig_name=final_fig_name, x_label=x_label, y_label=y_label, title_y_offset=title_y_offset, font_size=font_size, dpi=dpi, base_size=base_size)
         self.grid_cols_num: int = grid_cols_num
 
 class LonePlotManager():
@@ -37,8 +38,8 @@ class LonePlotManager():
         fig = Figure(figsize = ((self._plot_options._base_size + 7), (self._plot_options._base_size + 7)))
         ax = fig.subplots(1, 1, sharex=True, sharey=True)
         NUM_PROPS_IN_CYCLE = 4
-        if self._plot_options._use_prop_cycle:
-            ax.set_prop_cycle(color=['#CC79A7', '#CC79A7', '#0072B2', '#0072B2'], linestyle=['-', '--'] * int(NUM_PROPS_IN_CYCLE / 2), marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+        if self._plot_options._plot_cycler is not None and type(self._plot_options._plot_cycler) is dict:
+            ax.set_prop_cycle(**self._plot_options._plot_cycler)
         ax.tick_params(axis='both', labelsize='large')
 
         figax = fig, ax
@@ -118,9 +119,9 @@ class GridPlotsmanager():
         for grid_row in range(self._grid_rows_num):
             for grid_col in range(self._plot_options.grid_cols_num):
                 ax = axs[grid_row, grid_col]
-                if self._plot_options._use_prop_cycle:
-                    ax.set_prop_cycle(color=['#CC79A7', '#0072B2'], marker=['.', '.'], markersize=[2.5] * NUM_PROPS_IN_CYCLE, linestyle=['-']*NUM_PROPS_IN_CYCLE, linewidth=[1.5]*NUM_PROPS_IN_CYCLE)
-
+                if self._plot_options._plot_cycler is not None and type(self._plot_options._plot_cycler) is dict:
+                    ax.set_prop_cycle(**self._plot_options._plot_cycler)
+                    
         figaxes = fig, axs
         return figaxes
 
