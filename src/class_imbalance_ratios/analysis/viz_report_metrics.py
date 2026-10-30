@@ -34,13 +34,13 @@ def get_mix_match_names(mode: str, final_fig_name: str, experim_dir: Path, path:
     else: 
         train_split = "train"
     
-    train_split = train_split.upper()
+    train_split = train_split.title()
 
-    optimizer_name = optimizer_name.upper()
-    mode = mode.upper()
-    final_fig_name=final_fig_name.upper()
-    x_label = x_label.upper()
-    y_label = y_label.upper()
+    optimizer_name = optimizer_name.title()
+    mode = mode.title()
+    final_fig_name=final_fig_name.title()
+    x_label = x_label.title()
+    y_label = y_label.title()
     mix_match_names = SimpleNamespace(use_prop_cycle=cycle_on_prop_checker(path), mode=mode, unique_cols=use_unique_col_names(path), version=version, metric_name=metric_name, x_label = x_label, y_label = y_label, final_fig_name=final_fig_name, optimizer_name=optimizer_name, train_split=train_split)
 
     return mix_match_names
@@ -168,45 +168,8 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         os.makedirs(save_dir, exist_ok=True)
         fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
 
-def viz_over_dir(dir_path: Path):
-    """ 
-    Visualize non-core metrics that were created. 
-    """
-    MODES = ["mean", "std"]
-    for mode in MODES: 
-        # TODO: Do this again but for STD not mean (replace or do loop for modes (easiest))
-        print("=========== VIZ UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
-        # Unnormed Per col per step (per OPTIM step)
-        relative_paths_info = [
-            dict(
-                relative_path= f"runs_extra-none_{mode}_Unnormalised-GC.parquet", 
-            )
-        ]
-
-        viz_grid_metrics(
-            mode=mode,
-            outputs_dir=dir_path, 
-            version_dir="multijob/R*", 
-            run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Per Layer Dot Product"
-        ) 
-
-        # Unnormed Col reduction per step (per OPTIM step)
-        relative_paths_info = [
-            dict(
-                relative_path= f"runs_extra-cols_{mode}_Unnormalised-GC.parquet", 
-            )
-        ]
-
-        viz_lone_metrics(
-            mode=mode,
-            outputs_dir=dir_path, 
-            version_dir="multijob/R*", 
-            run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Dot Product"
-        ) 
-
-        print("=========== VIZ NORMED GRAD CORR METRICS FOR REPORT ===========") 
+def viz_mean_correlation(dir_path: Path, mode: str) -> None:
+        print(f"=========== VIZ {mode.upper()} NORMED GRAD CORR METRICS FOR REPORT ===========") 
         # Normed Per col per step (per OPTIM step)
         relative_paths_info = [
             dict(
@@ -237,7 +200,40 @@ def viz_over_dir(dir_path: Path):
             final_fig_name="Muon and Adam Cosine Similarity"
         ) 
 
-        print("=========== VIZ SUMMARY ACCURACY METRICS FOR REPORT ===========") 
+def viz_dot_prod(dir_path: Path, mode: str) -> None:
+    print(f"=========== VIZ {mode.upper()} UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
+    # Unnormed Per col per step (per OPTIM step)
+    relative_paths_info = [
+        dict(
+            relative_path= f"runs_extra-none_{mode}_Unnormalised-GC.parquet", 
+        )
+    ]
+
+    viz_grid_metrics(
+        mode=mode,
+        outputs_dir=dir_path, 
+        version_dir="multijob/R*", 
+        run_paths_info=relative_paths_info,
+        final_fig_name="Muon and Adam Per Layer Dot Product"
+    ) 
+
+    # Unnormed Col reduction per step (per OPTIM step)
+    relative_paths_info = [
+        dict(
+            relative_path= f"runs_extra-cols_{mode}_Unnormalised-GC.parquet", 
+        )
+    ]
+
+    viz_lone_metrics(
+        mode=mode,
+        outputs_dir=dir_path, 
+        version_dir="multijob/R*", 
+        run_paths_info=relative_paths_info,
+        final_fig_name="Muon and Adam Dot Product"
+    ) 
+
+def viz_accuracy(dir_path: Path, mode: str) -> None:
+        print(f"=========== VIZ {mode.upper()} SUMMARY ACCURACY METRICS FOR REPORT ===========") 
         # Cols present per epoch
         relative_paths_info = [
             dict(
@@ -292,7 +288,8 @@ def viz_over_dir(dir_path: Path):
             final_fig_name="Subgroup Muon and Adam Train and Validation Accuracy"
         ) 
 
-        print("=========== VIZ SUMMARY LOSS METRICS FOR REPORT ===========") 
+def viz_loss(dir_path: Path, mode: str) -> None:
+        print(f"=========== VIZ {mode.upper()} SUMMARY LOSS METRICS FOR REPORT ===========") 
         # Loss per step (NOT per optim step)
         relative_paths_info = [
             dict(
@@ -311,6 +308,16 @@ def viz_over_dir(dir_path: Path):
             final_fig_name="Muon and Adam Train and Validation Loss"
         ) 
 
+def viz_over_dir(dir_path: Path) -> None:
+    """ 
+    Visualize non-core metrics that were created. 
+    """
+    MODES = ["mean", "std"]
+    for mode in MODES: 
+        viz_accuracy(dir_path=dir_path, mode=mode)
+        viz_loss(dir_path=dir_path, mode=mode)
+        viz_dot_prod(dir_path=dir_path, mode=mode)
+        viz_mean_correlation(dir_path=dir_path, mode=mode)
 
 if __name__ == "__main__":
     viz_over_dir(cls_imb_s_outputs_dir)

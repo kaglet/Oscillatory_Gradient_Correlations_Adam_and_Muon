@@ -70,13 +70,13 @@ class LonePlotManager():
             col = f'{self._plot_options.names["optim_name"]} {self._plot_options.names["train_split"]}'
             if self._plot_options._use_cols:
                 col = col + " " + og_col
-            line.set_label(col.upper())
+            line.set_label(col.title())
             ax.legend(fontsize='medium')
         
         ax.grid(axis='both', color='gray', linestyle='--', linewidth=1, alpha=0.65, which="major")
 
-        ax.set_ylabel(self._plot_options.names["y_label"].upper(), fontsize='x-large')
-        ax.set_xlabel(self._plot_options.names["x_label"].upper(), fontsize='x-large')
+        ax.set_ylabel(self._plot_options.names["y_label"].title(), fontsize='x-large')
+        ax.set_xlabel(self._plot_options.names["x_label"].title(), fontsize='x-large')
 
         return fig, ax
 
@@ -149,9 +149,9 @@ class GridPlotsmanager():
                 
                 ax.tick_params(axis='both', which='both', labelbottom=True, labelleft=True, labelsize='x-small')
 
-                ax.set_ylabel(self._plot_options.names["y_label"].upper(), fontsize='medium') 
-                ax.set_xlabel(self._plot_options.names["x_label"].upper(), fontsize='medium')           
-                ax.set_title(f"{col.upper()}", fontsize='large')
+                ax.set_ylabel(self._plot_options.names["y_label"].title(), fontsize='medium') 
+                ax.set_xlabel(self._plot_options.names["x_label"].title(), fontsize='medium')           
+                ax.set_title(f"{col.title()}", fontsize='large')
 
                 line, = ax.plot(index_vals, col_vals, label=f'{self._plot_options.names["optim_name"]}')
 
