@@ -49,9 +49,9 @@ def cycle_on_prop_checker(path: Path) -> bool:
     cycle_yes = True
     if "accuracy" in path.stem.lower():
         if "subgroup_steps" in str(path.stem).lower(): # subgroup cases first
-            cycle_yes = True
+            cycle_yes = False
         elif "subgroup_epochs" in str(path.stem).lower():
-            cycle_yes = True
+            cycle_yes = False
         elif "epochs" in path.stem.lower(): # fine grained per epoch case, no subgroups detected
             cycle_yes = False 
 
@@ -69,7 +69,7 @@ def use_unique_col_names(path: Path) -> bool:
 
     return unique_cols
 
-def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str) -> None:
+def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str, Any]], version_dir: str, final_fig_name:str, plot_cycler_settings: dict | None) -> None:
     """ 
     Pass in list of patterns. and aggregation options, which are looped over for optional number of times. 
     """
@@ -169,36 +169,40 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
         fig.savefig(f"{save_dir}/grid_{final_fig_name.replace(" ", "_").lower()}.png") 
 
 def viz_mean_correlation(dir_path: Path, mode: str) -> None:
-        print(f"=========== VIZ {mode.upper()} NORMED GRAD CORR METRICS FOR REPORT ===========") 
-        # Normed Per col per step (per OPTIM step)
-        relative_paths_info = [
-            dict(
-                relative_path= f"runs_extra-none_{mode}_Normalised-GC.parquet", 
-            )
-        ]
+    print(f"=========== VIZ {mode.upper()} NORMED GRAD CORR METRICS FOR REPORT ===========") 
+    # Normed Per col per step (per OPTIM step)
+    relative_paths_info = [
+        dict(
+            relative_path= f"runs_extra-none_{mode}_Normalised-GC.parquet", 
+        )
+    ]
 
-        viz_grid_metrics(
-            mode=mode,
-            outputs_dir=dir_path, 
-            version_dir="multijob/R*", 
-            run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Per Layer Cosine Similarity"
-        ) 
+    NUM_PROPS_IN_CYCLE = 2
+    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['-', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+    
+    viz_grid_metrics(
+        mode=mode,
+        outputs_dir=dir_path, 
+        version_dir="multijob/R*", 
+        run_paths_info=relative_paths_info,
+        final_fig_name="Muon and Adam Per Layer Cosine Similarity"
+    ) 
 
-        # Normed Col reduction per step (per OPTIM step)
-        relative_paths_info = [
-            dict(
-                relative_path= f"runs_extra-cols_{mode}_Normalised-GC.parquet", 
-            )
-        ]
+    # Normed Col reduction per step (per OPTIM step)
+    relative_paths_info = [
+        dict(
+            relative_path= f"runs_extra-cols_{mode}_Normalised-GC.parquet", 
+        )
+    ]
 
-        viz_lone_metrics(
-            mode=mode,
-            outputs_dir=dir_path, 
-            version_dir="multijob/R*", 
-            run_paths_info=relative_paths_info,
-            final_fig_name="Muon and Adam Cosine Similarity"
-        ) 
+    viz_lone_metrics(
+        plot_cycler_settings=plot_cycler_settings,
+        mode=mode,
+        outputs_dir=dir_path, 
+        version_dir="multijob/R*", 
+        run_paths_info=relative_paths_info,
+        final_fig_name="Muon and Adam Cosine Similarity"
+    ) 
 
 def viz_dot_prod(dir_path: Path, mode: str) -> None:
     print(f"=========== VIZ {mode.upper()} UNNORMED GRAD CORR METRICS FOR REPORT ===========") 
@@ -209,6 +213,9 @@ def viz_dot_prod(dir_path: Path, mode: str) -> None:
         )
     ]
 
+    NUM_PROPS_IN_CYCLE = 2
+    plot_cycler_settings = dict(color=['#CC79A7', '#0072B2'], linestyle=['-', '--'], marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+        
     viz_grid_metrics(
         mode=mode,
         outputs_dir=dir_path, 
@@ -225,6 +232,7 @@ def viz_dot_prod(dir_path: Path, mode: str) -> None:
     ]
 
     viz_lone_metrics(
+        plot_cycler_settings=plot_cycler_settings,
         mode=mode,
         outputs_dir=dir_path, 
         version_dir="multijob/R*", 
@@ -232,20 +240,22 @@ def viz_dot_prod(dir_path: Path, mode: str) -> None:
         final_fig_name="Muon and Adam Dot Product"
     ) 
 
-def viz_accuracy(dir_path: Path, mode: str) -> None:
-        print(f"=========== VIZ {mode.upper()} SUMMARY ACCURACY METRICS FOR REPORT ===========") 
+def viz_accuracy(dir_path: Path, summary_mode: str) -> None:
+        print(f"=========== VIZ {summary_mode.upper()} SUMMARY ACCURACY METRICS FOR REPORT ===========") 
         # Cols present per epoch
         relative_paths_info = [
             dict(
-                relative_path= f"runs_extra-epochs_{mode}_Train-Accuracy.parquet", 
+                relative_path= f"runs_extra-epochs_{summary_mode}_Train-Accuracy.parquet", 
             ),
             dict(
-                relative_path = f"runs_extra-epochs_{mode}_Validation-Accuracy.parquet", 
+                relative_path = f"runs_extra-epochs_{summary_mode}_Validation-Accuracy.parquet", 
             ) 
         ]
 
+        plot_cycler_settings = None
         viz_lone_metrics(
-            mode=mode,
+            plot_cycler_settings=plot_cycler_settings,
+            mode=summary_mode,
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
@@ -255,15 +265,18 @@ def viz_accuracy(dir_path: Path, mode: str) -> None:
         # Col reduction per epoch
         relative_paths_info = [
             dict(
-                relative_path= f"runs_extra-both_{mode}_Train-Accuracy.parquet", 
+                relative_path= f"runs_extra-both_{summary_mode}_Train-Accuracy.parquet", 
             ),
             dict(
-                relative_path = f"runs_extra-both_{mode}_Validation-Accuracy.parquet", 
+                relative_path = f"runs_extra-both_{summary_mode}_Validation-Accuracy.parquet", 
             ) 
         ]
 
+        NUM_PROPS_IN_CYCLE = 4
+        plot_cycler_settings = dict(color=['#CC79A7', '#CC79A7', '#0072B2', '#0072B2'], linestyle=['-', '--'] * int(NUM_PROPS_IN_CYCLE / 2), marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
         viz_lone_metrics(
-            mode=mode,
+            plot_cycler_settings=plot_cycler_settings,
+            mode=summary_mode,
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
@@ -273,15 +286,20 @@ def viz_accuracy(dir_path: Path, mode: str) -> None:
         # Subgroups per epoch
         relative_paths_info = [
             dict(
-                relative_path= f"runs_extra-subgroup_epochs_{mode}_Train-Accuracy.parquet", 
+                relative_path= f"runs_extra-subgroup_epochs_{summary_mode}_Train-Accuracy.parquet", 
             ),
             dict(
-                relative_path = f"runs_extra-subgroup_epochs_{mode}_Validation-Accuracy.parquet", 
+                relative_path = f"runs_extra-subgroup_epochs_{summary_mode}_Validation-Accuracy.parquet", 
             ) 
         ]
 
+        NUM_PROPS_IN_CYCLE = 8
+        # Cycle is (Adam Majority, Adam Minority) Train then Val --- (Muon Majority, Muon Minority) Train then Val
+        plot_cycler_settings = dict(color=['#CC79A7', '#E69F00', '#CC79A7', '#E69F00', '#0072B2', '#56B4E9', '#0072B2', '#56B4E9'], linestyle=['-', '-', '--', '--'] * 2, marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+
         viz_lone_metrics(
-            mode=mode,
+            plot_cycler_settings=plot_cycler_settings,
+            mode=summary_mode,
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
             run_paths_info=relative_paths_info,
@@ -300,7 +318,10 @@ def viz_loss(dir_path: Path, mode: str) -> None:
             ) 
         ]
 
+        NUM_PROPS_IN_CYCLE = 4
+        plot_cycler_settings = dict(color=['#CC79A7', '#CC79A7', '#0072B2', '#0072B2'], linestyle=['-', '--'] * int(NUM_PROPS_IN_CYCLE / 2), marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
         viz_lone_metrics(
+            plot_cycler_settings=plot_cycler_settings,
             mode=mode,
             outputs_dir=dir_path, 
             version_dir="multijob/R*", 
@@ -314,7 +335,7 @@ def viz_over_dir(dir_path: Path) -> None:
     """
     MODES = ["mean", "std"]
     for mode in MODES: 
-        viz_accuracy(dir_path=dir_path, mode=mode)
+        viz_accuracy(dir_path=dir_path, summary_mode=mode)
         viz_loss(dir_path=dir_path, mode=mode)
         viz_dot_prod(dir_path=dir_path, mode=mode)
         viz_mean_correlation(dir_path=dir_path, mode=mode)
