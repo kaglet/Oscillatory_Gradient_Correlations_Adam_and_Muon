@@ -22,10 +22,5 @@ module load chpc/cuda/12.0/12.0
 echo "Starting Adam Class Imbalance Large Experiment Run via Pixi..."
 
 # 2. Execute current experiment (cls_imb_s) run using the absolute path to Pixi
-<<<<<<< HEAD:run.pbs
-~/.pixi/bin/pixi run cls_imb_l --run={{run}} --seed={{seed}} --slice={{slice}} --ratio_seed={{ratio_seed}}
-echo "JOB FINISHED AT: $(date '+%Y-%m-%d %H:%M:%S')"
-=======
 ~/.pixi/bin/pixi run adam_cls_imb_l --run={{run}} --seed={{seed}} --slice={{slice}} --ratio_seed={{ratio_seed}}
 echo "JOB FINISHED AT: $(date '+%Y-%m-%d %H:%M:%S')"
->>>>>>> c58fd1a4b03f856fd200f38864e99ee00f1da9ff:src/class_imbalance_ratios/large/run_adam.pbs
