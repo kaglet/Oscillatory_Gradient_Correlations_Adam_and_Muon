@@ -36,9 +36,9 @@ class LonePlotManager():
     def _create_lone_figax(self) -> Tuple[Figure, Axes]:
         fig = Figure(figsize = ((self._plot_options._base_size + 7), (self._plot_options._base_size + 7)))
         ax = fig.subplots(1, 1, sharex=True, sharey=True)
-        NUM_PROPS_IN_CYCLE = 4
+        NUM_PROPS_IN_CYCLE = 8
         if self._plot_options._use_prop_cycle:
-            ax.set_prop_cycle(color=['#CC79A7', '#CC79A7', '#0072B2', '#0072B2'], linestyle=['-', '--'] * int(NUM_PROPS_IN_CYCLE / 2), marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
+            ax.set_prop_cycle(color=['#CC79A7', '#CC79A7', '#0072B2', '#0072B2', '#E69F00', '#E69F00', '#56B4E9', '#56B4E9'], linestyle=['-', '--'] * int(NUM_PROPS_IN_CYCLE / 2), marker=['.'] * NUM_PROPS_IN_CYCLE, markersize=[2.5] * NUM_PROPS_IN_CYCLE, linewidth=[1.25] * NUM_PROPS_IN_CYCLE)
         ax.tick_params(axis='both', labelsize='large')
 
         figax = fig, ax
