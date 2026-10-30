@@ -13,8 +13,8 @@ tests = "python -m src.src_tests --num1=1 --num2=2 --num3=5"
 adam_cls_imb_l = "python -m src.class_imbalance_ratios.large.run_adam --run=0 --seed=0 --slice=0 --ratio_seed=0"
 muon_cls_imb_l = "python -m src.class_imbalance_ratios.large.run_muon --run=0 --seed=0 --slice=0 --ratio_seed=0"
 
-grid_run_pbs = "python -m src.class_imbalance_ratios.cli_grid_runners.batch_run_pbs"
-grid_run_local = "python -m src.class_imbalance_ratios.cli_grid_runners.batch_run_local"
+grid_run_pbs = "python -m src.class_imbalance_ratios.cli_grid_runners.grid_run_pbs"
+grid_run_local = "python -m src.class_imbalance_ratios.cli_grid_runners.grid_run_local"
 
 [dependencies]
 setuptools = "<81"
