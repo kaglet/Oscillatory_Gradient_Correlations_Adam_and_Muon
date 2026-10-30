@@ -3,7 +3,7 @@
 #PBS -q gpu_1
 #PBS -l select=1:ncpus=9:ngpus=1
 #PBS -P CSCI1166
-#PBS -l walltime=00:55:00
+#PBS -l walltime=00:45:00
 #PBS -M u25735056@tuks.co.za
 #PBS -m abe
 
@@ -19,8 +19,8 @@ echo
 # 1. Load the specific CUDA module required by cluster's physical NVIDIA drivers
 module load chpc/cuda/12.0/12.0
 
-echo "Starting Experiment Run via Pixi..."
+echo "Starting Adam Class Imbalance Large Experiment Run via Pixi..."
 
 # 2. Execute current experiment (cls_imb_s) run using the absolute path to Pixi
-~/.pixi/bin/pixi run cls_imb_l --run=5 --seed=5 --slice=0 --ratio_seed=0
+~/.pixi/bin/pixi run adam_cls_imb_l --run=1 --seed=1 --slice=1 --ratio_seed=1
 echo "JOB FINISHED AT: $(date '+%Y-%m-%d %H:%M:%S')"
