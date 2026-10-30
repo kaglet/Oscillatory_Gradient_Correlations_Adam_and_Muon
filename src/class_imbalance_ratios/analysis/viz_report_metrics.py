@@ -41,9 +41,21 @@ def get_mix_match_names(mode: str, final_fig_name: str, experim_dir: Path, path:
     final_fig_name=final_fig_name.upper()
     x_label = x_label.upper()
     y_label = y_label.upper()
-    mix_match_names = SimpleNamespace(mode=mode, unique_cols=use_unique_col_names(path), version=version, metric_name=metric_name, x_label = x_label, y_label = y_label, final_fig_name=final_fig_name, optimizer_name=optimizer_name, train_split=train_split)
+    mix_match_names = SimpleNamespace(use_prop_cycle=cycle_on_prop_checker(path), mode=mode, unique_cols=use_unique_col_names(path), version=version, metric_name=metric_name, x_label = x_label, y_label = y_label, final_fig_name=final_fig_name, optimizer_name=optimizer_name, train_split=train_split)
 
     return mix_match_names
+
+def cycle_on_prop_checker(path: Path) -> bool:
+    cycle_yes = True
+    if "accuracy" in path.stem.lower():
+        if "subgroup_steps" in str(path.stem).lower(): # subgroup cases first
+            cycle_yes = True
+        elif "subgroup_epochs" in str(path.stem).lower():
+            cycle_yes = True
+        elif "epochs" in path.stem.lower(): # fine grained per epoch case, no subgroups detected
+            cycle_yes = False 
+
+    return cycle_yes
 
 def use_unique_col_names(path: Path) -> bool:
     unique_cols = False
@@ -85,7 +97,7 @@ def viz_lone_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
                 names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
                 metric_df.rename(columns={"Filler":names.metric_name}, inplace=True)
 
-                options = LonePlotOptions(use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label)
+                options = LonePlotOptions(use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label)
                 assert type(options) is LonePlotOptions
 
                 plots_manager = LonePlotManager(metric_df=metric_df, plt_options=options)
@@ -134,7 +146,7 @@ def viz_grid_metrics(mode:str, outputs_dir: Path, run_paths_info: list[dict[str,
 
                 names = get_mix_match_names(mode, final_fig_name, experim_dir, path, v_dir)
 
-                options = GridPlotOptions(use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label, grid_cols_num=5)
+                options = GridPlotOptions(use_prop_cycle=names.use_prop_cycle, use_cols=names.unique_cols, version=names.version, train_split=names.train_split, final_fig_name=names.final_fig_name, mode=names.mode, optim_name=names.optimizer_name, base_size=8, x_label=names.x_label, y_label=names.y_label, grid_cols_num=5)
                 assert type(options) is GridPlotOptions
 
                 plots_manager = GridPlotsmanager(metric_df=metric_df, plt_options=options, version=v_dir.stem)
